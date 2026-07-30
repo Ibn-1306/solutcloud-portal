@@ -16,11 +16,11 @@ jobs:
       - name: 💿 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, ftp
 
       - name: 📦 Install Dependencies (Composer)
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --no-dev --optimize-autoloader --ignore-platform-req=php+
 
       - name: 🏗️ Build Assets (NPM)
         run: |
