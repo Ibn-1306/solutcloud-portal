@@ -34,9 +34,11 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           # ON ENLÈVE /htdocs/ CAR LA CONNEXION NOUS Y PLACE DÉJÀ
+          # HOPE
           server-dir: login.solutcloud.com/ 
           exclude: |
             **/.git*
             **/node_modules/**
             **/tests/**
             .env
+            
