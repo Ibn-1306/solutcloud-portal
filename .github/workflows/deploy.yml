@@ -33,9 +33,8 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # On déploie dans le dossier spécifique créé par LWS
-          server-dir: /htdocs/login.solutcloud.com/
-          # On ignore les dossiers inutiles en prod
+          # ON ENLÈVE /htdocs/ CAR LA CONNEXION NOUS Y PLACE DÉJÀ
+          server-dir: login.solutcloud.com/ 
           exclude: |
             **/.git*
             **/node_modules/**
