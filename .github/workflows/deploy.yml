@@ -1,0 +1,43 @@
+name: Deploy SOLUTCLOUD Portal
+
+on:
+  push:
+    branches:
+      - main  # Vérifie bien si ta branche s'appelle main ou master
+
+jobs:
+  web-deploy:
+    name: 🚀 Deploy to login.solutcloud.com
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 💿 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, ftp
+
+      - name: 📦 Install Dependencies (Composer)
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: 🏗️ Build Assets (NPM)
+        run: |
+          npm install
+          npm run build
+
+      - name: 🚀 Sync Files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # On déploie dans le dossier spécifique créé par LWS
+          server-dir: /htdocs/login.solutcloud.com/
+          # On ignore les dossiers inutiles en prod
+          exclude: |
+            **/.git*
+            **/node_modules/**
+            **/tests/**
+            .env
