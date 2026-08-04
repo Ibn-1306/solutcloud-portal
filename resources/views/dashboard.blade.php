@@ -44,69 +44,101 @@
         <div class="admin-watermark"></div>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 relative z-10">
 
-        <!-- SECTION STATISTIQUES -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <!-- SECTION STATISTIQUES SOLUTCLOUD HAUT NIVEAU -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
     
-    <!-- Carte Revenus -->
-    <div class="admin-card p-5 border-l-4 border-emerald-500">
+    <!-- Carte 1 : Revenus Mensuels -->
+    <div class="admin-card p-5 border-l-4 border-cyan-500 bg-white/95 backdrop-blur-md shadow-sm">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Revenus Mensuels (Est.)</p>
-                <h3 class="text-2xl font-black text-gray-800 mt-1">{{ number_format($monthlyRevenue, 0, ',', ' ') }} <span class="text-sm font-bold text-gray-600">FCFA</span></h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Revenus Mensuels (Est.)</p>
+                <h3 class="text-xl font-black text-gray-800 mt-1">
+                    {{ number_format($monthlyRevenue, 0, ',', ' ') }} <span class="text-[10px] text-gray-500">FCFA</span>
+                </h3>
             </div>
-            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
+                <!-- Icône : Graphique de croissance -->
+                <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.5 4.5L21.75 7.5M21.75 7.5V12m0-4.5H17.25" />
+                </svg>
             </div>
         </div>
     </div>
 
-    <!-- Carte Instances Actives -->
-    <div class="admin-card p-5 border-l-4 border-cyan-500">
+    <!-- Carte 2 : C.A Global -->
+    <div class="admin-card p-5 border-l-4 border-emerald-500 bg-white/95 backdrop-blur-md shadow-sm">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Instances Actives</p>
-                <h3 class="text-2xl font-black text-gray-800 mt-1">{{ $activeCount }} <span class="text-sm font-bold text-gray-600">CLIENT(S)</span></h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">C.A Global (REEL)</p>
+                <h3 class="text-xl font-black text-gray-800 mt-1">
+                    {{ number_format($totalRevenue, 0, ',', ' ') }} <span class="text-[10px] text-gray-500">FCFA</span>
+                </h3>
             </div>
-            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
+                <!-- Icône : Billets de banque -->
+                <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                </svg>
             </div>
         </div>
     </div>
 
-    <!-- Carte Alertes Échéances -->
-    <div class="admin-card p-5 border-l-4 {{ $alerts > 0 ? 'border-orange-500' : 'border-gray-200' }}">
+    <!-- Carte 3 : Instances Actives -->
+    <div class="admin-card p-5 border-l-4 border-brand-teal bg-white/95 backdrop-blur-md shadow-sm">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">Alertes Échéances (7j)</p>
-                <h3 class="text-2xl font-black {{ $alerts > 0 ? 'text-orange-600' : 'text-gray-800' }} mt-1">{{ $alerts }} <span class="text-sm font-bold text-gray-600">Critique(s)</span></h3>
+                <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Instances Actives</p>
+                <h3 class="text-xl font-black text-gray-800 mt-1">
+                    {{ $activeCount }} <span class="text-[10px] text-gray-500">CLIENT(S)</span>
+                </h3>
             </div>
-            <div class="w-12 h-12 {{ $alerts > 0 ? 'bg-orange-50' : 'bg-white' }} rounded-2xl flex items-center justify-center">
-                <svg class="w-6 h-6 {{ $alerts > 0 ? 'text-orange-600 animate-pulse' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
+                <!-- Icône : Serveurs Cloud -->
+                <svg class="w-6 h-6 text-brand-teal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a2.25 2.25 0 01-2.25-2.25V6.75A2.25 2.25 0 015.25 4.5h13.5a2.25 2.25 0 012.25 2.25v5.25a2.25 2.25 0 01-2.25 2.25m-13.5 0L3 16.5m15.75-2.25l2.25 2.25M3.75 20.25h16.5M18.75 20.25h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
+                </svg>
             </div>
         </div>
     </div>
 
+    <!-- Carte 4 : Alertes -->
+    <div class="admin-card p-5 border-l-4 {{ $alerts > 0 ? 'border-orange-500' : 'border-gray-200' }} bg-white/95 backdrop-blur-md shadow-sm">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Alertes Échéances (7j)</p>
+                <h3 class="text-xl font-black {{ $alerts > 0 ? 'text-orange-600' : 'text-gray-800' }} mt-1">
+                    {{ $alerts }} <span class="text-[10px] text-gray-500">CRITIQUE(S)</span>
+                </h3>
+            </div>
+            <div class="w-12 h-12 {{ $alerts > 0 ? 'bg-orange-50 border-orange-100' : '' }} rounded-2xl flex items-center justify-center">
+                <!-- Icône : Bouclier Alerte ou Exclamation -->
+                <svg class="w-6 h-6 {{ $alerts > 0 ? 'text-orange-600 animate-pulse' : 'text-gray-400' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+            </div>
+        </div>
     </div>
-            
-            <!-- ALERTES -->
-            @if (session('status'))
-                <div class="mb-6 p-4 bg-brand-teal text-white font-bold rounded-xl shadow-lg flex items-center animate-bounce">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    {{ session('status') }}
-                </div>
-            @endif
+</div>
 
-            @if ($errors->any())
-                <div class="mb-6 p-4 bg-red-600 text-white rounded-xl shadow-lg">
-                    <ul class="list-disc list-inside font-bold">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+<!-- ALERTES ET NOTIFICATIONS -->
+@if (session('status'))
+    <div class="relative z-50 mb-6 p-4 bg-brand-teal text-white font-bold rounded-xl shadow-lg flex items-center animate-bounce">
+        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        {{ session('status') }}
+    </div>
+@endif
+
+@if ($errors->any())
+    <div class="relative z-50 mb-6 p-4 bg-red-600 text-white rounded-xl shadow-lg">
+        <ul class="list-disc list-inside font-bold">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 
             <!-- FORMULAIRE D'AJOUT -->
             <div class="admin-card p-10 mb-12 bg-white/90 backdrop-blur-sm">
@@ -150,14 +182,18 @@
                             </select>
                         </div>
 
+                        <!-- Champ Montant Premium (Caché par défaut) -->
+                        <div id="premium-price-box" class="hidden">
+                            <label class="block text-xs font-bold text-orange-500 uppercase mb-1">Montant d'activation premium (FCFA)</label>
+                            <input type="number" name="premium_price" class="input-field" placeholder="Saisir le montant du devis">
+                        </div>
+
+                        <!-- Abonnement (Bloqué à 12 mois pour création) -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Abonnement</label>
-                            <select name="duration" class="input-field font-bold brand-teal">
-                                <option value="1">1 Mois</option>
-                                <option value="2">2 Mois</option>
-                                <option value="3">3 Mois</option>
-                                <option value="12">1 An (12 mois)</option>
-                            </select>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Engagement Initial</label>
+                        <select name="duration" class="input-field bg-gray-100 cursor-not-allowed" readonly>
+                            <option value="12" selected>12 Mois (1 an)</option>
+                        </select>
                         </div>
                     </div>
                     <div class="mt-8 text-right">
@@ -192,15 +228,27 @@
                             @foreach($companies as $company)
                             <tr class="hover:bg-teal-50/30 transition-colors">
                                 <td class="px-8 py-5">
-                                    <div class="font-bold text-gray-900">{{ $company->name }}</div>
-                                    <div class="text-[11px] text-gray-400">
-                                        @if($company->package === 'premium')
-                                            {{ $company->subdomain }} 
-                                        @else
-                                            {{ $company->subdomain }}.solutcloud.com
-                                        @endif
-                                    </div>
-                                </td>
+                            <!-- Nom de l'entreprise -->
+                            <div class="font-bold text-gray-900">{{ $company->name }}</div>
+    
+                            <!-- URL de l'instance -->
+                            <div class="text-[11px] text-teal-600 font-medium">
+                            @if($company->package === 'premium')
+                            https://{{ $company->subdomain }} 
+                            @else
+                            https://{{ $company->subdomain }}.solutcloud.com
+                            @endif
+                            </div>
+
+                            <!-- NOUVEAU (SP1) : Email du client -->
+                            <div class="flex items-center gap-1 text-[10px] text-gray-400">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            <!-- On récupère le mail de l'utilisateur lié à l'entreprise -->
+                            {{ $company->users->first()->email ?? 'Email non défini' }}
+                            </div>
+                            </td>
                                 <td class="px-6 py-5 text-center">
                                     <span class="px-3 py-1 rounded text-[10px] font-black uppercase {{ $company->package == 'premium' ? 'bg-amber-100 text-amber-700 border border-amber-200' : ($company->package == 'business' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600') }}">
                                         {{ $company->package }}
@@ -285,21 +333,42 @@
         };
 
         const toggleDomainMode = (mode) => {
-            if (mode === 'premium') {
-                inputDomain.readOnly = false;
-                inputDomain.classList.remove('bg-gray-50', 'cursor-not-allowed');
-                labelDomain.innerText = "Nom de Domaine Dédié";
-                if(inputDomain.value === "") inputDomain.value = "www.";
-                hintDomain.innerHTML = "<span class='text-orange-500 font-bold'>⚠️ Format obligatoire : www.nomdomaine.com</span>";
-            } else {
-                inputDomain.readOnly = true;
-                inputDomain.classList.add('bg-gray-50', 'cursor-not-allowed');
-                labelDomain.innerText = "Identifiant d'instance";
-                const formatted = slugify(inputName.value);
-                inputDomain.value = formatted;
-                hintDomain.innerHTML = `Adresse : <span id="preview-url" class="font-bold brand-teal">${formatted || '...'}</span>.solutcloud.com`;
-            }
-        };
+    // On récupère le bloc du prix premium (assure-toi que l'ID correspond dans ton HTML)
+    const premiumPriceBox = document.getElementById('premium-price-box');
+
+    if (mode === 'premium') {
+        // --- LOGIQUE PREMIUM ---
+        
+        // 1. Afficher le champ de saisie du prix (nouveau)
+        if (premiumPriceBox) premiumPriceBox.classList.remove('hidden');
+
+        // 2. Gestion du domaine (ton code existant)
+        inputDomain.readOnly = false;
+        inputDomain.classList.remove('bg-gray-50', 'cursor-not-allowed');
+        labelDomain.innerText = "Nom de Domaine Dédié";
+        
+        if(inputDomain.value === "" || inputDomain.value.indexOf('.') === -1) {
+            inputDomain.value = "www.";
+        }
+        
+        hintDomain.innerHTML = "<span class='text-orange-500 font-bold'>⚠️ Format obligatoire : www.nomdomaine.com</span>";
+
+    } else {
+        // --- LOGIQUE START & BUSINESS ---
+
+        // 1. Masquer le champ de saisie du prix (nouveau)
+        if (premiumPriceBox) premiumPriceBox.classList.add('hidden');
+
+        // 2. Gestion du domaine (ton code existant)
+        inputDomain.readOnly = true;
+        inputDomain.classList.add('bg-gray-50', 'cursor-not-allowed');
+        labelDomain.innerText = "Identifiant d'instance";
+        
+        const formatted = slugify(inputName.value);
+        inputDomain.value = formatted;
+        hintDomain.innerHTML = `Adresse : <span id="preview-url" class="font-bold brand-teal">${formatted || '...'}</span>.solutcloud.com`;
+    }
+    }; 
 
         inputDomain.addEventListener('blur', function() {
             if (packageSelect.value === 'premium') {

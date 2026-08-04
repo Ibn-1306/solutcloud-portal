@@ -9,167 +9,170 @@ use Illuminate\Support\Facades\{Hash, Mail, DB, Log, Storage};
 
 class CompanyController extends Controller 
 {
+    /**
+     * Affiche le dashboard avec les statistiques financières réelles
+     */
     public function index() 
     {
     $companies = Company::latest()->get();
+    
+    // Chiffre d'affaires TOTAL (Réel encaissé)
+    $totalRevenue = Company::sum('total_paid');
 
-    // 1. Compter les instances actives
-    $activeCount = Company::where('status', 'active')->count();
-
-    // 2. Calculer le revenu mensuel estimé (MRR)
-    // On additionne les prix selon le forfait de chaque client actif
-    $monthlyRevenue = 0;
-    foreach ($companies->where('status', 'active') as $company) {
-        if ($company->package === 'start') $monthlyRevenue += 5900;
-        if ($company->package === 'business') $monthlyRevenue += 9900;
-        if ($company->package === 'premium') $monthlyRevenue += 24900;
+    // MRR (Revenu mensuel récurrent estimé)
+    // On change le nom de $mrr par $monthlyRevenue pour correspondre à ta vue
+    $monthlyRevenue = 0; 
+    foreach ($companies->where('status', 'active') as $c) {
+        if ($c->package === 'start') $monthlyRevenue += 5900;
+        elseif ($c->package === 'business') $monthlyRevenue += 9900;
+        elseif ($c->package === 'premium') $monthlyRevenue += 24900;
     }
 
-    // 3. Compter les alertes (Expire dans moins de 7 jours)
+    $activeCount = $companies->where('status', 'active')->count();
+    
     $alerts = Company::where('status', 'active')
         ->where('expires_at', '<=', now()->addDays(7))
         ->where('expires_at', '>', now())
         ->count();
 
-    return view('dashboard', [
-        'companies' => $companies,
-        'activeCount' => $activeCount,
-        'monthlyRevenue' => $monthlyRevenue,
-        'alerts' => $alerts
-    ]);
+    // On passe bien $monthlyRevenue ici
+    return view('dashboard', compact('companies', 'activeCount', 'totalRevenue', 'monthlyRevenue', 'alerts'));
     }
 
+    /**
+     * Création d'une instance (Activation 12 mois forcée)
+     */
     public function store(Request $request) 
     {
-        // 1. On ajuste la validation selon le forfait
         $isPremium = $request->package === 'premium';
-        
+
         $data = $request->validate([
-            'name' => 'required|string|max:255', 
-            // Si premium, on autorise les points (regex), sinon alpha_dash
-            'subdomain' => [
-                'required', 
-                'unique:companies,subdomain',
-                $isPremium ? 'regex:/^[a-z0-9.-]+$/i' : 'alpha_dash'
-            ],
-            'email' => 'required|email|unique:users,email', 
+            'name' => 'required|string|max:255',
+            'subdomain' => 'required|unique:companies,subdomain',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
-            'package' => 'required', 
-            'duration' => 'required|integer'
-        ], [
-            'subdomain.regex' => 'Pour un domaine dédié, utilisez un format valide (ex: domaine.com)',
-            'subdomain.alpha_dash' => 'L\'identifiant ne doit contenir que des lettres, chiffres et tirets.'
+            'package' => 'required',
+            'premium_price' => 'nullable|numeric' 
         ]);
+
+        // 1. Calcul des frais d'activation initiaux
+        $activationFee = 0;
+        if ($data['package'] === 'start') $activationFee = 59000;
+        elseif ($data['package'] === 'business') $activationFee = 99000;
+        elseif ($data['package'] === 'premium') $activationFee = $request->premium_price ?? 0;
 
         try {
             $company = null;
 
-            DB::transaction(function () use ($data, &$company) {
+            // 2. Enregistrement en base de données
+            DB::transaction(function () use ($data, $activationFee, &$company) {
                 $company = Company::create([
-                    'name' => $data['name'], 
+                    'name' => $data['name'],
                     'subdomain' => strtolower($data['subdomain']),
-                    'package' => $data['package'], 
+                    'package' => $data['package'],
                     'status' => 'active',
-                    'expires_at' => now()->addMonths((int)$data['duration']),
+                    'expires_at' => now()->addMonths(12), // Engagement 12 mois
+                    'total_paid' => $activationFee,     // Premier encaissement
                 ]);
 
                 User::create([
-                    'name' => $data['name']." Admin", 
+                    'name' => $data['name']." Admin",
                     'email' => $data['email'],
-                    'password' => Hash::make($data['password']), 
-                    'role' => 'client', 
+                    'password' => Hash::make($data['password']),
+                    'role' => 'client',
                     'company_id' => $company->id
                 ]);
             });
 
-            // 2. Définition de l'URL sans protocole
+            // 3. Définition de l'URL pour les mails
             $finalUrl = $isPremium 
                 ? strtolower($data['subdomain']) 
                 : strtolower($data['subdomain']) . '.solutcloud.com';
 
-            // 3. ENVOI DES MAILS SÉPARÉS
-            
-            // --- MAIL 1 : DESTINÉ AU CLIENT ---
+            // 4. Envoi des mails (Client + Archive)
             Mail::send('emails.client_access', [
-                'name'      => $data['name'],
+                'name' => $data['name'],
                 'subdomain' => strtolower($data['subdomain']),
-                'email'     => $data['email'],
-                'password'  => $data['password'],
-                'company'   => $company,
-                'url'       => $finalUrl
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'company' => $company,
+                'url' => $finalUrl
             ], function($message) use ($data) {
-                $message->to($data['email'])
-                        ->subject('Vos accès à la plateforme SOLUTCLOUD');
+                $message->to($data['email'])->subject('Vos accès à la plateforme SOLUTCLOUD');
             });
 
-            // --- MAIL 2 : DESTINÉ À L'ARCHIVE (Administration) ---
             Mail::send('emails.admin_copy', [
-                'name'      => $data['name'],
-                'email'     => $data['email'],
-                'password'  => $data['password'],
-                'url'       => $finalUrl,
-                'date'      => now()->format('d/m/Y H:i')
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'url' => $finalUrl,
+                'date' => now()->format('d/m/Y H:i')
             ], function($message) {
-                $message->to('sales@i-solutions.ci')
-                        ->subject('📦 ARCHIVE : Nouveau client créé');
+                $message->to('sales@i-solutions.ci')->subject('📦 ARCHIVE : Nouveau client créé');
             });
 
-            return back()->with('status', "Instance créée et emails envoyés (Client + Archive) !");
+            return back()->with('status', "Instance créée et emails envoyés ! Encaissement : " . number_format($activationFee, 0, ',', ' ') . " FCFA");
 
         } catch (\Exception $e) {
-            Log::error("ERREUR SOLUTCLOUD : " . $e->getMessage());
+            Log::error("ERREUR STORE SOLUTCLOUD : " . $e->getMessage());
             return back()->withErrors("Erreur : " . $e->getMessage())->withInput();
         }
     }
 
+    /**
+     * Suspension via FTP .htaccess
+     */
     public function suspend($id) {
         $company = Company::findOrFail($id);
         $company->update(['status' => 'suspended']);
 
-        // LOGIQUE LWS : On calcule le nom du dossier uniquement
-        // Pour un Premium : on remonte d'un niveau pour sortir de htdocs/solutcloud vers la racine
-        if ($company->package === 'premium') {
-            $path = "../../" . $company->subdomain . "/htdocs/.htaccess";
-        } else {
-            // Pour Start/Business : on est déjà au bon endroit (dans htdocs)
-            $path = $company->subdomain . ".solutcloud.com/.htaccess";
-        }
+        $folder = ($company->package === 'premium') ? $company->subdomain : $company->subdomain . ".solutcloud.com";
+        $path = "htdocs/" . $folder . "/.htaccess";
 
         try {
-            Storage::disk('lws')->put($path, "Order Deny,Allow\nDeny from all");
-            return back()->with('status', "L'instance {$company->subdomain} est suspendue.");
+            Storage::disk('lws')->put($path, "Deny from all");
+            return back()->with('status', "L'instance {$company->subdomain} a été suspendue.");
         } catch (\Exception $e) {
-            return back()->with('status', "Erreur FTP : " . $e->getMessage());
+            return back()->with('status', "Coupé en base, mais erreur FTP : " . $e->getMessage());
         }
     }
 
+    /**
+     * Réactivation et cumul du paiement de réabonnement
+     */
     public function activate(Request $request, $id) {
         $company = Company::findOrFail($id);
-        $duration = (int)$request->duration;
-        $company->update(['status' => 'active', 'expires_at' => now()->addMonths($duration)]);
+        $months = (int)$request->duration;
+        
+        $monthlyRates = ['start' => 5900, 'business' => 9900, 'premium' => 24900];
+        $totalRenewal = ($monthlyRates[$company->package] ?? 0) * $months;
 
-        if ($company->package === 'premium') {
-            $path = "../../" . $company->subdomain . "/htdocs/.htaccess";
-        } else {
-            $path = $company->subdomain . ".solutcloud.com/.htaccess";
-        }
+        $newExpiry = $company->expires_at->isPast() ? now()->addMonths($months) : $company->expires_at->addMonths($months);
+
+        $company->update([
+            'status' => 'active', 
+            'expires_at' => $newExpiry,
+            'total_paid' => $company->total_paid + $totalRenewal
+        ]);
+
+        $folder = ($company->package === 'premium') ? $company->subdomain : $company->subdomain . ".solutcloud.com";
+        $path = "htdocs/" . $folder . "/.htaccess";
 
         try {
             Storage::disk('lws')->delete($path);
-            return back()->with('status', "L'instance {$company->subdomain} est réactivée.");
+            return back()->with('status', "Réactivée pour {$months} mois. Encaissement ajouté : " . number_format($totalRenewal, 0, ',', ' ') . " FCFA");
         } catch (\Exception $e) {
-            return back()->with('status', "Erreur FTP lors du déverrouillage.");
+            return back()->with('status', "Activé en base, mais le verrou FTP n'a pas pu être retiré.");
         }
     }
 
+    /**
+     * Suppression définitive
+     */
     public function destroy(Company $company) {
         $instanceName = $company->subdomain;
-        
-        if ($company->package === 'premium') {
-            $path = "../../" . $instanceName . "/htdocs/.htaccess";
-        } else {
-            $path = $instanceName . ".solutcloud.com/.htaccess";
-        }
+        $folder = ($company->package === 'premium') ? $instanceName : $instanceName . ".solutcloud.com";
+        $path = "htdocs/" . $folder . "/.htaccess";
 
         try {
             Storage::disk('lws')->put($path, "Deny from all");
