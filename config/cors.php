@@ -6,20 +6,20 @@ return [
     |--------------------------------------------------------------------------
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
-    |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
-    |
-    | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
-    |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    // On autorise toutes les routes API et la route du Webhook Moneroo
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'moneroo-webhook'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'], 
+    // J'inscris ici vos domaines officiels pour une sécurité maximale
+    'allowed_origins' => [
+        'https://www.solutcloud.com',
+        'https://solutcloud.com',
+        'https://login.solutcloud.com',
+        'https://admin.solutcloud.com'
+    ],
 
     'allowed_origins_patterns' => [],
 
