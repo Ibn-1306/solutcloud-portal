@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Artisan;
 */
 
 // Cette route permet de forcer le rafraîchissement de la configuration sans SSH
+/*
 Route::get('/force-clear', function() {
     Artisan::call('config:clear');
     Artisan::call('route:clear');
@@ -21,6 +22,7 @@ Route::get('/force-clear', function() {
     Artisan::call('view:clear');
     return "✅ Le système SOLUTCLOUD a été réinitialisé avec succès sur LWS !";
 });
+*/
 
 /*
 |--------------------------------------------------------------------------
