@@ -22,3 +22,4 @@ Route::get('/user', function (Request $request) {
  * Appelée par fetch('https://login.solutcloud.com/api/create-checkout')
  */
 Route::post('/create-checkout', [OrderController::class, 'createCheckout']);
+Route::post('/moneroo-webhook', [OrderController::class, 'handleWebhook']);

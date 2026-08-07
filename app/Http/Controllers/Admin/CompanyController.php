@@ -6,179 +6,154 @@ use App\Http\Controllers\Controller;
 use App\Models\{Company, User};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Hash, Mail, DB, Log, Storage};
+use Illuminate\Support\Str;
 
 class CompanyController extends Controller 
 {
-    /**
-     * Affiche le dashboard avec les statistiques financières réelles
-     */
     public function index() 
     {
-    $companies = Company::latest()->get();
-    
-    // Chiffre d'affaires TOTAL (Réel encaissé)
-    $totalRevenue = Company::sum('total_paid');
+        $companies = Company::latest()->get();
+        $totalRevenue = Company::sum('total_paid');
 
-    // MRR (Revenu mensuel récurrent estimé)
-    // On change le nom de $mrr par $monthlyRevenue pour correspondre à ta vue
-    $monthlyRevenue = 0; 
-    foreach ($companies->where('status', 'active') as $c) {
-        if ($c->package === 'start') $monthlyRevenue += 5900;
-        elseif ($c->package === 'business') $monthlyRevenue += 9900;
-        elseif ($c->package === 'premium') $monthlyRevenue += 24900;
+        // Calcul du MRR (Revenu Mensuel Récurrent)
+        $monthlyRevenue = 0; 
+        foreach ($companies->where('status', 'active') as $c) {
+            $monthlyRevenue += match($c->package) {
+                'start' => 5900,
+                'business' => 9900,
+                'premium' => 24900,
+                default => 0
+            };
+        }
+
+        $activeCount = $companies->where('status', 'active')->count();
+        $alerts = Company::where('status', 'active')
+            ->where('expires_at', '<=', now()->addDays(7))
+            ->where('expires_at', '>', now())
+            ->count();
+
+        return view('dashboard', compact('companies', 'activeCount', 'totalRevenue', 'monthlyRevenue', 'alerts'));
     }
 
-    $activeCount = $companies->where('status', 'active')->count();
-    
-    $alerts = Company::where('status', 'active')
-        ->where('expires_at', '<=', now()->addDays(7))
-        ->where('expires_at', '>', now())
-        ->count();
-
-    // On passe bien $monthlyRevenue ici
-    return view('dashboard', compact('companies', 'activeCount', 'totalRevenue', 'monthlyRevenue', 'alerts'));
-    }
-
-    /**
-     * Création d'une instance (Activation 12 mois forcée)
-     */
     public function store(Request $request) 
     {
-        $isPremium = $request->package === 'premium';
-
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'subdomain' => 'required|unique:companies,subdomain',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
-            'package' => 'required',
+            'package' => 'required|in:start,business,premium',
             'premium_price' => 'nullable|numeric' 
         ]);
 
-        // 1. Calcul des frais d'activation initiaux
-        $activationFee = 0;
-        if ($data['package'] === 'start') $activationFee = 59000;
-        elseif ($data['package'] === 'business') $activationFee = 99000;
-        elseif ($data['package'] === 'premium') $activationFee = $request->premium_price ?? 0;
-
         try {
-            $company = null;
-
-            // 2. Enregistrement en base de données
-            DB::transaction(function () use ($data, $activationFee, &$company) {
+            DB::transaction(function () use ($data, $request) {
                 $company = Company::create([
                     'name' => $data['name'],
+                    'email' => $data['email'], // Ajout de l'email dans la table Company
                     'subdomain' => strtolower($data['subdomain']),
                     'package' => $data['package'],
-                    'status' => 'active',
-                    'expires_at' => now()->addMonths(12), // Engagement 12 mois
-                    'total_paid' => $activationFee,     // Premier encaissement
+                    'status' => 'pending',
+                    'total_paid' => $data['package'] === 'premium' ? ($request->premium_price ?? 0) : ($data['package'] === 'start' ? 59000 : 99000),
                 ]);
 
                 User::create([
-                    'name' => $data['name']." Admin",
+                    'name' => $data['name'],
                     'email' => $data['email'],
-                    'password' => Hash::make($data['password']),
+                    'password' => Hash::make(Str::random(12)),
                     'role' => 'client',
                     'company_id' => $company->id
                 ]);
             });
 
-            // 3. Définition de l'URL pour les mails
-            $finalUrl = $isPremium 
-                ? strtolower($data['subdomain']) 
-                : strtolower($data['subdomain']) . '.solutcloud.com';
-
-            // 4. Envoi des mails (Client + Archive)
-            Mail::send('emails.client_access', [
-                'name' => $data['name'],
-                'subdomain' => strtolower($data['subdomain']),
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'company' => $company,
-                'url' => $finalUrl
-            ], function($message) use ($data) {
-                $message->to($data['email'])->subject('Vos accès à la plateforme SOLUTCLOUD');
-            });
-
-            Mail::send('emails.admin_copy', [
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => $data['password'],
-                'url' => $finalUrl,
-                'date' => now()->format('d/m/Y H:i')
-            ], function($message) {
-                $message->to('sales@i-solutions.ci')->subject('📦 ARCHIVE : Nouveau client créé');
-            });
-
-            return back()->with('status', "Instance créée et emails envoyés ! Encaissement : " . number_format($activationFee, 0, ',', ' ') . " FCFA");
+            return back()->with('status', "Fiche client créée. Procédez à l'installation sur LWS.");
 
         } catch (\Exception $e) {
-            Log::error("ERREUR STORE SOLUTCLOUD : " . $e->getMessage());
-            return back()->withErrors("Erreur : " . $e->getMessage())->withInput();
+            Log::error("ERREUR CREATION CLIENT : " . $e->getMessage());
+            return back()->withErrors("Erreur technique : " . $e->getMessage());
         }
     }
 
-    /**
-     * Suspension via FTP .htaccess
-     */
-    public function suspend($id) {
+    public function finalizeInstance(Request $request, int $id)
+    {
         $company = Company::findOrFail($id);
-        $company->update(['status' => 'suspended']);
+        $user = User::where('company_id', $company->id)->first();
 
-        $folder = ($company->package === 'premium') ? $company->subdomain : $company->subdomain . ".solutcloud.com";
-        $path = "htdocs/" . $folder . "/.htaccess";
-
-        try {
-            Storage::disk('lws')->put($path, "Deny from all");
-            return back()->with('status', "L'instance {$company->subdomain} a été suspendue.");
-        } catch (\Exception $e) {
-            return back()->with('status', "Coupé en base, mais erreur FTP : " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Réactivation et cumul du paiement de réabonnement
-     */
-    public function activate(Request $request, $id) {
-        $company = Company::findOrFail($id);
-        $months = (int)$request->duration;
-        
-        $monthlyRates = ['start' => 5900, 'business' => 9900, 'premium' => 24900];
-        $totalRenewal = ($monthlyRates[$company->package] ?? 0) * $months;
-
-        $newExpiry = $company->expires_at->isPast() ? now()->addMonths($months) : $company->expires_at->addMonths($months);
-
-        $company->update([
-            'status' => 'active', 
-            'expires_at' => $newExpiry,
-            'total_paid' => $company->total_paid + $totalRenewal
+        $request->validate([
+            'erp_login' => 'required|string',
+            'erp_password' => 'required|string',
         ]);
 
-        $folder = ($company->package === 'premium') ? $company->subdomain : $company->subdomain . ".solutcloud.com";
-        $path = "htdocs/" . $folder . "/.htaccess";
+        $company->update([
+            'status' => 'active',
+            'expires_at' => now()->addYear(),
+        ]);
+
+        $url = ($company->package === 'premium') ? "https://".$company->subdomain : "https://".$company->subdomain.".solutcloud.com";
 
         try {
-            Storage::disk('lws')->delete($path);
-            return back()->with('status', "Réactivée pour {$months} mois. Encaissement ajouté : " . number_format($totalRenewal, 0, ',', ' ') . " FCFA");
+            Mail::to($user->email)->send(new \App\Mail\InstanceReadyMail(
+                $company, 
+                $url, 
+                $request->erp_login, 
+                $request->erp_password
+            ));
+
+            return back()->with('status', "Instance activée et accès envoyés au client.");
         } catch (\Exception $e) {
-            return back()->with('status', "Activé en base, mais le verrou FTP n'a pas pu être retiré.");
+            Log::error("ECHEC ENVOI MAIL ACCES : " . $e->getMessage());
+            return back()->with('status', "Instance activée, mais l'envoi du mail a échoué. Vérifiez vos logs.");
         }
     }
 
-    /**
-     * Suppression définitive
-     */
-    public function destroy(Company $company) {
-        $instanceName = $company->subdomain;
-        $folder = ($company->package === 'premium') ? $instanceName : $instanceName . ".solutcloud.com";
-        $path = "htdocs/" . $folder . "/.htaccess";
+    public function suspend(int $id) {
+        $company = Company::findOrFail($id);
+        $path = $this->getFtpPath($company);
+
+        // Redirection .htaccess intelligente vers le portail
+        $htaccess = "RewriteEngine On\nRewriteRule ^(.*)$ https://login.solutcloud.com/dashboard [L,R=302]";
 
         try {
-            Storage::disk('lws')->put($path, "Deny from all");
+            Storage::disk('lws')->put($path . "/.htaccess", $htaccess);
+            $company->update(['status' => 'suspended']);
+            return back()->with('status', "Instance suspendue via FTP.");
+        } catch (\Exception $e) {
+            return back()->with('error', "Erreur FTP : " . $e->getMessage());
+        }
+    }
+
+    public function activate(Request $request, int $id) {
+        $company = Company::findOrFail($id);
+        $path = $this->getFtpPath($company);
+
+        try {
+            if (Storage::disk('lws')->exists($path . "/.htaccess")) {
+                Storage::disk('lws')->delete($path . "/.htaccess");
+            }
+            
+            $company->update([
+                'status' => 'active',
+                'expires_at' => $company->expires_at->isPast() ? now()->addMonths($request->duration ?? 1) : $company->expires_at->addMonths($request->duration ?? 1)
+            ]);
+
+            return back()->with('status', "Instance réactivée.");
+        } catch (\Exception $e) {
+            return back()->with('error', "Erreur lors de la suppression du verrou FTP.");
+        }
+    }
+
+    private function getFtpPath(Company $company) {
+        return ($company->package !== 'premium') 
+            ? "htdocs/" . $company->subdomain . ".solutcloud.com" 
+            : $company->subdomain;
+    }
+
+    public function destroy(Company $company) {
+        $path = $this->getFtpPath($company);
+        try {
+            Storage::disk('lws')->put($path . "/.htaccess", "Deny from all");
         } catch (\Exception $e) { }
 
         $company->delete();
-        return back()->with('status', "L'instance {$instanceName} supprimée de la gestion.");
+        return back()->with('status', "Fiche client supprimée.");
     }
 }

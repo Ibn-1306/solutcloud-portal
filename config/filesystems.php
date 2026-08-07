@@ -4,28 +4,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Default Filesystem Disk
+    | Disque par défaut
     |--------------------------------------------------------------------------
-    |
-    | Here you may specify the default filesystem disk that should be used
-    | by the framework. The "local" disk, as well as a variety of cloud
-    | based disks are available to your application for file storage.
-    |
     */
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
     |--------------------------------------------------------------------------
-    | Filesystem Disks
+    | Configuration des Disques
     |--------------------------------------------------------------------------
-    |
-    | Below you may configure as many filesystem disks as necessary, and you
-    | may even configure multiple disks for the same driver. Examples for
-    | most supported storage drivers are configured here for reference.
-    |
-    | Supported drivers: "local", "ftp", "sftp", "s3"
-    |
     */
 
     'disks' => [
@@ -60,30 +48,32 @@ return [
             'report' => false,
         ],
 
-        // AJOUT DU DISQUE LWS POUR LE KILL SWITCH
-                'lws' => [
-                'driver'   => 'ftp',
-                'host'     => env('FTP_HOST'),
-                'username' => env('FTP_USERNAME'),
-                'password' => env('FTP_PASSWORD'),
-                'port'     => (int) env('FTP_PORT', 21),
-                'root'     => env('FTP_ROOT'),
-                'passive'  => true,
-                'ssl'      => false,
-                'timeout'  => 30,
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | CONFIGURATION LWS (KILL SWITCH & MANAGEMENT)
+        |--------------------------------------------------------------------------
+        | Ce disque gère l'accès FTP à la racine de l'hébergement pour manipuler 
+        | les fichiers .htaccess des instances Start, Business et Premium.
+        */
+        'lws' => [
+            'driver'   => 'ftp',
+            'host'     => env('FTP_HOST'),
+            'username' => env('FTP_USERNAME'),
+            'password' => env('FTP_PASSWORD'),
+            'port'     => (int) env('FTP_PORT', 21),
+            'root'     => env('FTP_ROOT', '/'), // Utilise la racine définie dans le .env
+            'passive'  => true,
+            'ssl'      => false,
+            'timeout'  => 30,
+            'throw'    => true, // Senior Tip : Force Laravel à lever une exception en cas d'échec FTP
+        ],
 
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Symbolic Links
+    | Liens Symboliques
     |--------------------------------------------------------------------------
-    |
-    | Here you may configure the symbolic links that will be created when the
-    | `storage:link` Artisan command is executed. The array keys should be
-    | the locations of the links and the values should be their targets.
-    |
     */
 
     'links' => [

@@ -12,7 +12,7 @@ use Illuminate\View\View;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Affiche la vue de connexion unique.
      */
     public function create(): View
     {
@@ -20,7 +20,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Gère l'authentification et la redirection selon le rôle.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
@@ -30,38 +30,30 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        // 1. Redirection pour l'ADMINISTRATEUR (Gestion centrale)
+        /**
+         * LOGIQUE DE REDIRECTION "SENIOR"
+         * On sépare les flux : Admin vers Gestion, Client vers Portail.
+         */
+        
+        // 1. Redirection pour l'ADMINISTRATEUR
         if ($user->role === 'admin') {
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended(route('admin.dashboard'));
         }
 
-        // 2. Logique pour le CLIENT
-        // On récupère l'entreprise liée à l'utilisateur
-        $company = $user->company; 
-
-        // Vérification si l'entreprise existe et si elle est active
-        if (!$company || $company->status !== 'active') {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return back()->withErrors([
-                'email' => 'Votre accès est suspendu ou l\'instance est introuvable. Veuillez contacter le support SOLUTCLOUD.',
-            ]);
+        // 2. Redirection pour le CLIENT
+        // Note : On ne vérifie pas le statut ici (active/suspended). 
+        // On laisse le PortalController le faire pour que le client 
+        // puisse se connecter même s'il doit payer son renouvellement.
+        if ($user->role === 'client') {
+            return redirect()->intended(route('client.dashboard'));
         }
 
-        // 3. Construction de l'URL de redirection vers son Dolibarr
-        // Si Premium : domaine dédié. Sinon : sous-domaine solutcloud.com
-        $url = ($company->package === 'premium') 
-            ? "https://{$company->subdomain}" 
-            : "https://{$company->subdomain}.solutcloud.com";
-
-        // Redirection vers l'instance externe
-        return redirect()->away($url);
+        // Cas par défaut (Sécurité)
+        return redirect()->intended('/');
     }
 
     /**
-     * Destroy an authenticated session.
+     * Déconnexion de la session.
      */
     public function destroy(Request $request): RedirectResponse
     {

@@ -2,55 +2,50 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 20px auto; border: 1px solid #eef2f6; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .header { background-color: #2B909A; padding: 40px 20px; text-align: center; color: white; }
-        .logo-mail { width: 60px; height: 60px; margin-bottom: 15px; border-radius: 10px; background: white; padding: 5px; }
-        .content { padding: 30px; background-color: #ffffff; }
-        .access-box { background-color: #f8fafc; border: 1px dashed #2B909A; padding: 25px; border-radius: 8px; margin: 25px 0; }
-        .note-box { background-color: #fff9eb; padding: 15px; border-left: 4px solid #f59e0b; font-size: 14px; margin: 20px 0; }
-        .footer { background-color: #f1f5f9; padding: 25px; text-align: center; font-size: 12px; color: #64748b; }
-        .btn { display: inline-block; padding: 14px 30px; background-color: #2B909A; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: bold; }
-        strong { color: #2B909A; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 20px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); background-color: #ffffff; border: 1px solid #e2e8f0; }
+        .header { background-color: #2B909A; padding: 40px 20px; text-align: center; color: #ffffff; }
+        .logo-mail { width: 64px; height: 64px; margin-bottom: 15px; border-radius: 12px; background: #ffffff; padding: 8px; }
+        .header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+        .content { padding: 40px 30px; }
+        .content h2 { color: #2B909A; margin-top: 0; font-size: 22px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
+        .status-box { background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0; }
+        .order-details { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; font-size: 14px; }
+        .footer { background-color: #f8fafc; padding: 30px; text-align: center; font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; }
+        .highlight { color: #2B909A; font-weight: 600; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <!-- Remplacer par l'URL réelle de ton image une fois en ligne -->
-            <img src="https://solutcloud.com/img/favicon.png" alt="Logo" class="logo-mail">
-            <h1 style="margin:0; font-size: 24px; letter-spacing: 2px;">SOLUTCLOUD</h1>
+            <img src="https://solutcloud.com/img/favicon.png" alt="SolutCloud Logo" class="logo-mail">
+            <h1>SOLUTCLOUD</h1>
         </div>
         <div class="content">
-            <h2 style="margin-top:0;">Bienvenue chez SOLUTCLOUD</h2>
-            <p>Bonjour <strong>{{ $name }}</strong>,</p>
-            <p>Nous avons le plaisir de vous informer que votre instance de gestion est prête et opérationnelle.</p>
+            <h2>Merci pour votre confiance !</h2>
+            <p>Bonjour <span class="highlight">{{ $order->customer_name }}</span>,</p>
+            <p>Nous vous confirmons que votre paiement pour l'offre <span class="highlight">SOLUTCLOUD {{ $order->plan }}</span> a été reçu avec succès.</p>
             
-            <p>Voici vos accès pour vous connecter à votre <strong>portail client centralisé</strong> :</p>
-            
-            <div class="access-box">
-                <p style="margin:0;"><strong>Lien :</strong> <a href="https://solutcloud.com" style="color:#2B909A;">https://solutcloud.com</a></p>
-                <p style="margin:10px 0;"><strong>Identifiant :</strong> <span style="font-family: monospace; background: #eee; padding: 2px 5px;">{{ $email }}</span></p>
-                <p style="margin:0;"><strong>Mot de passe :</strong> <span style="font-family: monospace; background: #eee; padding: 2px 5px;">{{ $password }}</span></p>
+            <div class="status-box">
+                <p style="margin: 0; color: #92400e; font-weight: bold;">⚙️ Statut : Préparation de votre instance en cours</p>
+                <p style="margin: 10px 0 0 0; font-size: 14px; color: #92400e;">Un administrateur procède actuellement à la configuration manuelle de votre environnement ERP sur nos serveurs. Cette opération prend généralement entre 30 minutes et 2 heures.</p>
             </div>
 
-            <p>Accès direct à votre instance ERP :<br>
-            <a href="https://{{ $url }}">Accéder à mon instance</a>
-
-            <div class="note-box">
-                ⚠️ <strong>Note importante :</strong> Vous recevrez un second mail ou un message Whatsapp contenant vos accès spécifiques à l'ERP.
-            </div>
-
-            <p>Merci d'avoir choisi <strong>SOLUTCLOUD</strong> pour votre gestion !</p>
+            <p>Dès que votre instance sera prête, vous recevrez un <strong>second email</strong> contenant vos identifiants sécurisés et votre lien d'accès définitif.</p>
             
-            <div style="text-align: center; margin-top: 30px;">
-                <a href="https://solutcloud.com" class="btn">Accéder à mon espace</a>
+            <div class="order-details">
+                <p style="margin-top:0;"><strong>Récapitulatif de commande :</strong></p>
+                <p style="margin: 5px 0;">Entreprise : {{ $order->company_name }}</p>
+                <p style="margin: 5px 0;">Montant payé : {{ number_format($order->amount, 0, ',', ' ') }} FCFA</p>
+                <p style="margin: 5px 0;">Transaction ID : {{ $order->transaction_id }}</p>
             </div>
+
+            <p style="margin-top: 30px;">Merci d'avoir choisi <span class="highlight">SOLUTCLOUD</span> pour piloter la croissance de votre entreprise.</p>
         </div>
         <div class="footer">
-            <p><strong>I-SOLUTIONS</strong><br>
-            Ingénierie informatique<br>
+            <p><strong>I-SOLUTIONS - Ingénierie Informatique</strong><br>
             Yopougon Ananeraie, 21 BP 4069 Abidjan 21, Côte d'Ivoire.</p>
         </div>
     </div>

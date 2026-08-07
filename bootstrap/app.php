@@ -12,11 +12,31 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        //
+    ->withMiddleware(function (Middleware $middleware) {
+        
+        // 1. CONFIANCE AUX PROXIES (Indispensable pour Ngrok et LWS)
+        // Cela permet à Laravel de comprendre qu'il est derrière un tunnel HTTPS
+        // et résout l'erreur ERR_SSL_PROTOCOL_ERROR.
+        $middleware->trustProxies(at: '*');
+
+        // 2. EXEMPTION CSRF
+        // On autorise les appels API externes et le futur Webhook de Moneroo.
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'moneroo-webhook' 
+        ]);
+
+        // 3. ÉTAT DE L'API
+        // Permet la gestion des sessions entre les sous-domaines si nécessaire.
+        $middleware->statefulApi();
+
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
+        
+        // Rendu JSON systématique pour les erreurs API
+        // Évite de recevoir une page HTML d'erreur lors d'un fetch JavaScript.
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
     })->create();

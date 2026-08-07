@@ -45,7 +45,7 @@
             <img src="{{ asset('img/LOGO_SOLUTCLOUD_Sans_fond.png') }}" alt="SOLUTCLOUD" class="h-12 sm:h-20 w-auto">
             <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span class="text-[9px] sm:text-[12px] uppercase tracking-[0.22em] text-black font-bold">Système Opérationnel</span>
+                <span class="text-[9px] sm:text-[12px] uppercase tracking-[0.22em] text-black font-bold">Gestion ERP</span>
             </div>
         </nav>
 
