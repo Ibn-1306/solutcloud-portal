@@ -32,7 +32,7 @@ class CompanyController extends Controller
             ->where('expires_at', '>', now())
             ->count();
 
-        return view('dashboard', compact('companies', 'activeCount', 'totalRevenue', 'monthlyRevenue', 'alerts'));
+        return view('admin.dashboard', compact('companies', 'activeCount', 'totalRevenue', 'monthlyRevenue', 'alerts'));
     }
 
     public function store(Request $request) 
