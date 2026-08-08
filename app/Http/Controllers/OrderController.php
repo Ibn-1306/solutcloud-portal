@@ -12,11 +12,10 @@ class OrderController extends Controller
 {
     /**
      * 1. GÉNÉRATION DU LIEN DE PAIEMENT (API PUBLIC)
-     * Reçoit les données du site vitrine et initie la transaction Moneroo.
+     * Point d'entrée pour le site vitrine via fetch.
      */
     public function createCheckout(Request $request)
     {
-        // Validation stricte des données d'entrée
         $data = $request->validate([
             'fullname'     => 'required|string|max:255',
             'email'        => 'required|email',
@@ -27,7 +26,7 @@ class OrderController extends Controller
         ]);
 
         try {
-            // Appel à l'API Moneroo
+            // Initialisation de la transaction chez Moneroo
             $response = Http::withToken(env('MONEROO_SECRET_KEY'))
                 ->post('https://api.moneroo.io/v1/payments/initialize', [
                     'amount'      => (int)$data['amount'],
@@ -50,7 +49,7 @@ class OrderController extends Controller
 
             if ($response->successful() && isset($result['data']['checkout_url'])) {
                 
-                // Enregistrement de la commande en base avec statut 'pending'
+                // On archive la demande de paiement avec le transaction_id de Moneroo
                 Order::create([
                     'transaction_id' => $result['data']['id'], 
                     'company_name'   => $data['company_name'],
@@ -71,21 +70,21 @@ class OrderController extends Controller
             throw new \Exception($result['message'] ?? 'Erreur API Moneroo');
 
         } catch (\Exception $e) {
-            Log::error("ERREUR INITIALISATION PAIEMENT : " . $e->getMessage());
-            return response()->json(['error' => 'Une erreur technique est survenue. Veuillez réessayer.'], 500);
+            Log::error("CRITICAL - ÉCHEC INITIALISATION MONEROO : " . $e->getMessage());
+            return response()->json(['error' => 'Une erreur technique empêche le paiement. Contactez support@i-solutions.ci'], 500);
         }
     }
 
     /**
-     * 2. WEBHOOK : TRAITEMENT POST-PAIEMENT
-     * Reçoit la confirmation de Moneroo (Serveur à Serveur).
+     * 2. WEBHOOK : AUTOMATISATION POST-PAIEMENT
+     * Cette méthode est appelée par les serveurs de Moneroo en arrière-plan.
      */
     public function handleWebhook(Request $request)
     {
-        // Sécurité : Vérification de la signature du Webhook
+        // Sécurité : Vérification de la signature (Secret Moneroo)
         $signature = $request->header('moneroo-signature');
         if (!$signature || $signature !== env('MONEROO_WEBHOOK_SECRET')) {
-            Log::warning("Webhook Moneroo : Signature invalide.");
+            Log::warning("ATTENTION - Webhook Moneroo : Signature invalide ou absente.");
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -96,48 +95,56 @@ class OrderController extends Controller
             $transactionId = $payload['data']['id'];
             $order = Order::where('transaction_id', $transactionId)->first();
 
-            // Si la commande existe et n'est pas encore traitée
+            // Sécurité Senior : On ne traite que les commandes existantes et non encore validées
             if ($order && $order->status === 'pending') {
                 
                 DB::transaction(function () use ($order) {
-                    // 1. Mise à jour de la commande
+                    
+                    // A. Validation de la commande
                     $order->update(['status' => 'completed']);
 
-                    // 2. CRÉATION AUTOMATIQUE DE LA FICHE CLIENT (Statut : pending install)
-                    // On transforme le nom de l'entreprise en identifiant (slug)
-                    $subdomain = Str::slug($order->company_name);
+                    // B. Nettoyage du nom de forfait (ex: "SOLUTCLOUD START" -> "start")
+                    $cleanPackage = trim(strtolower(str_replace('SOLUTCLOUD', '', $order->plan)));
 
+                    // C. Création de la Fiche Entreprise (Engagement 12 mois)
                     $company = Company::create([
                         'name'       => $order->company_name,
                         'email'      => $order->customer_email,
-                        'subdomain'  => $subdomain,
-                        'package'    => strtolower($order->plan),
-                        'status'     => 'pending', // Attend l'intervention admin
+                        'subdomain'  => Str::slug($order->company_name), // ex: "I-Solutions CI" -> "i-solutions-ci"
+                        'package'    => $cleanPackage,
+                        'status'     => 'pending', // Reste orange jusqu'à installation manuelle sur LWS
                         'total_paid' => $order->amount,
+                        'expires_at' => now()->addMonths(12),
                     ]);
 
-                    // 3. Création du compte utilisateur pour le portail login.solutcloud.com
-                    User::create([
-                        'name'       => $order->customer_name,
-                        'email'      => $order->customer_email,
-                        'password'   => Hash::make(Str::random(12)), // MDP aléatoire à changer
-                        'role'       => 'client',
-                        'company_id' => $company->id
-                    ]);
+                    /**
+                     * D. Création/Mise à jour du Compte Utilisateur
+                     * On utilise updateOrCreate pour éviter les crashs si l'email existe déjà
+                     */
+                    $user = User::updateOrCreate(
+                        ['email' => $order->customer_email],
+                        [
+                            'name'       => $order->customer_name,
+                            'password'   => Hash::make(Str::random(12)),
+                            'role'       => User::ROLE_CLIENT,
+                            'company_id' => $company->id
+                        ]
+                    );
 
-                    // 4. NOTIFICATIONS EMAILS
+                    // E. Expédition des emails de confirmation (Brevo)
                     try {
                         Mail::to($order->customer_email)->send(new CustomerOrderConfirmation($order));
                         Mail::to('sales@i-solutions.ci')->send(new SalesNotification($order));
                     } catch (\Exception $e) {
-                        Log::error("ECHEC ENVOI MAILS WEBHOOK : " . $e->getMessage());
+                        Log::error("ERREUR ENVOI EMAILS WEBHOOK : " . $e->getMessage());
                     }
                 });
 
-                Log::info("Paiement Moneroo validé et fiche client créée : " . $order->company_name);
+                Log::info("SUCCÈS - Client créé via Moneroo : " . $order->company_name);
             }
         }
 
+        // Réponse obligatoire 200 pour libérer le serveur Moneroo
         return response()->json(['status' => 'processed'], 200);
     }
 }
