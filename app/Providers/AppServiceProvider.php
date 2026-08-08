@@ -11,7 +11,7 @@ use App\Models\User;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Enregistrement des services.
+     * Enregistrement des services de l'application.
      */
     public function register(): void
     {
@@ -23,31 +23,27 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // 1. COMPATIBILITÉ INDEX MYSQL (Indispensable pour LWS)
-        // Évite les erreurs de longueur de clé lors des migrations sur d'anciennes versions de MySQL
+        // 1. COMPATIBILITÉ INDEX MYSQL (Indispensable pour l'infrastructure LWS)
         Schema::defaultStringLength(191);
 
         /**
          * 2. SÉCURITÉ DES ACCÈS (GATES)
-         * Je renforce la détection des rôles pour éviter les erreurs de casse (majuscules/minuscules)
+         * Utilisation des constantes du modèle User pour une maintenance évolutive.
          */
-        
-        // Gate pour l'Administrateur principal
         Gate::define('admin-only', function (User $user) {
-            return $user && trim(strtolower($user->role)) === 'admin';
+            return $user && trim(strtolower($user->role)) === User::ROLE_ADMIN;
         });
 
-        // Gate pour l'accès au Portail Client
         Gate::define('client-only', function (User $user) {
-            return $user && trim(strtolower($user->role)) === 'client';
+            return $user && trim(strtolower($user->role)) === User::ROLE_CLIENT;
         });
 
         /**
-         * 3. LOGIQUE RÉSEAU & HTTPS
-         * Je force le HTTPS uniquement en production pour éviter les erreurs de Mixed Content
-         * et sécuriser les cookies de session partagés.
+         * 3. LOGIQUE RÉSEAU & FORÇAGE HTTPS (Production)
+         * Cette instruction est vitale pour corriger l'erreur "Mixed Content".
+         * Elle force Laravel à générer tous les liens (CSS, JS, Images) en https://
          */
-        if ($this->app->environment('production')) {
+        if ($this->app->environment('production') || env('APP_ENV') === 'production') {
             URL::forceScheme('https');
         }
     }
