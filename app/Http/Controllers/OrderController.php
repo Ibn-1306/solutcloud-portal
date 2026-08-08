@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Order, Company, User};
-use App\Mail\{CustomerOrderConfirmation, SalesNotification};
+use App\Mail\{CustomerOrderConfirmation};
+use App\Mail\{SalesNotification};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Http, Log, Mail, DB, Hash};
 use Illuminate\Support\Str;
@@ -26,15 +27,21 @@ class OrderController extends Controller
         ]);
 
         try {
-            // Initialisation de la transaction chez Moneroo
+            // LOGIQUE SENIOR : Séparation du nom complet pour l'API Moneroo
+            $nameParts = explode(' ', trim($data['fullname']), 2);
+            $firstName = $nameParts[0];
+            $lastName  = $nameParts[1] ?? $nameParts[0]; // Sécurité si un seul mot est saisi
+
+            // Appel à l'API Moneroo avec les nouveaux champs exigés
             $response = Http::withToken(env('MONEROO_SECRET_KEY'))
                 ->post('https://api.moneroo.io/v1/payments/initialize', [
                     'amount'      => (int)$data['amount'],
                     'currency'    => 'XOF',
                     'customer'    => [
-                        'name'  => $data['fullname'],
-                        'email' => $data['email'],
-                        'phone' => $data['phone'],
+                        'first_name' => $firstName, // Correction ici
+                        'last_name'  => $lastName,  // Correction ici
+                        'email'      => $data['email'],
+                        'phone'      => $data['phone'],
                     ],
                     'description' => "Activation SOLUTCLOUD - " . $data['plan'],
                     'return_url'  => 'https://www.solutcloud.com/merci.html',
