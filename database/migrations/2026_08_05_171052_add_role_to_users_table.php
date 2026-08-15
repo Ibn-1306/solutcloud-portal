@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::table('users', function (Blueprint $table) {
-        // 'client' par défaut, 'admin' pour toi
-        $table->string('role')->default('client')->after('email');
-    });
+    // Sécurité : ne pas ajouter la colonne si elle existe déjà
+    // (la colonne 'role' est déjà créée dans la migration create_users_table)
+    if (!Schema::hasColumn('users', 'role')) {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('role')->default('client')->after('email');
+        });
+    }
     }
 
     /**
