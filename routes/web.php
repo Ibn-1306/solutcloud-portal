@@ -5,21 +5,20 @@ use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Client\PortalController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 
 /*
 |--------------------------------------------------------------------------
 | MAINTENANCE & CACHE
 |--------------------------------------------------------------------------
 */
-/*
 Route::get('/force-clear', function() {
     Artisan::call('config:clear');
     Artisan::call('route:clear');
     Artisan::call('cache:clear');
     Artisan::call('view:clear');
-    return "✅ Système SOLUTCLOUD synchronisé !";
+    return "Système SOLUTCLOUD synchronisé !";
 });
-*/
 
 /*
 |--------------------------------------------------------------------------
