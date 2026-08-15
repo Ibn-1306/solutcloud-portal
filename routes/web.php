@@ -64,12 +64,26 @@ Route::middleware(['auth', 'can:admin-only'])->prefix('admin')->group(function (
 | SECTION CLIENT (Accessible via login.solutcloud.com/portal/...)
 |--------------------------------------------------------------------------
 */
+/*
+|--------------------------------------------------------------------------
+| PROFIL (Accessible par admin et client)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| SECTION CLIENT (Accessible via login.solutcloud.com/portal/...)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'can:client-only'])->prefix('portal')->group(function () {
     
     Route::get('/dashboard', [PortalController::class, 'index'])->name('client.dashboard');
     Route::post('/renew', [PortalController::class, 'renew'])->name('client.renew');
-    
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 });
 
 require __DIR__.'/auth.php';

@@ -1,31 +1,17 @@
 <x-app-layout>
     <style>
-    /* --- STYLES DE BASE (DESKTOP) --- */
     .brand-teal { color: #2B909A; }
     .bg-brand-teal { background-color: #2B909A; }
     .input-field { border: 1px solid #e2e8f0; border-radius: 0.375rem; width: 100%; padding: 0.6rem; font-size: 14px; }
     .admin-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #f1f5f9; }
     svg.icon-fix { width: 28px !important; height: 28px !important; flex-shrink: 0; }
-
-    /* FILIGRANE / WATERMARK */
     .admin-watermark {
-        position: fixed;
-        top: 52%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 1000px; /* Taille Desktop */
-        height: 800px;
+        position: fixed; top: 52%; left: 50%; transform: translate(-50%, -50%);
+        width: 1000px; height: 800px;
         background-image: url('{{ asset("img/favicon.png") }}');
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-        opacity: 0.05; 
-        pointer-events: none; 
-        z-index: 0;
-        transition: all 0.3s ease; 
+        background-size: contain; background-repeat: no-repeat; background-position: center;
+        opacity: 0.05; pointer-events: none; z-index: 0; transition: all 0.3s ease;
     }
-
-    /* --- RESPONSIVE : MOBILES --- */
     @media (max-width: 768px) {
         .admin-watermark { width: 300px; height: 300px; opacity: 0.03; }
         .admin-card { padding: 1rem; }
@@ -44,46 +30,44 @@
         <div class="admin-watermark"></div>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 relative z-10">
 
-        <!-- SECTION STATISTIQUES SOLUTCLOUD HAUT NIVEAU -->
+            {{-- STATISTIQUES --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 
-                <!-- Carte 1 : Revenus Mensuels -->
+                {{-- Carte 1 : Total Entreprises --}}
                 <div class="admin-card p-5 border-l-4 border-cyan-500 bg-white/95 backdrop-blur-md shadow-sm">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Revenus Mensuels (Est.)</p>
+                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Total Entreprises</p>
                             <h3 class="text-xl font-black text-gray-800 mt-1">
-                                {{ number_format($monthlyRevenue, 0, ',', ' ') }} <span class="text-[10px] text-gray-500">FCFA</span>
+                                {{ $totalCount }} <span class="text-[10px] text-gray-500">ENTREPRISE(S)</span>
                             </h3>
                         </div>
                         <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
-                            <!-- Icône : Graphique de croissance -->
                             <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.5 4.5L21.75 7.5M21.75 7.5V12m0-4.5H17.25" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5M9 9.75h1.5M9 12.75h1.5M9 15.75h1.5m4.5-9H15m-1.5 3H15m-1.5 3H15m-1.5 3H15" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- Carte 2 : C.A Global -->
-                <div class="admin-card p-5 border-l-4 border-emerald-500 bg-white/95 backdrop-blur-md shadow-sm">
+                {{-- Carte 2 : En attente d'installation --}}
+                <div class="admin-card p-5 border-l-4 border-amber-500 bg-white/95 backdrop-blur-md shadow-sm">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">C.A Global (REEL)</p>
-                            <h3 class="text-xl font-black text-gray-800 mt-1">
-                                {{ number_format($totalRevenue, 0, ',', ' ') }} <span class="text-[10px] text-gray-500">FCFA</span>
+                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">En attente d'installation</p>
+                            <h3 class="text-xl font-black {{ $pendingCount > 0 ? 'text-amber-600' : 'text-gray-800' }} mt-1">
+                                {{ $pendingCount }} <span class="text-[10px] text-gray-500">A INSTALLER</span>
                             </h3>
                         </div>
                         <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
-                            <!-- Icône : Billets de banque -->
-                            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                            <svg class="w-6 h-6 {{ $pendingCount > 0 ? 'text-amber-600 animate-pulse' : 'text-gray-400' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- Carte 3 : Instances Actives -->
+                {{-- Carte 3 : Instances Actives --}}
                 <div class="admin-card p-5 border-l-4 border-brand-teal bg-white/95 backdrop-blur-md shadow-sm">
                     <div class="flex items-center justify-between">
                         <div>
@@ -93,7 +77,6 @@
                             </h3>
                         </div>
                         <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
-                            <!-- Icône : Serveurs Cloud -->
                             <svg class="w-6 h-6 text-brand-teal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a2.25 2.25 0 01-2.25-2.25V6.75A2.25 2.25 0 015.25 4.5h13.5a2.25 2.25 0 012.25 2.25v5.25a2.25 2.25 0 01-2.25 2.25m-13.5 0L3 16.5m15.75-2.25l2.25 2.25M3.75 20.25h16.5M18.75 20.25h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
                             </svg>
@@ -101,7 +84,7 @@
                     </div>
                 </div>
 
-                <!-- Carte 4 : Alertes -->
+                {{-- Carte 4 : Alertes --}}
                 <div class="admin-card p-5 border-l-4 {{ $alerts > 0 ? 'border-orange-500' : 'border-gray-200' }} bg-white/95 backdrop-blur-md shadow-sm">
                     <div class="flex items-center justify-between">
                         <div>
@@ -111,7 +94,6 @@
                             </h3>
                         </div>
                         <div class="w-12 h-12 {{ $alerts > 0 ? 'bg-orange-50 border-orange-100' : '' }} rounded-2xl flex items-center justify-center">
-                            <!-- Icône : Bouclier Alerte ou Exclamation -->
                             <svg class="w-6 h-6 {{ $alerts > 0 ? 'text-orange-600 animate-pulse' : 'text-gray-400' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                             </svg>
@@ -120,7 +102,6 @@
                 </div>
             </div>
 
-            <!-- ALERTES ET NOTIFICATIONS -->
             @if (session('status'))
                 <div class="relative z-50 mb-6 p-4 bg-brand-teal text-white font-bold rounded-xl shadow-lg flex items-center animate-bounce">
                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +121,7 @@
                 </div>
             @endif
 
-            <!-- FORMULAIRE D'AJOUT -->
+            {{-- FORMULAIRE D'AJOUT --}}
             <div class="admin-card p-10 mb-12 bg-white/90 backdrop-blur-sm">
                 <div class="flex items-center mb-8 border-b pb-4">
                     <svg class="icon-fix brand-teal mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,23 +137,19 @@
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dénomination Sociale</label>
                             <input type="text" id="company_name" name="name" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="Saisir la raison sociale">
                         </div>
-
                         <div>
                             <label id="label-domain" class="block text-xs font-bold text-gray-500 uppercase mb-1">Identifiant d'instance</label>
                             <input type="text" id="input-domain" name="subdomain" class="input-field bg-gray-50 cursor-not-allowed focus:ring-0" required readonly placeholder="Par dénomination">
                             <p id="hint-domain" class="text-[10px] text-gray-400 mt-1">Adresse : <span id="preview-url" class="font-bold text-cyan-600">...</span>.solutcloud.com</p>
                         </div>
-
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Client</label>
                             <input type="email" name="email" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="contact@client.com">
                         </div>
-
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Mot de passe</label>
                             <input type="password" name="password" class="input-field focus:border-cyan-600 focus:ring-0" required>
                         </div>
-
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Forfait</label>
                             <select name="package" class="input-field">
@@ -181,19 +158,15 @@
                                 <option value="premium">Forfait PREMIUM</option>
                             </select>
                         </div>
-
-                        <!-- Champ Montant Premium (Caché par défaut) -->
                         <div id="premium-price-box" class="hidden">
                             <label class="block text-xs font-bold text-orange-500 uppercase mb-1">Montant d'activation premium (FCFA)</label>
                             <input type="number" name="premium_price" class="input-field" placeholder="Saisir le montant du devis">
                         </div>
-
-                        <!-- Abonnement (Bloqué à 12 mois pour création) -->
                         <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Engagement Initial</label>
-                        <select name="duration" class="input-field bg-gray-100 cursor-not-allowed" readonly>
-                            <option value="12" selected>12 Mois (1 an)</option>
-                        </select>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Engagement Initial</label>
+                            <select name="duration" class="input-field bg-gray-100 cursor-not-allowed" readonly>
+                                <option value="12" selected>12 Mois (1 an)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="mt-8 text-right">
@@ -204,7 +177,7 @@
                 </form>
             </div>
 
-            <!-- TABLEAU DES CLIENTS VERSION PREMIUM -->
+            {{-- TABLEAU DES CLIENTS --}}
             <div class="admin-card overflow-hidden bg-white/90 backdrop-blur-sm">
                 <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h3 class="text-sm font-black text-gray-700 uppercase tracking-tighter">Instances Déployées</h3>
@@ -212,7 +185,6 @@
                         {{ $companies->count() }} Client(s)
                     </span>
                 </div>
-                
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
                         <thead class="bg-gray-900 text-white">
@@ -228,27 +200,21 @@
                             @foreach($companies as $company)
                             <tr class="hover:bg-teal-50/30 transition-colors">
                                 <td class="px-8 py-5">
-                            <!-- Nom de l'entreprise -->
-                            <div class="font-bold text-gray-900">{{ $company->name }}</div>
-    
-                            <!-- URL de l'instance -->
-                            <div class="text-[11px] text-teal-600 font-medium">
-                            @if($company->package === 'premium')
-                            https://{{ $company->subdomain }} 
-                            @else
-                            https://{{ $company->subdomain }}.solutcloud.com
-                            @endif
-                            </div>
-
-                            <!-- NOUVEAU (SP1) : Email du client -->
-                            <div class="flex items-center gap-1 text-[10px] text-gray-400">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                            <!-- On récupère le mail de l'utilisateur lié à l'entreprise -->
-                            {{ $company->users->first()->email ?? 'Email non défini' }}
-                            </div>
-                            </td>
+                                    <div class="font-bold text-gray-900">{{ $company->name }}</div>
+                                    <div class="text-[11px] text-teal-600 font-medium">
+                                    @if($company->package === 'premium')
+                                    https://{{ $company->subdomain }}
+                                    @else
+                                    https://{{ $company->subdomain }}.solutcloud.com
+                                    @endif
+                                    </div>
+                                    <div class="flex items-center gap-1 text-[10px] text-gray-400">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    {{ $company->users->first()->email ?? 'Email non défini' }}
+                                    </div>
+                                </td>
                                 <td class="px-6 py-5 text-center">
                                     <span class="px-3 py-1 rounded text-[10px] font-black uppercase {{ $company->package == 'premium' ? 'bg-amber-100 text-amber-700 border border-amber-200' : ($company->package == 'business' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600') }}">
                                         {{ $company->package }}
@@ -289,8 +255,7 @@
                                 <td class="px-8 py-5 text-right">
                                     <div class="flex justify-end items-center gap-4">
                                         @if($company->status == 'pending')
-                                            <!-- LE BOUTON MAGIQUE -->
-                                            <button onclick="openFinalizeModal('{{ $company->id }}', '{{ $company->name }}')" 
+                                            <button onclick="openFinalizeModal('{{ $company->id }}', '{{ $company->name }}')"
                                                     class="bg-blue-600 text-white px-3 py-1 rounded-md font-black text-[10px] hover:bg-blue-700 transition-all uppercase">
                                                 Finaliser & Activer
                                             </button>
@@ -311,7 +276,6 @@
                                                 </form>
                                             @endif
                                         @endif
-
                                         <form action="{{ route('companies.destroy', $company->id) }}" method="POST" onsubmit="return confirm('Suppression définitive ?')">
                                             @csrf
                                             @method('DELETE')
@@ -328,7 +292,8 @@
                 </div>
             </div>
         </div>
-        <!-- MODAL DE FINALISATION : SAISIE DES ACCÈS ERP -->
+
+        {{-- MODAL DE FINALISATION --}}
         <dialog id="modal-finalize" class="rounded-2xl p-0 border-none shadow-2xl backdrop:bg-black/50">
             <div class="p-8 w-[450px] bg-white">
                 <div class="flex items-center mb-6">
@@ -342,7 +307,6 @@
                         <p id="finalize-client-name" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"></p>
                     </div>
                 </div>
-
                 <form id="form-finalize" method="POST">
                     @csrf
                     <div class="space-y-4">
@@ -355,7 +319,6 @@
                             <input type="text" name="erp_password" class="input-field focus:border-blue-600" required placeholder="Saisir le mot de passe">
                         </div>
                     </div>
-
                     <div class="mt-8 flex justify-end gap-3">
                         <button type="button" onclick="document.getElementById('modal-finalize').close()" class="text-[10px] font-black text-gray-400 uppercase hover:text-gray-600">Annuler</button>
                         <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-black text-[10px] uppercase shadow-lg shadow-blue-200">
@@ -382,42 +345,29 @@
 
         const toggleDomainMode = (mode) => {
             const premiumPriceBox = document.getElementById('premium-price-box');
-
             if (mode === 'premium') {
-                // --- LOGIQUE PREMIUM ---
                 if (premiumPriceBox) premiumPriceBox.classList.remove('hidden');
-
                 inputDomain.readOnly = false;
                 inputDomain.classList.remove('bg-gray-50', 'cursor-not-allowed');
                 labelDomain.innerText = "Nom de Domaine Dédié";
-                
-                if(inputDomain.value === "" || inputDomain.value.indexOf('.') === -1) {
-                    inputDomain.value = "www.";
-                }
-                
-                hintDomain.innerHTML = "<span class='text-orange-500 font-bold'>⚠️ Format obligatoire : www.nomdomaine.com</span>";
-
+                if(inputDomain.value === "" || inputDomain.value.indexOf('.') === -1) { inputDomain.value = "www."; }
+                hintDomain.innerHTML = "<span class='text-orange-500 font-bold'>Format obligatoire : www.nomdomaine.com</span>";
             } else {
-                // --- LOGIQUE START & BUSINESS ---
                 if (premiumPriceBox) premiumPriceBox.classList.add('hidden');
-
                 inputDomain.readOnly = true;
                 inputDomain.classList.add('bg-gray-50', 'cursor-not-allowed');
                 labelDomain.innerText = "Identifiant d'instance";
-                
                 const formatted = slugify(inputName.value);
                 inputDomain.value = formatted;
                 hintDomain.innerHTML = 'Adresse : <span id="preview-url" class="font-bold brand-teal">' + (formatted || '...') + '</span>.solutcloud.com';
             }
-        }; 
-
+        };
         inputDomain.addEventListener('blur', function() {
             if (packageSelect.value === 'premium') {
                 let val = this.value.trim().toLowerCase();
                 if (val !== "" && !val.startsWith('www.')) { this.value = 'www.' + val; }
             }
         });
-
         inputName.addEventListener('input', function() {
             if (packageSelect.value !== 'premium') {
                 const formatted = slugify(this.value);
@@ -426,24 +376,15 @@
                 if(preview) preview.innerText = formatted || '...';
             }
         });
-
-        packageSelect.addEventListener('change', function () {
-            toggleDomainMode(this.value);
-        });
+        packageSelect.addEventListener('change', function () { toggleDomainMode(this.value); });
     });
 
-    /**
-     * BOUTON MAGIQUE : Ouverture de la modale de finalisation
-     * J'utilise la concaténation standard pour éviter les erreurs VS Code
-     */
     window.openFinalizeModal = function(id, name) {
         const modal = document.getElementById('modal-finalize');
         const form = document.getElementById('form-finalize');
         const nameDisplay = document.getElementById('finalize-client-name');
-        
         if (modal && form && nameDisplay) {
             nameDisplay.innerText = "Client : " + name;
-            // Correction ici : Concaténation classique au lieu de backticks
             form.action = "/companies/" + id + "/finalize";
             modal.showModal();
         }

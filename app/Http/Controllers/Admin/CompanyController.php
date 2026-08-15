@@ -13,27 +13,15 @@ class CompanyController extends Controller
         public function index() 
         {
         $companies = Company::latest()->get();
-        
-        // Chiffre d'affaires réel (Somme de tout ce qui a été payé)
-        $totalRevenue = Company::sum('total_paid');
 
-        // Calcul du MRR (Revenu Mensuel Récurrent lissé)
-        $monthlyRevenue = 0; 
-        foreach ($companies->where('status', 'active') as $c) {
-            $monthlyRevenue += match(strtolower($c->package)) {
-                'solutcloud start', 'start'       => 5900,
-                'solutcloud business', 'business' => 9900,
-                'solutcloud premium', 'premium'   => 24900, // Pivot de base pour premium
-                default => 0
-            };
-        }
-
+        $totalCount = $companies->count();
+        $pendingCount = $companies->where('status', 'pending')->count();
         $activeCount = $companies->where('status', 'active')->count();
         $alerts = Company::where('status', 'active')
         ->where('expires_at', '<=', now()->addDays(7))
         ->count();
 
-    return view('admin.dashboard', compact('companies', 'activeCount', 'totalRevenue', 'monthlyRevenue', 'alerts'));
+    return view('admin.dashboard', compact('companies', 'totalCount', 'pendingCount', 'activeCount', 'alerts'));
     }
 
     public function store(Request $request) 
