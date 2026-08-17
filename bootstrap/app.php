@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         
-        // 1. CONFIANCE AUX PROXIES (Indispensable pour Ngrok et LWS)
+        // 1. CONFIANCE AUX PROXIES (Indispensable pour l'infrastructure LWS)
         // Cela permet à Laravel de comprendre qu'il est derrière un tunnel HTTPS
         // et résout l'erreur ERR_SSL_PROTOCOL_ERROR.
         $middleware->trustProxies(at: '*');

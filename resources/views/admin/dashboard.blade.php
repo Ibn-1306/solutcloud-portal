@@ -365,14 +365,23 @@
                 inputDomain.classList.remove('bg-gray-50', 'cursor-not-allowed');
                 labelDomain.innerText = "Nom de Domaine Dédié";
                 if(inputDomain.value === "" || inputDomain.value.indexOf('.') === -1) { inputDomain.value = "www."; }
-                hintDomain.innerHTML = "<span class='text-orange-500 font-bold'>Format obligatoire : www.nomdomaine.com</span>";
+                hintDomain.innerHTML = "";
+                const span = document.createElement('span');
+                span.className = 'text-orange-500 font-bold';
+                span.textContent = "Format obligatoire : www.nomdomaine.com";
+                hintDomain.appendChild(span);
             } else {
                 inputDomain.readOnly = true;
                 inputDomain.classList.add('bg-gray-50', 'cursor-not-allowed');
                 labelDomain.innerText = "Identifiant d'instance";
                 const formatted = slugify(inputName.value);
                 inputDomain.value = formatted;
-                hintDomain.innerHTML = 'Adresse : <span id="preview-url" class="font-bold brand-teal">' + (formatted || '...') + '</span>.solutcloud.com';
+                
+                hintDomain.innerHTML = 'Adresse : <span id="preview-url" class="font-bold brand-teal"></span>.solutcloud.com';
+                const preview = document.getElementById('preview-url');
+                if (preview) {
+                    preview.textContent = formatted || '...';
+                }
             }
         };
         inputDomain.addEventListener('blur', function() {
