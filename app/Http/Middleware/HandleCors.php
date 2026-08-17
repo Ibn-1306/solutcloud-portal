@@ -18,9 +18,9 @@ class HandleCors
 {
     public function handle(Request $request, Closure $next)
     {
-        // Liste blanche des origines autorisées (configurable via .env)
-        $allowedOrigins = env('CORS_ALLOWED_ORIGINS', 'https://www.solutcloud.com,https://solutcloud.com');
-        $allowedOrigins = array_map('trim', explode(',', $allowedOrigins));
+        // Liste blanche des origines autorisées (via config/services.php)
+        $allowedOrigins = config('services.cors.allowed_origins', 'https://www.solutcloud.com,https://solutcloud.com');
+        $allowedOrigins = array_map('trim', explode(',', (string) $allowedOrigins));
 
         $origin = $request->headers->get('Origin');
 

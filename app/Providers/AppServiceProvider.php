@@ -43,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
          * Cette instruction est vitale pour corriger l'erreur "Mixed Content".
          * Elle force Laravel à générer tous les liens (CSS, JS, Images) en https://
          */
-        if ($this->app->environment('production') || env('APP_ENV') === 'production') {
+        if ($this->app->environment('production') || config('app.env') === 'production') {
             URL::forceScheme('https');
         }
     }

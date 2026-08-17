@@ -20,6 +20,8 @@ jobs:
           extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, ftp
 
       - name: 📦 Install Dependencies (Composer)
+        env:
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
         run: composer install --no-dev --optimize-autoloader --ignore-platform-req=php+
 
       - name: 🏗️ Build Assets (NPM)

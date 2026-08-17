@@ -49,4 +49,8 @@ return [
             : 'https://sandbox.moneroo.io',
     ],
 
+    'cors' => [
+        'allowed_origins' => env('CORS_ALLOWED_ORIGINS', 'https://www.solutcloud.com,https://solutcloud.com'),
+    ],
+
 ];

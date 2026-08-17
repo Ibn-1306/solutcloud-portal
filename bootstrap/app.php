@@ -30,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Permet la gestion des sessions entre les sous-domaines si nécessaire.
         $middleware->statefulApi();
 
+        // 4. GESTION DU CORS (Custom)
+        $middleware->append(\App\Http\Middleware\HandleCors::class);
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         
