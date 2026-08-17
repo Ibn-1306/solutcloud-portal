@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Moneroo (Passerelle de paiement)
+    |--------------------------------------------------------------------------
+    */
+    'moneroo' => [
+        'secret'         => env('MONEROO_SECRET_KEY'),
+        'webhook_secret' => env('MONEROO_WEBHOOK_SECRET'),
+        'mode'           => env('MONEROO_MODE', 'sandbox'),
+        'base_url'       => env('MONEROO_MODE', 'sandbox') === 'production'
+            ? 'https://api.moneroo.io'
+            : 'https://sandbox.moneroo.io',
+    ],
+
 ];

@@ -30,8 +30,8 @@ class CompanyController extends Controller
             'name' => 'required|string|max:255',
             'subdomain' => 'required|unique:companies,subdomain',
             'email' => 'required|email|unique:users,email',
+            'phone' => 'nullable|string|max:30',
             'package' => 'required|in:start,business,premium',
-            'premium_price' => 'nullable|numeric' 
         ]);
 
         try {
@@ -39,10 +39,10 @@ class CompanyController extends Controller
                 $company = Company::create([
                     'name' => $data['name'],
                     'email' => $data['email'], // Ajout de l'email dans la table Company
+                    'phone' => $data['phone'] ?? null,
                     'subdomain' => strtolower($data['subdomain']),
                     'package' => $data['package'],
                     'status' => 'pending',
-                    'total_paid' => $data['package'] === 'premium' ? ($request->premium_price ?? 0) : ($data['package'] === 'start' ? 59000 : 99000),
                 ]);
 
                 User::create([

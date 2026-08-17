@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\DemoController;
+use App\Http\Controllers\Admin\QuoteController;
 use App\Http\Controllers\Client\PortalController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -57,13 +59,14 @@ Route::middleware(['auth', 'can:admin-only'])->prefix('admin')->group(function (
     });
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+
+    Route::get('/demos', [DemoController::class, 'index'])->name('admin.demos.index');
+    Route::post('/demos', [DemoController::class, 'store'])->name('admin.demos.store');
+
+    Route::get('/quotes', [QuoteController::class, 'index'])->name('admin.quotes.index');
+    Route::post('/quotes', [QuoteController::class, 'store'])->name('admin.quotes.store');
 });
 
-/*
-|--------------------------------------------------------------------------
-| SECTION CLIENT (Accessible via login.solutcloud.com/portal/...)
-|--------------------------------------------------------------------------
-*/
 /*
 |--------------------------------------------------------------------------
 | PROFIL (Accessible par admin et client)

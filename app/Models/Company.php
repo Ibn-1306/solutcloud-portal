@@ -9,16 +9,16 @@ class Company extends Model
 {
     /**
      * Les attributs qui peuvent être assignés en masse.
-     * On ajoute 'total_paid' pour le suivi financier.
      */
     protected $fillable = [
         'name', 
+        'email',
+        'phone',
         'subdomain', 
         'custom_domain', 
         'package', 
         'status', 
         'expires_at',
-        'total_paid' // AJOUTÉ ICI
     ];
 
     /**
@@ -26,7 +26,6 @@ class Company extends Model
      */
     protected $casts = [
         'expires_at' => 'datetime',
-        'total_paid' => 'decimal:2', // Force le format numérique avec 2 décimales
     ];
 
     /**

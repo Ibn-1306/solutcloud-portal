@@ -2,7 +2,7 @@
     <style>
     .brand-teal { color: #2B909A; }
     .bg-brand-teal { background-color: #2B909A; }
-    .input-field { border: 1px solid #e2e8f0; border-radius: 0.375rem; width: 100%; padding: 0.6rem; font-size: 14px; }
+    .input-field { border: 1px solid #e2e8f0; border-radius: 0.375rem; width: 100%; padding: 0.6rem; font-size: 15px; }
     .admin-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #f1f5f9; }
     svg.icon-fix { width: 28px !important; height: 28px !important; flex-shrink: 0; }
     .admin-watermark {
@@ -144,7 +144,11 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Client</label>
-                            <input type="email" name="email" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="contact@client.com">
+                            <input type="email" name="email" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="client@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Téléphone Client</label>
+                            <input type="tel" name="phone" class="input-field focus:border-cyan-600 focus:ring-0" placeholder="+225 07 00 00 00 00">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Mot de passe</label>
@@ -157,10 +161,6 @@
                                 <option value="business">Forfait BUSINESS</option>
                                 <option value="premium">Forfait PREMIUM</option>
                             </select>
-                        </div>
-                        <div id="premium-price-box" class="hidden">
-                            <label class="block text-xs font-bold text-orange-500 uppercase mb-1">Montant d'activation premium (FCFA)</label>
-                            <input type="number" name="premium_price" class="input-field" placeholder="Saisir le montant du devis">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Engagement Initial</label>
@@ -197,7 +197,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @foreach($companies as $company)
+                            @forelse($companies as $company)
                             <tr class="hover:bg-teal-50/30 transition-colors">
                                 <td class="px-8 py-5">
                                     <div class="font-bold text-gray-900">{{ $company->name }}</div>
@@ -208,12 +208,22 @@
                                     https://{{ $company->subdomain }}.solutcloud.com
                                     @endif
                                     </div>
-                                    <div class="flex items-center gap-1 text-[10px] text-gray-400">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    {{ $company->users->first()->email ?? 'Email non défini' }}
+                                    <div class="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <a href="mailto:{{ $company->email ?? $company->users->first()->email ?? '' }}" class="hover:text-teal-600 hover:underline">
+                                            {{ $company->email ?? $company->users->first()->email ?? 'Email non défini' }}
+                                        </a>
                                     </div>
+                                    @if($company->phone)
+                                    <div class="flex items-center gap-1 text-[10px] text-gray-400 mt-0.5">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        <a href="tel:{{ $company->phone }}" class="hover:text-teal-600 hover:underline">{{ $company->phone }}</a>
+                                    </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-5 text-center">
                                     <span class="px-3 py-1 rounded text-[10px] font-black uppercase {{ $company->package == 'premium' ? 'bg-amber-100 text-amber-700 border border-amber-200' : ($company->package == 'business' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600') }}">
@@ -286,7 +296,13 @@
                                     </div>
                                 </td>
                             </tr>
-                            @endforeach
+                            @empty
+                            <tr>
+                                <td colspan="5" class="px-8 py-10 text-center text-gray-400 font-semibold">
+                                    Aucune instance déployée pour le moment.
+                                </td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -344,16 +360,13 @@
         };
 
         const toggleDomainMode = (mode) => {
-            const premiumPriceBox = document.getElementById('premium-price-box');
             if (mode === 'premium') {
-                if (premiumPriceBox) premiumPriceBox.classList.remove('hidden');
                 inputDomain.readOnly = false;
                 inputDomain.classList.remove('bg-gray-50', 'cursor-not-allowed');
                 labelDomain.innerText = "Nom de Domaine Dédié";
                 if(inputDomain.value === "" || inputDomain.value.indexOf('.') === -1) { inputDomain.value = "www."; }
                 hintDomain.innerHTML = "<span class='text-orange-500 font-bold'>Format obligatoire : www.nomdomaine.com</span>";
             } else {
-                if (premiumPriceBox) premiumPriceBox.classList.add('hidden');
                 inputDomain.readOnly = true;
                 inputDomain.classList.add('bg-gray-50', 'cursor-not-allowed');
                 labelDomain.innerText = "Identifiant d'instance";

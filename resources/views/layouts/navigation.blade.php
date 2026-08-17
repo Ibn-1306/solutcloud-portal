@@ -1,20 +1,26 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo / Favicon dans la barre de navigation -->
                 <div class="shrink-0 flex items-center">
                 <a href="{{ route('dashboard') }}">
-                <img src="{{ asset('img/favicon.png') }}" class="block h-10 w-auto fill-current text-gray-800" alt="Solutcloud">
+                <img src="{{ asset('img/favicon.png') }}" class="block h-10 w-auto fill-current text-black" alt="Solutcloud">
                 </a>
-                <span class="ml-3 font-bold text-gray-700 hidden sm:block">SOLUTCLOUD</span>
+                <span class="ml-3 font-bold text-black hidden sm:block">SOLUTCLOUD_GESTION</span>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('dashboard') || request()->routeIs('admin.dashboard')">
                         {{ __('Tableau de bord - Gestion') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('admin.demos.index')" :active="request()->routeIs('admin.demos.*')">
+                        {{ __('Démonstration') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('admin.quotes.index')" :active="request()->routeIs('admin.quotes.*')">
+                        {{ __('Devis') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -23,20 +29,19 @@
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        <button class="inline-flex items-center gap-3 px-3 py-1 border border-gray-200 rounded-full text-sm font-bold text-gray-700 bg-white hover:bg-teal-50 hover:text-teal-700 hover:border-teal-100 focus:outline-none transition duration-150 ease-in-out shadow-sm">
+                            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-100 text-teal-600 shadow-sm">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                                 </svg>
                             </div>
+                            <div class="pr-2">Administrateur</div>
                         </button>
                     </x-slot>
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Voir mon profil') }}
+                            {{ __('Profil') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -68,16 +73,29 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('dashboard') || request()->routeIs('admin.dashboard')">
                 {{ __('Tableau de bord - Gestion') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.demos.index')" :active="request()->routeIs('admin.demos.*')">
+                {{ __('Démonstration') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.quotes.index')" :active="request()->routeIs('admin.quotes.*')">
+                {{ __('Devis') }}
             </x-responsive-nav-link>
         </div>
 
         <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+        <div class="pt-4 pb-1 border-t border-gray-200 bg-gray-50/50">
+            <div class="px-4 flex items-center gap-3">
+                <div class="flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 text-teal-600 shadow-sm">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-black text-base text-teal-700">Administrateur</div>
+                    <div class="font-medium text-xs text-gray-500">{{ Auth::user()->email }}</div>
+                </div>
             </div>
 
             <div class="mt-3 space-y-1">
