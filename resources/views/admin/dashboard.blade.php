@@ -267,7 +267,7 @@
                                         @if($company->status == 'pending')
                                             <button onclick="openFinalizeModal('{{ $company->id }}', '{{ $company->name }}')"
                                                     class="bg-blue-600 text-white px-3 py-1 rounded-md font-black text-[10px] hover:bg-blue-700 transition-all uppercase">
-                                                Finaliser & Activer
+                                                Finaliser l'activation
                                             </button>
                                         @else
                                             @if($company->status == 'active')
