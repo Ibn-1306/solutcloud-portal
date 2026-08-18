@@ -53,4 +53,8 @@ return [
         'allowed_origins' => env('CORS_ALLOWED_ORIGINS', 'https://www.solutcloud.com,https://solutcloud.com'),
     ],
 
+    'solutcloud' => [
+        'contact_recipient' => env('SOLUTCLOUD_CONTACT_RECIPIENT', 'sales@i-solutions.ci'),
+    ],
+
 ];

@@ -365,11 +365,11 @@
                 inputDomain.classList.remove('bg-gray-50', 'cursor-not-allowed');
                 labelDomain.innerText = "Nom de Domaine Dédié";
                 if(inputDomain.value === "" || inputDomain.value.indexOf('.') === -1) { inputDomain.value = "www."; }
-                hintDomain.innerHTML = "";
+                
                 const span = document.createElement('span');
                 span.className = 'text-orange-500 font-bold';
                 span.textContent = "Format obligatoire : www.nomdomaine.com";
-                hintDomain.appendChild(span);
+                hintDomain.replaceChildren(span);
             } else {
                 inputDomain.readOnly = true;
                 inputDomain.classList.add('bg-gray-50', 'cursor-not-allowed');
@@ -377,11 +377,16 @@
                 const formatted = slugify(inputName.value);
                 inputDomain.value = formatted;
                 
-                hintDomain.innerHTML = 'Adresse : <span id="preview-url" class="font-bold brand-teal"></span>.solutcloud.com';
-                const preview = document.getElementById('preview-url');
-                if (preview) {
-                    preview.textContent = formatted || '...';
-                }
+                const previewSpan = document.createElement('span');
+                previewSpan.id = 'preview-url';
+                previewSpan.className = 'font-bold brand-teal';
+                previewSpan.textContent = formatted || '...';
+
+                hintDomain.replaceChildren(
+                    document.createTextNode('Adresse : '),
+                    previewSpan,
+                    document.createTextNode('.solutcloud.com')
+                );
             }
         };
         inputDomain.addEventListener('blur', function() {
