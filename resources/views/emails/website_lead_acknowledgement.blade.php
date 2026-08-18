@@ -30,9 +30,9 @@
         <tr><td class="email-detail-label email-detail-last">E-mail</td><td class="email-detail-value email-detail-last">{{ $lead->email }}</td></tr>
     </table>
 
-    <div style="margin-top:24px;padding:18px 20px;border-radius:10px;background:#f0f7f7">
-        <div style="margin-bottom:6px;color:#176f77;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase">Prochaine étape</div>
-        <div style="color:#40565a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65">Un conseiller examinera votre demande et vous contactera avec les informations adaptées à votre besoin.</div>
+    <div style="margin-top:24px;padding:18px 20px;border:1px solid #dadce0;border-radius:8px;background:#f8f9fa">
+        <div style="margin-bottom:6px;color:#2b909a;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase">Prochaine étape</div>
+        <div style="color:#5f6368;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65">Un conseiller examinera votre demande et vous contactera avec les informations adaptées à votre besoin.</div>
     </div>
 @endsection
 

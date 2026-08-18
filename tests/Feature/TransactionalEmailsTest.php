@@ -44,13 +44,15 @@ class TransactionalEmailsTest extends TestCase
         ]);
 
         $quote = new Quote([
-            'quote_number' => 'DEV-2026-0001',
+            'quote_number' => 'DEVIS-26-0001',
+            'payment_transaction_id' => 'pay_quote_001',
+            'payment_url' => 'https://checkout.moneroo.io/pay_quote_001',
             'customer_name' => 'Awa Koné',
             'customer_email' => 'awa@example.com',
             'customer_phone' => '+225 01 02 03 04 05',
             'company_name' => 'Entreprise Démonstration',
             'amount' => 350000,
-            'duration' => '12 mois',
+            'duration' => 12,
             'description' => 'Déploiement, configuration et accompagnement.',
             'status' => Quote::STATUS_SENT,
         ]);
@@ -84,7 +86,7 @@ class TransactionalEmailsTest extends TestCase
             [new SalesNotification($order), 'Nouvelle commande à provisionner'],
             [new DemoAccessMail($demo), 'Votre démonstration est prête'],
             [new InstanceReadyMail($company, 'https://entreprise-demo.solutcloud.com', 'admin.demo', 'mot-de-passe-test'), 'Votre instance est opérationnelle'],
-            [new QuoteSendMail($quote), 'Votre proposition SOLUTCLOUD PREMIUM'],
+            [new QuoteSendMail($quote), 'Votre devis SOLUTCLOUD PREMIUM'],
             [new WebsiteLeadAcknowledgement($lead), 'Votre message a bien été transmis'],
             [new WebsiteLeadReceived($lead), 'Nouvelle demande commerciale'],
             [new NewsletterWelcome($subscriber), 'Bienvenue dans l’écosystème SOLUTCLOUD'],
@@ -104,12 +106,41 @@ class TransactionalEmailsTest extends TestCase
         $this->assertStringContainsString('SOLUTCLOUD', $html);
         $this->assertStringContainsString('I-SOLUTIONS', $html);
         $this->assertStringContainsString('role="presentation"', $html);
+        $this->assertStringContainsString('alt="SOLUTCLOUD"', $html);
         $this->assertStringContainsString($expectedHeading, $html);
+        $this->assertStringContainsString('#2b909a', strtolower($html));
+        $this->assertStringNotContainsString('height:5px;background:#2b909a', strtolower($html));
+        $this->assertStringNotContainsString('background:#102a2d', strtolower($html));
+        $this->assertStringNotContainsString('background:#e9f5f5', strtolower($html));
         $this->assertStringContainsString('SOLUTCLOUD', $subject);
         $this->assertStringNotContainsString('🚀', $html);
         $this->assertStringNotContainsString('💰', $html);
         $this->assertStringNotContainsString('🚀', $subject);
         $this->assertStringNotContainsString('💰', $subject);
         $this->assertStringNotContainsString('✅', $subject);
+    }
+
+    public function test_quote_email_contains_the_secure_moneroo_payment_link(): void
+    {
+        $quote = new Quote([
+            'quote_number' => 'DEVIS-26-0007',
+            'payment_transaction_id' => 'pay_quote_007',
+            'payment_url' => 'https://checkout.moneroo.io/pay_quote_007',
+            'customer_name' => 'Awa Koné',
+            'customer_email' => 'awa@example.com',
+            'company_name' => 'Entreprise Démonstration',
+            'amount' => 350000,
+            'duration' => 12,
+            'status' => Quote::STATUS_SENT,
+        ]);
+
+        $html = (new QuoteSendMail($quote))->render();
+
+        $this->assertStringContainsString('https://checkout.moneroo.io/pay_quote_007', $html);
+        $this->assertStringContainsString('Cliquez ici pour payer', $html);
+        $this->assertStringContainsString('Paiement sécurisé', $html);
+        $this->assertStringContainsString('350 000 FCFA', $html);
+        $this->assertStringNotContainsString('Échanger sur cette proposition', $html);
+        $this->assertStringNotContainsString('Pour accepter cette proposition', $html);
     }
 }

@@ -18,15 +18,15 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel" style="margin-top:0">
         <tr><td class="email-detail-label">Type</td><td class="email-detail-value">{{ $requestLabel }}</td></tr>
         <tr><td class="email-detail-label">Nom</td><td class="email-detail-value">{{ $lead->fullname }}</td></tr>
-        <tr><td class="email-detail-label">E-mail</td><td class="email-detail-value"><a href="mailto:{{ $lead->email }}" style="color:#176f77;text-decoration:none">{{ $lead->email }}</a></td></tr>
+        <tr><td class="email-detail-label">E-mail</td><td class="email-detail-value"><a href="mailto:{{ $lead->email }}" style="color:#2b909a;text-decoration:none">{{ $lead->email }}</a></td></tr>
         <tr><td class="email-detail-label">Téléphone</td><td class="email-detail-value">{{ $lead->phone ?: 'Non renseigné' }}</td></tr>
         <tr><td class="email-detail-label">Entreprise</td><td class="email-detail-value">{{ $lead->company_name ?: 'Non renseignée' }}</td></tr>
         <tr><td class="email-detail-label email-detail-last">Profil</td><td class="email-detail-value email-detail-last">{{ $lead->profile ?: 'Non renseigné' }}</td></tr>
     </table>
 
-    <div style="margin-top:24px;padding:18px 20px;border:1px solid #dce6e8;border-radius:10px;background:#f8fafb">
-        <div style="margin-bottom:8px;color:#718286;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">Message</div>
-        <div style="color:#40565a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7">{!! nl2br(e($lead->message ?: 'Aucun message complémentaire.')) !!}</div>
+    <div style="margin-top:24px;padding:18px 20px;border:1px solid #dadce0;border-radius:8px;background:#f8f9fa">
+        <div style="margin-bottom:8px;color:#70757a;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">Message</div>
+        <div style="color:#5f6368;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7">{!! nl2br(e($lead->message ?: 'Aucun message complémentaire.')) !!}</div>
     </div>
 @endsection
 

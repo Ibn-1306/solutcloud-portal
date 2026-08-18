@@ -12,16 +12,16 @@
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0">
         <tr>
-            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#176f77;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:28px;text-align:center">1</div></td>
-            <td style="padding:2px 0 18px 10px;color:#20373a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Paiement reçu</strong><br><span style="color:#718286">La transaction a été confirmée.</span></td>
+            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#2b909a;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:28px;text-align:center">1</div></td>
+            <td style="padding:2px 0 18px 10px;color:#202124;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Paiement reçu</strong><br><span style="color:#70757a">La transaction a été confirmée.</span></td>
         </tr>
         <tr>
-            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;border:2px solid #79b7bc;color:#176f77;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:24px;text-align:center;box-sizing:border-box">2</div></td>
-            <td style="padding:2px 0 18px 10px;color:#20373a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Configuration en cours</strong><br><span style="color:#718286">Votre instance est préparée et contrôlée.</span></td>
+            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;border:2px solid #2b909a;color:#2b909a;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:24px;text-align:center;box-sizing:border-box">2</div></td>
+            <td style="padding:2px 0 18px 10px;color:#202124;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Configuration en cours</strong><br><span style="color:#70757a">Votre instance est préparée et contrôlée.</span></td>
         </tr>
         <tr>
-            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;border:2px solid #d3dfe1;color:#718286;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:24px;text-align:center;box-sizing:border-box">3</div></td>
-            <td style="padding:2px 0 0 10px;color:#20373a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Accès à venir</strong><br><span style="color:#718286">Vous recevrez un message distinct dès la mise en service.</span></td>
+            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;border:2px solid #dadce0;color:#70757a;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:24px;text-align:center;box-sizing:border-box">3</div></td>
+            <td style="padding:2px 0 0 10px;color:#202124;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Accès à venir</strong><br><span style="color:#70757a">Vous recevrez un message distinct dès la mise en service.</span></td>
         </tr>
     </table>
 

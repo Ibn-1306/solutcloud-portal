@@ -11,7 +11,7 @@
     <p>L’environnement de démonstration demandé pour <strong>{{ $demo->company_name }}</strong> est maintenant accessible avec les informations ci-dessous.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel">
-        <tr><td class="email-detail-label">Adresse</td><td class="email-detail-value"><a href="{{ $demo->url }}" style="color:#176f77;text-decoration:none">{{ $demo->url }}</a></td></tr>
+        <tr><td class="email-detail-label">Adresse</td><td class="email-detail-value"><a href="{{ $demo->url }}" style="color:#2b909a;text-decoration:none">{{ $demo->url }}</a></td></tr>
         <tr><td class="email-detail-label">Identifiant</td><td class="email-detail-value"><span class="email-code">{{ $demo->erp_login }}</span></td></tr>
         <tr><td class="email-detail-label email-detail-last">Mot de passe</td><td class="email-detail-value email-detail-last"><span class="email-code">{{ $demo->erp_password }}</span></td></tr>
     </table>

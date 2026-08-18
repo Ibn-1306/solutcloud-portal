@@ -41,12 +41,14 @@ return [
     |--------------------------------------------------------------------------
     */
     'moneroo' => [
-        'secret'         => env('MONEROO_SECRET_KEY'),
+        'secret' => env('MONEROO_SECRET_KEY'),
         'webhook_secret' => env('MONEROO_WEBHOOK_SECRET'),
-        'mode'           => env('MONEROO_MODE', 'sandbox'),
-        'base_url'       => env('MONEROO_MODE', 'sandbox') === 'production'
+        'mode' => env('MONEROO_MODE', 'sandbox'),
+        'base_url' => env('MONEROO_MODE', 'sandbox') === 'production'
             ? 'https://api.moneroo.io'
             : 'https://sandbox.moneroo.io',
+        'return_url' => env('MONEROO_RETURN_URL', 'https://solutcloud.com/tarifs.html'),
+        'timeout' => (int) env('MONEROO_TIMEOUT', 10),
     ],
 
     'cors' => [
