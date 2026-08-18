@@ -1,53 +1,42 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; background-color: #f8fafc; }
-        .container { max-width: 600px; margin: 20px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); background-color: #ffffff; border: 1px solid #e2e8f0; }
-        .header { background-color: #2B909A; padding: 40px 20px; text-align: center; color: #ffffff; }
-        .logo-mail { width: 64px; height: 64px; margin-bottom: 15px; border-radius: 12px; background: #ffffff; padding: 8px; }
-        .header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-        .content { padding: 40px 30px; }
-        .content h2 { color: #2B909A; margin-top: 0; font-size: 22px; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
-        .status-box { background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 30px 0; }
-        .order-details { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; font-size: 14px; }
-        .footer { background-color: #f8fafc; padding: 30px; text-align: center; font-size: 13px; color: #64748b; border-top: 1px solid #e2e8f0; }
-        .highlight { color: #2B909A; font-weight: 600; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <img src="https://solutcloud.com/img/favicon.png" alt="SolutCloud Logo" class="logo-mail">
-            <h1>SOLUTCLOUD</h1>
-        </div>
-        <div class="content">
-            <h2>Merci pour votre confiance !</h2>
-            <p>Bonjour <span class="highlight">{{ $order->customer_name }}</span>,</p>
-            <p>Nous vous confirmons que votre paiement pour l'offre <span class="highlight">SOLUTCLOUD {{ $order->plan }}</span> a été reçu avec succès.</p>
-            
-            <div class="status-box">
-                <p style="margin: 0; color: #92400e; font-weight: bold;">⚙️ Statut : Préparation de votre instance en cours</p>
-                <p style="margin: 10px 0 0 0; font-size: 14px; color: #92400e;">Un administrateur procède actuellement à la configuration manuelle de votre environnement ERP sur nos serveurs. Cette opération prend généralement entre 30 minutes et 2 heures.</p>
-            </div>
+@extends('emails.layouts.transactional', [
+    'emailTitle' => 'Votre paiement est confirmé',
+    'preheader' => 'Votre commande SOLUTCLOUD a bien été enregistrée.',
+    'emailCategory' => 'Commande',
+    'emailBadge' => 'Paiement reçu',
+    'emailIntro' => 'Votre commande est validée. Notre équipe prépare maintenant votre environnement de travail sécurisé.',
+])
 
-            <p>Dès que votre instance sera prête, vous recevrez un <strong>second email</strong> contenant vos identifiants sécurisés et votre lien d'accès définitif.</p>
-            
-            <div class="order-details">
-                <p style="margin-top:0;"><strong>Récapitulatif de commande :</strong></p>
-                <p style="margin: 5px 0;">Entreprise : {{ $order->company_name }}</p>
-                <p style="margin: 5px 0;">Montant payé : {{ number_format($order->amount, 0, ',', ' ') }} FCFA</p>
-                <p style="margin: 5px 0;">Transaction ID : {{ $order->transaction_id }}</p>
-            </div>
+@section('content')
+    <p>Bonjour <strong>{{ $order->customer_name }}</strong>,</p>
+    <p>Merci pour votre confiance. Nous avons bien reçu le règlement associé à la commande de <strong>{{ $order->company_name }}</strong>.</p>
 
-            <p style="margin-top: 30px;">Merci d'avoir choisi <span class="highlight">SOLUTCLOUD</span> pour piloter la croissance de votre entreprise.</p>
-        </div>
-        <div class="footer">
-            <p><strong>I-SOLUTIONS - Ingénierie Informatique</strong><br>
-            Yopougon Ananeraie, 21 BP 4069 Abidjan 21, Côte d'Ivoire.</p>
-        </div>
-    </div>
-</body>
-</html>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0">
+        <tr>
+            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#176f77;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:28px;text-align:center">1</div></td>
+            <td style="padding:2px 0 18px 10px;color:#20373a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Paiement reçu</strong><br><span style="color:#718286">La transaction a été confirmée.</span></td>
+        </tr>
+        <tr>
+            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;border:2px solid #79b7bc;color:#176f77;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:24px;text-align:center;box-sizing:border-box">2</div></td>
+            <td style="padding:2px 0 18px 10px;color:#20373a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Configuration en cours</strong><br><span style="color:#718286">Votre instance est préparée et contrôlée.</span></td>
+        </tr>
+        <tr>
+            <td width="34" valign="top"><div style="width:28px;height:28px;border-radius:50%;border:2px solid #d3dfe1;color:#718286;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:24px;text-align:center;box-sizing:border-box">3</div></td>
+            <td style="padding:2px 0 0 10px;color:#20373a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5"><strong>Accès à venir</strong><br><span style="color:#718286">Vous recevrez un message distinct dès la mise en service.</span></td>
+        </tr>
+    </table>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel">
+        <tr><td class="email-detail-label">Entreprise</td><td class="email-detail-value">{{ $order->company_name }}</td></tr>
+        <tr><td class="email-detail-label">Offre</td><td class="email-detail-value">{{ strtoupper($order->plan) }}</td></tr>
+        <tr><td class="email-detail-label">Montant</td><td class="email-detail-value">{{ number_format((float) $order->amount, 0, ',', ' ') }} FCFA</td></tr>
+        <tr><td class="email-detail-label email-detail-last">Transaction</td><td class="email-detail-value email-detail-last">{{ $order->transaction_id }}</td></tr>
+    </table>
+@endsection
+
+@section('action')
+    <a href="https://solutcloud.com" class="email-button">Découvrir SOLUTCLOUD</a>
+@endsection
+
+@section('notice')
+    Pour votre sécurité, SOLUTCLOUD ne vous demandera jamais votre mot de passe ou vos coordonnées bancaires par e-mail.
+@endsection

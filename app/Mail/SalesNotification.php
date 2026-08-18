@@ -16,6 +16,7 @@ class SalesNotification extends Mailable
     /**
      * L'instance de la commande.
      * Déclarer en "public" permet d'y accéder directement dans le template Blade.
+     *
      * @var Order
      */
     public $order;
@@ -34,8 +35,7 @@ class SalesNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            // Un sujet percutant pour l'équipe commerciale
-            subject: '💰 NOUVELLE COMMANDE : ' . $this->order->company_name . ' (Offre ' . $this->order->plan . ')',
+            subject: '[SOLUTCLOUD] Nouvelle commande à traiter — '.$this->order->company_name,
         );
     }
 

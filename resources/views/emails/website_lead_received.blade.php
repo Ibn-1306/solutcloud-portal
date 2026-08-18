@@ -1,28 +1,39 @@
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <title>Nouvelle demande SOLUTCLOUD</title>
-</head>
-<body style="margin:0;background:#f3f6f7;font-family:Arial,sans-serif;color:#172126">
-    <div style="max-width:640px;margin:0 auto;padding:32px 16px">
-        <div style="background:#ffffff;border-radius:12px;padding:28px;border-top:5px solid #2b909a">
-            <h1 style="margin:0 0 22px;font-size:22px">Nouvelle demande depuis solutcloud.com</h1>
-            <table role="presentation" style="width:100%;border-collapse:collapse">
-                <tr><td style="padding:7px 0;font-weight:bold">Type</td><td style="padding:7px 0">{{ strtoupper($lead->type) }}</td></tr>
-                <tr><td style="padding:7px 0;font-weight:bold">Nom</td><td style="padding:7px 0">{{ $lead->fullname }}</td></tr>
-                <tr><td style="padding:7px 0;font-weight:bold">E-mail</td><td style="padding:7px 0"><a href="mailto:{{ $lead->email }}">{{ $lead->email }}</a></td></tr>
-                <tr><td style="padding:7px 0;font-weight:bold">Téléphone</td><td style="padding:7px 0">{{ $lead->phone ?: 'Non renseigné' }}</td></tr>
-                <tr><td style="padding:7px 0;font-weight:bold">Entreprise</td><td style="padding:7px 0">{{ $lead->company_name ?: 'Non renseignée' }}</td></tr>
-                <tr><td style="padding:7px 0;font-weight:bold">Profil</td><td style="padding:7px 0">{{ $lead->profile ?: 'Non renseigné' }}</td></tr>
-            </table>
+@php
+    $requestLabel = match ($lead->type) {
+        'trial' => 'Demande d’essai',
+        'quote' => 'Demande de devis',
+        default => 'Message de contact',
+    };
+@endphp
 
-            @if($lead->message)
-                <div style="margin-top:22px;padding:18px;background:#f6fafb;border-radius:8px;white-space:pre-line">{{ $lead->message }}</div>
-            @endif
+@extends('emails.layouts.transactional', [
+    'emailTitle' => 'Nouvelle demande commerciale',
+    'preheader' => $requestLabel.' reçue de '.$lead->fullname.'.',
+    'emailCategory' => 'Équipe commerciale',
+    'emailBadge' => 'Action requise',
+    'emailIntro' => $lead->fullname.' vient de transmettre une demande depuis le site solutcloud.com.',
+])
 
-            <p style="margin:24px 0 0;color:#66747c;font-size:13px">Répondez directement à cet e-mail pour contacter {{ $lead->fullname }}.</p>
-        </div>
+@section('content')
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel" style="margin-top:0">
+        <tr><td class="email-detail-label">Type</td><td class="email-detail-value">{{ $requestLabel }}</td></tr>
+        <tr><td class="email-detail-label">Nom</td><td class="email-detail-value">{{ $lead->fullname }}</td></tr>
+        <tr><td class="email-detail-label">E-mail</td><td class="email-detail-value"><a href="mailto:{{ $lead->email }}" style="color:#176f77;text-decoration:none">{{ $lead->email }}</a></td></tr>
+        <tr><td class="email-detail-label">Téléphone</td><td class="email-detail-value">{{ $lead->phone ?: 'Non renseigné' }}</td></tr>
+        <tr><td class="email-detail-label">Entreprise</td><td class="email-detail-value">{{ $lead->company_name ?: 'Non renseignée' }}</td></tr>
+        <tr><td class="email-detail-label email-detail-last">Profil</td><td class="email-detail-value email-detail-last">{{ $lead->profile ?: 'Non renseigné' }}</td></tr>
+    </table>
+
+    <div style="margin-top:24px;padding:18px 20px;border:1px solid #dce6e8;border-radius:10px;background:#f8fafb">
+        <div style="margin-bottom:8px;color:#718286;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">Message</div>
+        <div style="color:#40565a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7">{!! nl2br(e($lead->message ?: 'Aucun message complémentaire.')) !!}</div>
     </div>
-</body>
-</html>
+@endsection
+
+@section('action')
+    <a href="mailto:{{ $lead->email }}" class="email-button">Répondre au demandeur</a>
+@endsection
+
+@section('notice')
+    Source : solutcloud.com · Reçue le {{ optional($lead->created_at)->format('d/m/Y à H:i') ?: now()->format('d/m/Y à H:i') }}.
+@endsection

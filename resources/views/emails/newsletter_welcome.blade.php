@@ -1,17 +1,37 @@
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <title>Bienvenue chez SOLUTCLOUD</title>
-</head>
-<body style="margin:0;background:#f3f6f7;font-family:Arial,sans-serif;color:#172126">
-    <div style="max-width:600px;margin:0 auto;padding:32px 16px">
-        <div style="background:#ffffff;border-radius:12px;padding:32px;border-top:5px solid #2b909a;text-align:center">
-            <h1 style="margin:0 0 18px;font-size:24px">Bienvenue dans la newsletter SOLUTCLOUD</h1>
-            <p style="margin:0 0 20px;line-height:1.7">Votre inscription est confirmée. Vous recevrez nos conseils, nouveautés et informations sur la gestion d’entreprise.</p>
-            <a href="https://solutcloud.com" style="display:inline-block;padding:12px 22px;border-radius:7px;background:#2b909a;color:#ffffff;text-decoration:none;font-weight:bold">Découvrir SOLUTCLOUD</a>
-            <p style="margin:24px 0 0;color:#66747c;font-size:12px">Vous recevez ce message après une inscription sur solutcloud.com.</p>
-        </div>
-    </div>
-</body>
-</html>
+@extends('emails.layouts.transactional', [
+    'emailTitle' => 'Bienvenue dans l’écosystème SOLUTCLOUD',
+    'preheader' => 'Votre inscription aux actualités SOLUTCLOUD est confirmée.',
+    'emailCategory' => 'Newsletter',
+    'emailBadge' => 'Inscription confirmée',
+    'emailIntro' => 'Vous recevrez désormais une sélection utile d’actualités, de conseils et d’évolutions autour de la gestion d’entreprise.',
+])
+
+@section('content')
+    <p>Bonjour,</p>
+    <p>Merci de rejoindre SOLUTCLOUD. Nous privilégions des communications claires, occasionnelles et directement utiles à votre activité.</p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0">
+        <tr>
+            <td width="30" valign="top" style="color:#176f77;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700">01</td>
+            <td style="padding:0 0 18px 12px;border-bottom:1px solid #e5ecee;color:#4b5f63;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6"><strong style="color:#20373a">Conseils opérationnels</strong><br>Des méthodes concrètes pour mieux piloter votre entreprise.</td>
+        </tr>
+        <tr>
+            <td width="30" valign="top" style="padding-top:18px;color:#176f77;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700">02</td>
+            <td style="padding:18px 0 18px 12px;border-bottom:1px solid #e5ecee;color:#4b5f63;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6"><strong style="color:#20373a">Nouveautés produit</strong><br>Les fonctionnalités et améliorations qui comptent réellement.</td>
+        </tr>
+        <tr>
+            <td width="30" valign="top" style="padding-top:18px;color:#176f77;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700">03</td>
+            <td style="padding:18px 0 0 12px;color:#4b5f63;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6"><strong style="color:#20373a">Ressources sélectionnées</strong><br>Des contenus pour accélérer l’adoption de vos outils numériques.</td>
+        </tr>
+    </table>
+
+    <p style="font-size:13px;color:#718286">Inscription enregistrée pour <strong>{{ $subscriber->email }}</strong>.</p>
+@endsection
+
+@section('action')
+    <a href="https://solutcloud.com" class="email-button">Découvrir la plateforme</a>
+@endsection
+
+@section('notice')
+    Vous recevez ce message parce que cette adresse a été inscrite à la newsletter depuis solutcloud.com.
+@endsection

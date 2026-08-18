@@ -1,64 +1,38 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px; }
-        .card { max-width: 600px; margin: auto; background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
-        .header { background: #2B909A; padding: 20px; text-align: center; font-weight: bold; font-size: 18px; letter-spacing: 1px; color: white; }
-        .content { padding: 30px; }
-        .badge { background: #10b981; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-block; margin-bottom: 20px; }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table td { padding: 12px 8px; border-bottom: 1px solid #334155; }
-        .label { color: #94a3b8; width: 150px; font-size: 13px; text-transform: uppercase; }
-        .value { color: #ffffff; font-weight: 600; }
-        .action-box { margin-top: 30px; padding: 20px; background: #0f172a; border-radius: 8px; border: 1px solid #2B909A; text-align: center; }
-        .action-box p { margin: 0 0 15px 0; font-size: 14px; }
-        .btn-admin { display: inline-block; padding: 10px 20px; background: #2B909A; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <div class="header">NOUVELLE COMMANDE À TRAITER</div>
-        <div class="content">
-            <div class="badge">PAIEMENT REÇU - À INSTALLER</div>
-            
-            <table class="data-table">
-                <tr>
-                    <td class="label">Entreprise :</td>
-                    <td class="value">{{ $order->company_name }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Responsable :</td>
-                    <td class="value">{{ $order->customer_name }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Email :</td>
-                    <td class="value">{{ $order->customer_email }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Téléphone :</td>
-                    <td class="value">{{ $order->customer_phone }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Offre :</td>
-                    <td class="value" style="color: #2B909A;">SOLUTCLOUD {{ $order->plan }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Montant :</td>
-                    <td class="value">{{ number_format($order->amount, 0, ',', ' ') }} FCFA</td>
-                </tr>
-            </table>
+@extends('emails.layouts.transactional', [
+    'emailTitle' => 'Nouvelle commande à provisionner',
+    'preheader' => 'Une commande SOLUTCLOUD payée nécessite la création de son instance.',
+    'emailCategory' => 'Administration',
+    'emailBadge' => 'Paiement confirmé',
+    'emailIntro' => 'Le paiement est validé. L’environnement client peut maintenant être configuré et mis en service.',
+])
 
-            <div class="action-box">
-                <p>🚀 Connectez-vous à LWS pour créer l'instance :</p>
-                <!-- Ici on génère l'URL prévisionnelle pour t'aider -->
-                <p style="color: #2B909A; font-family: monospace;">
-                    {{ Str::slug($order->company_name) }}.solutcloud.com
-                </p>
-                <a href="https://login.solutcloud.com/admin" class="btn-admin">ACCÉDER AU DASHBOARD ADMIN</a>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+@section('content')
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;border-radius:10px;background:#102a2d">
+        <tr>
+            <td style="padding:22px 24px">
+                <div style="color:#9cced1;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase">Montant encaissé</div>
+                <div style="margin-top:7px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:700;line-height:1.2">{{ number_format((float) $order->amount, 0, ',', ' ') }} FCFA</div>
+            </td>
+        </tr>
+    </table>
+
+    <p>Une nouvelle commande a été enregistrée pour <strong>{{ $order->company_name }}</strong>. Voici les informations utiles à son traitement.</p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel">
+        <tr><td class="email-detail-label">Entreprise</td><td class="email-detail-value">{{ $order->company_name }}</td></tr>
+        <tr><td class="email-detail-label">Responsable</td><td class="email-detail-value">{{ $order->customer_name }}</td></tr>
+        <tr><td class="email-detail-label">E-mail</td><td class="email-detail-value"><a href="mailto:{{ $order->customer_email }}" style="color:#176f77;text-decoration:none">{{ $order->customer_email }}</a></td></tr>
+        <tr><td class="email-detail-label">Téléphone</td><td class="email-detail-value">{{ $order->customer_phone ?: 'Non renseigné' }}</td></tr>
+        <tr><td class="email-detail-label">Offre</td><td class="email-detail-value">{{ strtoupper($order->plan) }}</td></tr>
+        <tr><td class="email-detail-label">Transaction</td><td class="email-detail-value">{{ $order->transaction_id }}</td></tr>
+        <tr><td class="email-detail-label email-detail-last">Domaine prévu</td><td class="email-detail-value email-detail-last">{{ \Illuminate\Support\Str::slug($order->company_name) }}.solutcloud.com</td></tr>
+    </table>
+@endsection
+
+@section('action')
+    <a href="https://login.solutcloud.com/admin" class="email-button">Ouvrir l’administration</a>
+@endsection
+
+@section('notice')
+    Vérifiez la transaction, créez l’instance puis contrôlez son accessibilité avant l’envoi des identifiants au client.
+@endsection

@@ -24,8 +24,7 @@ class CustomerOrderConfirmation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            // Sujet pro qui rassure le client
-            subject: '🚀 SOLUTCLOUD : Confirmation de votre commande',
+            subject: 'SOLUTCLOUD — Paiement confirmé pour votre commande',
         );
     }
 
@@ -33,7 +32,7 @@ class CustomerOrderConfirmation extends Mailable
     {
         return new Content(
             // On pointe vers ton template de confirmation (pas encore celui des accès)
-            view: 'emails.client_access', 
+            view: 'emails.client_access',
         );
     }
 

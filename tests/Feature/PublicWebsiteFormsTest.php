@@ -104,7 +104,7 @@ class PublicWebsiteFormsTest extends TestCase
         });
 
         $mailHtml = (new NewsletterWelcome(NewsletterSubscriber::firstOrFail()))->render();
-        $this->assertStringContainsString('Bienvenue dans la newsletter SOLUTCLOUD', $mailHtml);
+        $this->assertStringContainsString('Bienvenue dans l’écosystème SOLUTCLOUD', $mailHtml);
     }
 
     public function test_invalid_newsletter_email_is_rejected(): void

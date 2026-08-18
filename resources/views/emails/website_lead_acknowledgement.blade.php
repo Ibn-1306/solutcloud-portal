@@ -1,26 +1,45 @@
-<!doctype html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <title>Votre demande SOLUTCLOUD</title>
-</head>
-<body style="margin:0;background:#f3f6f7;font-family:Arial,sans-serif;color:#172126">
-    <div style="max-width:600px;margin:0 auto;padding:32px 16px">
-        <div style="background:#ffffff;border-radius:12px;padding:32px;border-top:5px solid #2b909a">
-            <h1 style="margin:0 0 18px;font-size:24px">Bonjour {{ $lead->fullname }},</h1>
-            <p style="margin:0 0 16px;line-height:1.7">
-                @if($lead->type === 'trial')
-                    Votre demande d’essai gratuit a bien été reçue.
-                @elseif($lead->type === 'quote')
-                    Votre demande de devis a bien été reçue.
-                @else
-                    Votre message a bien été transmis à notre équipe.
-                @endif
-            </p>
-            <p style="margin:0 0 22px;line-height:1.7">Un conseiller SOLUTCLOUD vous répondra dans les meilleurs délais.</p>
-            <a href="https://solutcloud.com" style="display:inline-block;padding:12px 22px;border-radius:7px;background:#2b909a;color:#ffffff;text-decoration:none;font-weight:bold">Visiter solutcloud.com</a>
-            <p style="margin:24px 0 0;color:#66747c;font-size:12px">Ce message automatique confirme uniquement la réception de votre demande.</p>
-        </div>
+@php
+    $requestLabel = match ($lead->type) {
+        'trial' => 'Demande d’essai',
+        'quote' => 'Demande de devis',
+        default => 'Message de contact',
+    };
+
+    $title = match ($lead->type) {
+        'trial' => 'Votre demande d’essai est confirmée',
+        'quote' => 'Votre demande de devis est confirmée',
+        default => 'Votre message a bien été transmis',
+    };
+@endphp
+
+@extends('emails.layouts.transactional', [
+    'emailTitle' => $title,
+    'preheader' => 'Votre demande a bien été transmise à l’équipe SOLUTCLOUD.',
+    'emailCategory' => 'Suivi de demande',
+    'emailBadge' => 'Demande reçue',
+    'emailIntro' => 'Notre équipe a bien reçu vos informations et reviendra vers vous dans les meilleurs délais.',
+])
+
+@section('content')
+    <p>Bonjour <strong>{{ $lead->fullname }}</strong>,</p>
+    <p>Merci d’avoir contacté SOLUTCLOUD. Votre demande est enregistrée et a été transmise à un conseiller.</p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel">
+        <tr><td class="email-detail-label">Type</td><td class="email-detail-value">{{ $requestLabel }}</td></tr>
+        <tr><td class="email-detail-label">Référence</td><td class="email-detail-value">SC-{{ str_pad((string) $lead->id, 6, '0', STR_PAD_LEFT) }}</td></tr>
+        <tr><td class="email-detail-label email-detail-last">E-mail</td><td class="email-detail-value email-detail-last">{{ $lead->email }}</td></tr>
+    </table>
+
+    <div style="margin-top:24px;padding:18px 20px;border-radius:10px;background:#f0f7f7">
+        <div style="margin-bottom:6px;color:#176f77;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase">Prochaine étape</div>
+        <div style="color:#40565a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65">Un conseiller examinera votre demande et vous contactera avec les informations adaptées à votre besoin.</div>
     </div>
-</body>
-</html>
+@endsection
+
+@section('action')
+    <a href="https://solutcloud.com" class="email-button">Visiter solutcloud.com</a>
+@endsection
+
+@section('notice')
+    Ceci est un accusé de réception automatique. Vous pouvez répondre à ce message pour ajouter une précision à votre demande.
+@endsection
