@@ -110,23 +110,68 @@ class CompanyController extends Controller
         }
     }
 
-    public function activate(Request $request, int $id) {
+    public function activate(Request $request, int $id)
+    {
+        $request->validate([
+            'duration' => [
+                'required',
+                'integer',
+                'in:1,2,3,6,12'
+            ],
+        ], [
+            'duration.in' => 'La durée de réactivation sélectionnée est invalide.',
+            'duration.required' => 'Veuillez sélectionner une durée.',
+        ]);
+
+
         $company = Company::findOrFail($id);
+
         $path = $this->getFtpPath($company);
 
+
         try {
+
+            // Suppression du verrou de suspension
             if (Storage::disk('lws')->exists($path . "/.htaccess")) {
+
                 Storage::disk('lws')->delete($path . "/.htaccess");
+
             }
-            
+
+
+            $months = (int) $request->duration;
+
+
+            $newExpiration = $company->expires_at && $company->expires_at->isFuture()
+                ? $company->expires_at->addMonths($months)
+                : now()->addMonths($months);
+
+
+
             $company->update([
+
                 'status' => 'active',
-                'expires_at' => $company->expires_at->isPast() ? now()->addMonths($request->duration ?? 1) : $company->expires_at->addMonths($request->duration ?? 1)
+
+                'expires_at' => $newExpiration,
+
             ]);
 
-            return back()->with('status', "Instance réactivée.");
+
+
+            return back()->with(
+                'status',
+                "Instance réactivée pour {$months} mois."
+            );
+
+
         } catch (\Exception $e) {
-            return back()->with('error', "Erreur lors de la suppression du verrou FTP.");
+
+
+            return back()->with(
+                'error',
+                "Erreur lors de la réactivation de l'instance."
+            );
+
         }
     }
 

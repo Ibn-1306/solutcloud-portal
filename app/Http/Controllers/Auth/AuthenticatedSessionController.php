@@ -12,7 +12,7 @@ use Illuminate\View\View;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Affiche la vue de connexion unique.
+     * Affiche la vue de connexion.
      */
     public function create(): View
     {
@@ -20,40 +20,34 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Gère l'authentification et la redirection selon le rôle.
+     * Authentifie l'utilisateur et redirige selon son rôle.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
+        // Régénération de session après authentification.
         $request->session()->regenerate();
 
         $user = Auth::user();
 
-        /**
-         * LOGIQUE DE REDIRECTION "SENIOR"
-         * On sépare les flux : Admin vers Gestion, Client vers Portail.
-         */
-        
-        // 1. Redirection pour l'ADMINISTRATEUR
+        // Administrateur : accès à l'espace de gestion.
         if ($user->role === 'admin') {
             return redirect()->intended(route('admin.dashboard'));
         }
 
-        // 2. Redirection pour le CLIENT
-        // Note : On ne vérifie pas le statut ici (active/suspended). 
-        // On laisse le PortalController le faire pour que le client 
-        // puisse se connecter même s'il doit payer son renouvellement.
+        // Client : accès au portail client.
+        // Les contrôles métier restent gérés par le portail.
         if ($user->role === 'client') {
             return redirect()->intended(route('client.dashboard'));
         }
 
-        // Cas par défaut (Sécurité)
+        // Sécurité : rôle non reconnu.
         return redirect()->intended('/');
     }
 
     /**
-     * Déconnexion de la session.
+     * Déconnecte l'utilisateur et détruit sa session.
      */
     public function destroy(Request $request): RedirectResponse
     {

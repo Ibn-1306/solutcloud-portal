@@ -278,21 +278,29 @@
                                             @else
                                                 <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="inline-flex items-center gap-2">
                                                     @csrf
-                                                    <select name="duration" class="text-[10px] py-0.5 px-1 border-gray-300 rounded bg-white">
-                                                        <option value="1">1 mois</option>
-                                                        <option value="12">1 an</option>
+
+                                                    <select 
+                                                        name="duration" 
+                                                        class="text-[10px] py-1 px-2 border-gray-300 rounded-lg bg-white font-semibold focus:border-[#2B909A] focus:ring-[#2B909A]"
+                                                        required
+                                                    >
+                                                        <option value="1">1 Mois</option>
+                                                        <option value="2">2 Mois</option>
+                                                        <option value="3">3 Mois</option>
+                                                        <option value="6">6 Mois</option>
+                                                        <option value="12">12 Mois</option>
                                                     </select>
-                                                    <button class="text-green-600 font-black text-[11px] hover:underline tracking-tighter uppercase">Réactiver</button>
+
+                                                    <button 
+                                                        class="text-green-600 font-black text-[11px] hover:underline tracking-tighter uppercase"
+                                                    >
+                                                        Réactiver
+                                                    </button>
+
                                                 </form>
                                             @endif
                                         @endif
-                                        <form action="{{ route('companies.destroy', $company->id) }}" method="POST" onsubmit="return confirm('Suppression définitive ?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-gray-300 hover:text-red-600 transition-colors">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                            </button>
-                                        </form>
+    
                                     </div>
                                 </td>
                             </tr>
