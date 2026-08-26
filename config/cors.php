@@ -8,8 +8,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    // On autorise toutes les routes API et la route du Webhook Moneroo
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'moneroo-webhook'],
+    // On autorise les routes API publiques utilisées par le site vitrine.
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
@@ -18,7 +18,7 @@ return [
         'https://www.solutcloud.com',
         'https://solutcloud.com',
         'https://login.solutcloud.com',
-        'https://admin.solutcloud.com'
+        'https://admin.solutcloud.com',
     ],
 
     'allowed_origins_patterns' => [],

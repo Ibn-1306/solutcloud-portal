@@ -17,9 +17,11 @@ class WebsiteLeadAcknowledgement extends Mailable
 
     public function envelope(): Envelope
     {
+        $offer = $this->lead->offer ? ' '.$this->lead->offer : '';
         $subject = match ($this->lead->type) {
-            'trial' => 'SOLUTCLOUD — Votre demande d’essai est bien reçue',
-            'quote' => 'SOLUTCLOUD — Votre demande de devis est bien reçue',
+            'trial' => 'SOLUTCLOUD — Confirmation de votre demande de test',
+            'order' => 'SOLUTCLOUD — Confirmation de votre commande'.$offer,
+            'quote' => 'SOLUTCLOUD — Confirmation de votre demande de devis'.$offer,
             default => 'SOLUTCLOUD — Votre message est bien reçu',
         };
 

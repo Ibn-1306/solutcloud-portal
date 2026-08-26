@@ -317,12 +317,14 @@
             margin: 0 auto 22px;
 
             display: block;
+
+            filter: drop-shadow(0 10px 22px rgba(43,144,154,.14));
         }
 
         .login-heading {
             margin: 0;
 
-            color: #ffffff;
+            color: #0f172a;
 
             font-size: 38px;
             line-height: 1.12;
@@ -340,7 +342,7 @@
 
             margin: 20px auto 0;
 
-            color: rgba(255,255,255,.65);
+            color: #64748b;
 
             font-size: 15px;
             line-height: 1.6;
@@ -565,14 +567,27 @@
             flex-direction: column;
             justify-content: center;
 
-            background: #050505;
+            background:
+                radial-gradient(
+                    circle at 92% 10%,
+                    rgba(43, 144, 154, .10) 0%,
+                    rgba(43, 144, 154, 0) 32%
+                ),
+                radial-gradient(
+                    circle at 8% 88%,
+                    rgba(43, 144, 154, .055) 0%,
+                    rgba(43, 144, 154, 0) 30%
+                ),
+                linear-gradient(180deg, #ffffff 0%, #fbfdfd 100%);
 
             padding: 60px clamp(45px, 7vw, 120px);
 
-            color: #ffffff;
+            color: #0f172a;
 
             position: relative;
             overflow: hidden;
+
+            border-left: 1px solid #e6eef0;
         }
 
         /* couche décorative */
@@ -622,7 +637,7 @@
 
             border-radius:50%;
 
-            border:1px solid rgba(255,255,255,.08);
+            border:1px solid rgba(43,144,154,.11);
         }
 
 
@@ -641,8 +656,8 @@
             background:
                 linear-gradient(
                     145deg,
-                    rgba(43,144,154,.18),
-                    transparent
+                    rgba(43,144,154,.11),
+                    rgba(255,255,255,.08)
                 );
 
 
@@ -677,11 +692,11 @@
 
 
             background:
-                rgba(255,255,255,.04);
+                rgba(255,255,255,.68);
 
 
             border:
-                1px solid rgba(255,255,255,.12);
+                1px solid rgba(43,144,154,.14);
 
 
             backdrop-filter:blur(12px);
@@ -692,7 +707,7 @@
 
 
             box-shadow:
-                0 30px 60px rgba(0,0,0,.25);
+                0 24px 60px rgba(15,23,42,.08);
         }
 
 
@@ -755,15 +770,15 @@
 
             border-radius: 22px;
 
-            border: 1px solid rgba(255,255,255,.08);
+            border: 1px solid rgba(43,144,154,.13);
 
             transform: rotate(35deg);
 
             background:
                 linear-gradient(
                     135deg,
-                    rgba(43,144,154,.12),
-                    transparent
+                    rgba(43,144,154,.09),
+                    rgba(255,255,255,.24)
                 );
         }
 
@@ -807,7 +822,7 @@
         .login-heading {
             margin: 0;
 
-            color: #ffffff;
+            color: #0f172a;
 
             font-size: 36px;
             line-height: 1.1;
@@ -818,28 +833,28 @@
         .login-subtitle {
             margin: 13px 0 38px;
 
-            color: rgba(255,255,255,.65);
+            color: #64748b;
 
             font-size: 14px;
             line-height: 1.65;
         }
 
         .form-label {
-            color: rgba(255,255,255,.90);
+            color: #334155;
 
             font-size: 12px;
             font-weight: 650;
         }
 
         .forgot-link {
-            color: rgba(255,255,255,.58);
+            color: #64748b;
 
             font-size: 11px;
             text-decoration: none;
         }
 
         .forgot-link:hover {
-            color: #67cbd2;
+            color: var(--brand-dark);
         }
 
         .form-group {
@@ -856,13 +871,13 @@
 
             padding: 0 46px 0 16px;
 
-            border: 1px solid rgba(255,255,255,.15);
+            border: 1px solid #d7e1e4;
 
             border-radius: 8px;
 
-            color: #ffffff;
+            color: #0f172a;
 
-            background: rgba(255,255,255,.06);
+            background: rgba(255,255,255,.88);
 
             font-size: 14px;
 
@@ -875,7 +890,7 @@
         }
 
         .form-input::placeholder {
-            color: rgba(255,255,255,.38);
+            color: #94a3b8;
         }
 
         .form-input:focus {
@@ -884,7 +899,16 @@
             box-shadow:
                 0 0 0 4px rgba(43,144,154,.13);
 
-            background: rgba(255,255,255,.08);
+            background: #ffffff;
+        }
+
+        .login-panel .password-toggle {
+            color: #64748b;
+        }
+
+        .login-panel .password-toggle:hover {
+            color: var(--brand-dark);
+            background: rgba(43,144,154,.09);
         }
 
         .form-input.no-icon {
@@ -901,13 +925,13 @@
 
             border-radius: 12px;
 
-            color: #fecaca;
+            color: #b91c1c;
 
             background:
-                rgba(220, 38, 38, .12);
+                #fef2f2;
 
             border:
-                1px solid rgba(239, 68, 68, .35);
+                1px solid #fecaca;
 
             font-size: 13px;
             font-weight: 500;
@@ -973,10 +997,10 @@
 
             margin: 0;
 
-            border: 1.5px solid rgba(255,255,255,.38);
+            border: 1.5px solid #94a3b8;
             border-radius: 3px;
 
-            background: transparent;
+            background: #ffffff;
 
             cursor: pointer;
 
@@ -1020,7 +1044,7 @@
         }
 
         .remember-row label {
-            color: rgba(255,255,255,.72);
+            color: #475569;
 
             font-size: 12px;
             font-weight: 500;
@@ -1087,19 +1111,19 @@
             justify-content: space-between;
             gap: 24px;
 
-            color: rgba(255,255,255,.48);
+            color: #94a3b8;
 
             font-size: 10px;
             font-weight: 500;
         }
 
         .right-footer span:first-child {
-            color: rgba(255,255,255,.62);
+            color: #64748b;
             font-weight: 600;
         }
 
         .right-footer span:last-child {
-            color: rgba(255,255,255,.42);
+            color: #94a3b8;
             text-align: right;
         }
 
@@ -1280,20 +1304,12 @@
 
         <!-- Décoration géométrique premium -->
         <div class="login-shapes" aria-hidden="true">
-            <span class="shape-circle"></span>
             <span class="shape-ring"></span>
             <span class="shape-square"></span>
-            <div class="login-shapes" aria-hidden="true">
-
-                <span class="shape-orbit"></span>
-
-                <span class="shape-hexagon"></span>
-
-                <span class="shape-glass"></span>
-
-                <span class="shape-glow"></span>
-
-            </div>
+            <span class="shape-orbit"></span>
+            <span class="shape-hexagon"></span>
+            <span class="shape-glass"></span>
+            <span class="shape-glow"></span>
         </div>
 
         <div class="login-container">

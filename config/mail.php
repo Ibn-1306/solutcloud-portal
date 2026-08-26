@@ -115,4 +115,6 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    'brand_logo_url' => env('SOLUTCLOUD_EMAIL_LOGO_URL', 'https://solutcloud.com/img/favicon.png'),
+
 ];

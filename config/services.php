@@ -35,28 +35,26 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Moneroo (Passerelle de paiement)
-    |--------------------------------------------------------------------------
-    */
-    'moneroo' => [
-        'secret' => env('MONEROO_SECRET_KEY'),
-        'webhook_secret' => env('MONEROO_WEBHOOK_SECRET'),
-        'mode' => env('MONEROO_MODE', 'sandbox'),
-        'base_url' => env('MONEROO_MODE', 'sandbox') === 'production'
-            ? 'https://api.moneroo.io'
-            : 'https://sandbox.moneroo.io',
-        'return_url' => env('MONEROO_RETURN_URL', 'https://solutcloud.com/tarifs.html'),
-        'timeout' => (int) env('MONEROO_TIMEOUT', 10),
-    ],
-
     'cors' => [
         'allowed_origins' => env('CORS_ALLOWED_ORIGINS', 'https://www.solutcloud.com,https://solutcloud.com'),
     ],
 
     'solutcloud' => [
         'contact_recipient' => env('SOLUTCLOUD_CONTACT_RECIPIENT', 'sales@i-solutions.ci'),
+        'portal_url' => env('SOLUTCLOUD_PORTAL_URL', 'https://login.solutcloud.com'),
+    ],
+
+    'moneroo' => [
+        'secret' => env('MONEROO_SECRET_KEY'),
+        'webhook_secret' => env('MONEROO_WEBHOOK_SECRET'),
+        'base_url' => env('MONEROO_BASE_URL', 'https://api.moneroo.io'),
+        'currency' => strtoupper(env('MONEROO_CURRENCY', 'XOF')),
+        'timeout' => (int) env('MONEROO_TIMEOUT', 10),
+        'sandbox_monthly_amounts' => [
+            'start' => (int) env('MONEROO_SANDBOX_START_MONTHLY', 10),
+            'business' => (int) env('MONEROO_SANDBOX_BUSINESS_MONTHLY', 20),
+            'premium' => (int) env('MONEROO_SANDBOX_PREMIUM_MONTHLY', 30),
+        ],
     ],
 
 ];

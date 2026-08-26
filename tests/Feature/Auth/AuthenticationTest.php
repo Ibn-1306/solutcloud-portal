@@ -14,7 +14,11 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get('/login');
 
-        $response->assertStatus(200);
+        $response
+            ->assertStatus(200)
+            ->assertSee('linear-gradient(180deg, #ffffff 0%, #fbfdfd 100%)', false)
+            ->assertSee('border: 1px solid #d7e1e4;', false)
+            ->assertDontSee('background: #050505;', false);
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
@@ -27,7 +31,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('client.dashboard', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

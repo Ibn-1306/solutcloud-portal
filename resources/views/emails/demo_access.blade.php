@@ -8,7 +8,7 @@
 
 @section('content')
     <p>Bonjour,</p>
-    <p>L’environnement de démonstration demandé pour <strong>{{ $demo->company_name }}</strong> est maintenant accessible avec les informations ci-dessous.</p>
+    <p>L’environnement de démonstration demandé pour <strong>SOLUTCLOUD</strong> est maintenant accessible avec les informations ci-dessous.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel">
         <tr><td class="email-detail-label">Adresse</td><td class="email-detail-value"><a href="{{ $demo->url }}" style="color:#2b909a;text-decoration:none">{{ $demo->url }}</a></td></tr>
@@ -17,10 +17,6 @@
     </table>
 
     <p>Nous vous recommandons de tester les principaux parcours de votre activité afin d’évaluer concrètement l’organisation, le suivi et la centralisation proposés par la plateforme.</p>
-@endsection
-
-@section('action')
-    <a href="{{ $demo->url }}" class="email-button">Accéder à la démonstration</a>
 @endsection
 
 @section('notice')

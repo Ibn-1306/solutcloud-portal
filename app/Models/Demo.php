@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Demo extends Model
 {
+    public const DEFAULT_SUBDOMAIN = 'demo';
+
     protected $fillable = [
         'company_name',
         'subdomain',
@@ -22,6 +24,6 @@ class Demo extends Model
 
     public function getUrlAttribute(): string
     {
-        return 'https://' . $this->subdomain . '.solutcloud.com';
+        return 'https://'.$this->subdomain.'.solutcloud.com';
     }
 }

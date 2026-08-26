@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Company extends Model
 {
@@ -21,15 +22,38 @@ class Company extends Model
         'expires_at',
         'erp_login',
         'erp_password',
-        'ftp_path',
+        'subscription_started_at',
     ];
 
     /**
      * Conversion automatique des types.
      */
     protected $casts = [
+
         'expires_at' => 'datetime',
+
+        'subscription_started_at' => 'datetime',
+
     ];
+
+    public function getRenewalPlans()
+    {
+        return SubscriptionPlan::where(
+            'package',
+            strtoupper($this->package)
+        )
+            ->where('active', true)
+            ->get()
+            ->map(function ($plan) {
+
+                $plan->display_price = $this->isPromoPeriod()
+                    ? $plan->promo_price
+                    : $plan->regular_price;
+
+                return $plan;
+
+            });
+    }
 
     /**
      * Utilisateurs liés à l'entreprise.
@@ -39,49 +63,83 @@ class Company extends Model
         return $this->hasMany(User::class);
     }
 
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class)->oldestOfMany();
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     /**
      * URL publique de l'instance Dolibarr.
      */
     public function getInstanceUrlAttribute(): string
     {
         if ($this->package === 'premium' && ! empty($this->custom_domain)) {
-            return 'https://' . $this->custom_domain;
+            return 'https://'.$this->custom_domain;
         }
 
-        return 'https://' . $this->subdomain . '.solutcloud.com';
+        return 'https://'.$this->subdomain.'.solutcloud.com';
     }
 
-        /**
-         * Chemin FTP LWS de l'instance.
-         *
-         * START / BUSINESS :
-         * htdocs/client.solutcloud.com
-         *
-         * PREMIUM :
-         * client.com
-         */
-        /**
-     * Chemin FTP réellement utilisé pour gérer l'instance.
+    public function isPromoPeriod(): bool
+    {
+        if (! $this->subscription_started_at) {
+
+            return true;
+
+        }
+
+        return now()->lessThan(
+            $this->subscription_started_at->copy()->addYear()
+        );
+    }
+
+    public function getPackageUpperAttribute(): string
+    {
+        return strtoupper($this->package);
+    }
+
+    /**
+     * Liste les emplacements LWS possibles, par ordre de priorité.
+     * START/BUSINESS utilisent client.solutcloud.com et PREMIUM entreprise.com,
+     * avec un repli sous htdocs si la configuration FTP LWS l'exige.
      *
-     * Si un chemin FTP a été enregistré manuellement,
-     * il est prioritaire.
-     *
-     * START / BUSINESS :
-     * client.solutcloud.com
-     *
-     * PREMIUM :
-     * chemin FTP réel renseigné lors de l'installation.
+     * @return array<int, string>
      */
+    public function ftpPathCandidates(): array
+    {
+        if ($this->package === 'premium') {
+            if (! filled($this->custom_domain)) {
+                return [];
+            }
+
+            $domain = trim(strtolower($this->custom_domain), " /\\\t\n\r\0\x0B");
+
+            return array_values(array_unique([
+                $domain,
+                'htdocs/'.$domain,
+            ]));
+        }
+
+        if (! filled($this->subdomain)) {
+            return [];
+        }
+
+        $subdomain = trim(strtolower($this->subdomain), " /\\\t\n\r\0\x0B");
+        $domain = $subdomain.'.solutcloud.com';
+
+        return array_values(array_unique([
+            $domain,
+            'htdocs/'.$domain,
+        ]));
+    }
+
     public function getResolvedFtpPathAttribute(): ?string
     {
-        if (! empty($this->ftp_path)) {
-            return trim($this->ftp_path, '/');
-        }
-
-        if ($this->package !== 'premium') {
-            return $this->subdomain . '.solutcloud.com';
-        }
-
-        return null;
+        return $this->ftpPathCandidates()[0] ?? null;
     }
 }

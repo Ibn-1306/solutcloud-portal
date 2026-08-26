@@ -2,19 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Mail\CustomerOrderConfirmation;
+use App\Mail\AccountInvitationMail;
 use App\Mail\DemoAccessMail;
+use App\Mail\InstallationPendingMail;
 use App\Mail\InstanceReadyMail;
 use App\Mail\NewsletterWelcome;
-use App\Mail\QuoteSendMail;
-use App\Mail\SalesNotification;
+use App\Mail\PaymentLinkMail;
 use App\Mail\WebsiteLeadAcknowledgement;
 use App\Mail\WebsiteLeadReceived;
 use App\Models\Company;
 use App\Models\Demo;
 use App\Models\NewsletterSubscriber;
-use App\Models\Order;
-use App\Models\Quote;
+use App\Models\Payment;
+use App\Models\User;
 use App\Models\WebsiteLead;
 use Illuminate\Mail\Mailable;
 use Tests\TestCase;
@@ -23,17 +23,6 @@ class TransactionalEmailsTest extends TestCase
 {
     public function test_every_transactional_email_uses_the_professional_layout(): void
     {
-        $order = new Order([
-            'transaction_id' => 'TX-SC-2026-001',
-            'company_name' => 'Entreprise Démonstration',
-            'customer_name' => 'Awa Koné',
-            'customer_email' => 'awa@example.com',
-            'customer_phone' => '+225 01 02 03 04 05',
-            'plan' => 'premium',
-            'amount' => 250000,
-            'status' => 'paid',
-        ]);
-
         $demo = new Demo([
             'company_name' => 'Entreprise Démonstration',
             'subdomain' => 'entreprise-demo',
@@ -41,20 +30,6 @@ class TransactionalEmailsTest extends TestCase
             'phone' => '+225 01 02 03 04 05',
             'erp_login' => 'admin.demo',
             'erp_password' => 'mot-de-passe-test',
-        ]);
-
-        $quote = new Quote([
-            'quote_number' => 'DEVIS-26-0001',
-            'payment_transaction_id' => 'pay_quote_001',
-            'payment_url' => 'https://checkout.moneroo.io/pay_quote_001',
-            'customer_name' => 'Awa Koné',
-            'customer_email' => 'awa@example.com',
-            'customer_phone' => '+225 01 02 03 04 05',
-            'company_name' => 'Entreprise Démonstration',
-            'amount' => 350000,
-            'duration' => 12,
-            'description' => 'Déploiement, configuration et accompagnement.',
-            'status' => Quote::STATUS_SENT,
         ]);
 
         $company = new Company([
@@ -76,19 +51,66 @@ class TransactionalEmailsTest extends TestCase
         ]);
         $lead->id = 42;
 
+        $orderLead = new WebsiteLead([
+            'type' => 'order',
+            'fullname' => 'Awa Koné',
+            'email' => 'awa@example.com',
+            'phone' => '+225 01 02 03 04 05',
+            'company_name' => 'Entreprise Démonstration',
+            'profile' => 'PME',
+            'offer' => 'START',
+            'message' => 'Commande SOLUTCLOUD START.',
+        ]);
+        $orderLead->id = 43;
+
+        $quoteLead = new WebsiteLead([
+            'type' => 'quote',
+            'fullname' => 'Awa Koné',
+            'email' => 'awa@example.com',
+            'phone' => '+225 01 02 03 04 05',
+            'company_name' => 'Entreprise Démonstration',
+            'profile' => 'PME',
+            'offer' => 'PREMIUM',
+            'message' => 'Demande de devis SOLUTCLOUD PREMIUM.',
+        ]);
+        $quoteLead->id = 44;
+
         $subscriber = new NewsletterSubscriber([
             'email' => 'awa@example.com',
             'is_active' => true,
         ]);
 
+        $payment = new Payment([
+            'reference' => 'PAY-26-0042',
+            'customer_name' => 'Awa Koné',
+            'customer_email' => 'awa@example.com',
+            'company_name' => 'Entreprise Démonstration',
+            'package' => 'premium',
+            'amount' => 2000,
+            'currency' => 'USD',
+            'description' => 'Abonnement annuel SOLUTCLOUD PREMIUM',
+            'checkout_url' => 'https://checkout.moneroo.io/pay_test_42',
+        ]);
+
+        $user = new User([
+            'name' => 'Awa Koné',
+            'email' => 'awa@example.com',
+            'role' => User::ROLE_CLIENT,
+        ]);
+        $user->id = 42;
+
         $messages = [
-            [new CustomerOrderConfirmation($order), 'Votre paiement est confirmé'],
-            [new SalesNotification($order), 'Nouvelle commande à provisionner'],
             [new DemoAccessMail($demo), 'Votre démonstration est prête'],
             [new InstanceReadyMail($company, 'https://entreprise-demo.solutcloud.com', 'admin.demo', 'mot-de-passe-test'), 'Votre instance est opérationnelle'],
-            [new QuoteSendMail($quote), 'Votre devis SOLUTCLOUD PREMIUM'],
+            [new InstallationPendingMail($company), 'Votre instance est en cours de préparation'],
+            [new AccountInvitationMail($user, 'https://login.solutcloud.com/reset-password/test-token?email=awa%40example.com', $company, $payment), 'Activez votre espace client'],
+            [new PaymentLinkMail($payment), 'Votre règlement SOLUTCLOUD'],
             [new WebsiteLeadAcknowledgement($lead), 'Votre message a bien été transmis'],
             [new WebsiteLeadReceived($lead), 'Nouvelle demande commerciale'],
+            [new WebsiteLeadAcknowledgement($orderLead), 'Votre commande est confirmée'],
+            [new WebsiteLeadReceived($orderLead), 'Nouvelle commande à traiter'],
+            [new WebsiteLeadAcknowledgement($quoteLead), 'Votre demande de devis est confirmée'],
+            [new WebsiteLeadReceived($quoteLead), 'Nouvelle demande de devis'],
             [new NewsletterWelcome($subscriber), 'Bienvenue dans l’écosystème SOLUTCLOUD'],
         ];
 
@@ -107,40 +129,177 @@ class TransactionalEmailsTest extends TestCase
         $this->assertStringContainsString('I-SOLUTIONS', $html);
         $this->assertStringContainsString('role="presentation"', $html);
         $this->assertStringContainsString('alt="SOLUTCLOUD"', $html);
+        $this->assertStringContainsString('data-email-footer="centered"', $html);
+        $this->assertStringContainsString('align="center" data-email-footer="centered"', $html);
         $this->assertStringContainsString($expectedHeading, $html);
         $this->assertStringContainsString('#2b909a', strtolower($html));
         $this->assertStringNotContainsString('height:5px;background:#2b909a', strtolower($html));
         $this->assertStringNotContainsString('background:#102a2d', strtolower($html));
         $this->assertStringNotContainsString('background:#e9f5f5', strtolower($html));
+        $this->assertStringNotContainsString('cid:', strtolower($html));
+        $this->assertStringNotContainsString('$message->embed', strtolower($html));
+        $this->assertStringNotContainsString('vient de transmettre une demande depuis le site solutcloud.com', $html);
+        $this->assertStringNotContainsString('Message transactionnel envoyé par SOLUTCLOUD.', $html);
+        $this->assertStringNotContainsString('Ceci est un accusé de réception automatique.', $html);
         $this->assertStringContainsString('SOLUTCLOUD', $subject);
         $this->assertStringNotContainsString('🚀', $html);
         $this->assertStringNotContainsString('💰', $html);
         $this->assertStringNotContainsString('🚀', $subject);
         $this->assertStringNotContainsString('💰', $subject);
         $this->assertStringNotContainsString('✅', $subject);
+
+        if ($mailable instanceof PaymentLinkMail || $mailable instanceof AccountInvitationMail) {
+            $this->assertStringContainsString('class="email-button"', $html);
+        } else {
+            $this->assertStringNotContainsString('class="email-button"', $html);
+        }
     }
 
-    public function test_quote_email_contains_the_secure_moneroo_payment_link(): void
+    public function test_commercial_confirmations_match_each_website_request(): void
     {
-        $quote = new Quote([
-            'quote_number' => 'DEVIS-26-0007',
-            'payment_transaction_id' => 'pay_quote_007',
-            'payment_url' => 'https://checkout.moneroo.io/pay_quote_007',
+        $requests = [
+            [
+                'type' => 'order',
+                'offer' => 'START',
+                'heading' => 'Votre commande est confirmée',
+                'subject' => 'Confirmation de votre commande START',
+                'reference' => 'CMD-'.now()->format('y').'-0043',
+                'detail' => 'validera avec vous les informations de la commande',
+            ],
+            [
+                'type' => 'quote',
+                'offer' => 'PREMIUM',
+                'heading' => 'Votre demande de devis est confirmée',
+                'subject' => 'Confirmation de votre demande de devis PREMIUM',
+                'reference' => 'DEVIS-REQ-'.now()->format('y').'-0043',
+                'detail' => 'étudiera votre besoin et vous contactera',
+            ],
+            [
+                'type' => 'trial',
+                'offer' => null,
+                'heading' => 'Votre demande de test est confirmée',
+                'subject' => 'Confirmation de votre demande de test',
+                'reference' => 'TEST-'.now()->format('y').'-0043',
+                'detail' => 'préparer votre accès de test',
+            ],
+        ];
+
+        foreach ($requests as $request) {
+            $lead = new WebsiteLead([
+                'type' => $request['type'],
+                'offer' => $request['offer'],
+                'fullname' => 'Awa Koné',
+                'email' => 'awa@example.com',
+                'phone' => '+225 01 02 03 04 05',
+                'company_name' => 'Entreprise Démonstration',
+                'profile' => 'PME',
+                'message' => 'Demande transmise depuis solutcloud.com.',
+            ]);
+            $lead->id = 43;
+
+            $mailable = new WebsiteLeadAcknowledgement($lead);
+            $html = $mailable->render();
+
+            $this->assertStringContainsString($request['heading'], $html);
+            $this->assertStringContainsString($request['reference'], $html);
+            $this->assertStringContainsString($request['detail'], $html);
+            $this->assertStringContainsString($request['subject'], $mailable->envelope()->subject);
+        }
+    }
+
+    public function test_payment_button_is_large_centered_and_highly_visible(): void
+    {
+        $payment = new Payment([
+            'reference' => 'PAY-26-0042',
             'customer_name' => 'Awa Koné',
             'customer_email' => 'awa@example.com',
             'company_name' => 'Entreprise Démonstration',
-            'amount' => 350000,
-            'duration' => 12,
-            'status' => Quote::STATUS_SENT,
+            'package' => 'start',
+            'amount' => 70800,
+            'currency' => 'XOF',
+            'checkout_url' => 'https://checkout.moneroo.io/pay_test_42',
         ]);
 
-        $html = (new QuoteSendMail($quote))->render();
+        $html = (new PaymentLinkMail($payment))->render();
 
-        $this->assertStringContainsString('https://checkout.moneroo.io/pay_quote_007', $html);
-        $this->assertStringContainsString('Cliquez ici pour payer', $html);
-        $this->assertStringContainsString('Paiement sécurisé', $html);
-        $this->assertStringContainsString('350 000 FCFA', $html);
-        $this->assertStringNotContainsString('Échanger sur cette proposition', $html);
-        $this->assertStringNotContainsString('Pour accepter cette proposition', $html);
+        $this->assertStringContainsString('width="420"', $html);
+        $this->assertStringContainsString('align="center"', $html);
+        $this->assertStringContainsString('padding:18px 32px', $html);
+        $this->assertStringContainsString('font-size:16px', $html);
+        $this->assertStringContainsString('Payer en toute sécurité', $html);
+        $this->assertStringNotContainsString('Vérifiez que l’adresse ouverte appartient bien au domaine sécurisé de Moneroo', $html);
+        $this->assertStringNotContainsString('SOLUTCLOUD ne vous demandera jamais vos codes secrets', $html);
+
+        $content = (new PaymentLinkMail($payment))->content();
+        $headers = (new PaymentLinkMail($payment))->headers();
+
+        $this->assertSame('emails.text.payment_link', $content->text);
+        $this->assertSame('solutcloud-payment-link', $headers->text['X-Mailin-Tag']);
+        $this->assertSame('solutcloud-payment-PAY-26-0042', $headers->text['X-Entity-Ref-ID']);
+        $this->assertStringContainsString($payment->checkout_url, view($content->text, compact('payment'))->render());
+    }
+
+    public function test_account_activation_email_contains_the_correct_details_for_every_offer(): void
+    {
+        $offers = [
+            'start' => ['START', 'Jusqu’à 2 utilisateurs', 'Sauvegardes hebdomadaires'],
+            'business' => ['BUSINESS', 'Jusqu’à 5 utilisateurs', 'Sauvegardes quotidiennes'],
+            'premium' => ['PREMIUM', 'Utilisateurs illimités', 'Serveur dédié et isolé'],
+        ];
+
+        foreach ($offers as $package => [$label, $users, $infrastructure]) {
+            $company = new Company([
+                'name' => 'Entreprise Démonstration',
+                'subdomain' => 'entreprise-'.$package,
+                'package' => $package,
+                'status' => 'pending',
+            ]);
+
+            $payment = new Payment([
+                'reference' => 'PAY-26-0042',
+                'company_name' => 'Entreprise Démonstration',
+                'customer_name' => 'Awa Koné',
+                'customer_email' => 'awa@example.com',
+                'package' => $package,
+                'amount' => 70800,
+                'currency' => 'XOF',
+                'description' => "Formation comptable incluse.\nImport initial convenu.",
+            ]);
+
+            $user = new User([
+                'name' => 'Awa Koné',
+                'email' => 'awa@example.com',
+                'role' => User::ROLE_CLIENT,
+            ]);
+
+            $mail = new AccountInvitationMail(
+                $user,
+                'https://login.solutcloud.com/reset-password/test-token',
+                $company,
+                $payment,
+            );
+            $html = $mail->render();
+            $text = view('emails.text.account_invitation', [
+                'user' => $user,
+                'company' => $company,
+                'payment' => $payment,
+                'offerDetails' => $mail->offerDetails,
+                'resetUrl' => $mail->resetUrl,
+            ])->render();
+
+            foreach ([$html, $text] as $content) {
+                $this->assertStringContainsString('SOLUTCLOUD '.$label, $content);
+                $this->assertStringContainsString($users, $content);
+                $this->assertStringContainsString($infrastructure, $content);
+                $this->assertStringContainsString('Description / Notes additionnelles', $content);
+                $this->assertStringContainsString('Formation comptable incluse.', $content);
+                $this->assertStringContainsString('PAY-26-0042', $content);
+                $this->assertStringContainsString('70 800 XOF', $content);
+                $this->assertStringContainsString('awa@example.com', $content);
+                $this->assertStringContainsString('https://login.solutcloud.com/reset-password/test-token', $content);
+            }
+
+            $this->assertStringContainsString('Activer mon compte', $html);
+        }
     }
 }

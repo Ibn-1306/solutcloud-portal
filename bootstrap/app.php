@@ -20,10 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         // 2. EXEMPTION CSRF
-        // On autorise les appels API externes et le futur Webhook de Moneroo.
+        // On autorise les appels API externes du site vitrine.
         $middleware->validateCsrfTokens(except: [
             'api/*',
-            'moneroo-webhook' 
         ]);
 
         // 3. ÉTAT DE L'API

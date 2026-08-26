@@ -1,4 +1,8 @@
-<x-app-layout>
+<x-admin-layout
+    title="SOLUTCLOUD — Démonstrations"
+    page-title="Démonstrations"
+    description="Création et suivi des accès de démonstration."
+>
     <style>
     .brand-teal { color: #2B909A; }
     .bg-brand-teal { background-color: #2B909A; }
@@ -19,12 +23,6 @@
         h2 { font-size: 1.25rem; }
     }
     </style>
-
-    <x-slot name="header">
-        <h2 class="font-bold text-xl text-black leading-tight uppercase tracking-widest">
-            Essai Gratuit
-        </h2>
-    </x-slot>
 
     <div class="py-8 relative min-h-screen">
         <div class="admin-watermark"></div>
@@ -67,8 +65,9 @@
                             <input type="text" name="company_name" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="Saisir la raison sociale">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Identifiant d'instance</label>
-                            <input type="text" name="subdomain" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="ex : www.demo.solutcloud.com">
+                            <label for="demo-subdomain" class="block text-xs font-bold text-gray-500 uppercase mb-1">Identifiant d'instance</label>
+                            <input id="demo-subdomain" type="text" name="subdomain" value="{{ \App\Models\Demo::DEFAULT_SUBDOMAIN }}" class="input-field cursor-not-allowed bg-slate-100 text-slate-500" readonly aria-readonly="true">
+                            <p class="mt-1.5 text-xs text-gray-400">Adresse fixe : <strong class="text-[#237781]">https://demo.solutcloud.com</strong></p>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Client</label>
@@ -133,8 +132,27 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="px-8 py-10 text-center text-gray-400 font-semibold">
-                                    Aucune démonstration déployée pour le moment.
+                                <td colspan="5" class="px-8 py-16 text-center align-middle">
+
+                                    <div class="flex flex-col items-center justify-center text-gray-400 font-semibold">
+
+                                        <svg class="w-10 h-10 mb-3 text-gray-300"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24">
+
+                                            <path stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                        </svg>
+
+                                        <span class="text-sm">
+                                            Aucune démonstration déployée pour le moment.
+                                        </span>
+
+                                    </div>
+
                                 </td>
                             </tr>
                             @endforelse
@@ -144,4 +162,4 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+</x-admin-layout>

@@ -3,34 +3,37 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Support\OfferCatalog;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 
 class PortalController extends Controller
 {
-    /**
-     * Affiche le dashboard client
-     */
-    public function index()
+    public function index(): View
     {
-        // Utilisation de la relation directe définie dans le modèle User
         $user = Auth::user();
-        $company = $user->company;
+        $company = $user->company()
+            ->with('payment')
+            ->first();
 
-        if (!$company) {
+        if ($company === null) {
             Auth::logout();
-            return redirect()->route('login')->with('error', 'Compte orphelin. Contactez le support.');
+            abort(403, 'Compte client sans entreprise.');
         }
 
-        return view('client.dashboard', compact('company'));
+        return view('client.dashboard', [
+            'company' => $company,
+            'payment' => $company->payment,
+            'offerDetails' => OfferCatalog::details($company->package),
+        ]);
     }
 
-    /**
-     * Logique de renouvellement (SP3)
-     */
-    public function renew()
+    public function profile(): View
     {
-        // Futur branchement sur l'OrderController pour Moneroo
-        return back()->with('status', 'La passerelle de réabonnement est en cours de déploiement.');
+        $company = Auth::user()->company;
+
+        abort_if($company === null, 403, 'Compte client sans entreprise.');
+
+        return view('client.profile', compact('company'));
     }
 }

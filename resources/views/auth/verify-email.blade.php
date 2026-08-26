@@ -5,7 +5,7 @@
 
     @if (session('status') == 'verification-link-sent')
         <div class="mb-4 font-medium text-sm text-green-600">
-            {{ __('Un nouveau lien de vérification a été envoyé à l'adresse électronique que vous avez fournie lors de votre inscription.') }}
+            {{ __("Un nouveau lien de vérification a été envoyé à l'adresse électronique que vous avez fournie lors de votre inscription.") }}
         </div>
     @endif
 
@@ -15,7 +15,7 @@
 
             <div>
                 <x-primary-button>
-                    {{ __('Renvoyer l'e-mail de vérification') }}
+                    {{ __("Renvoyer l'e-mail de vérification") }}
                 </x-primary-button>
             </div>
         </form>

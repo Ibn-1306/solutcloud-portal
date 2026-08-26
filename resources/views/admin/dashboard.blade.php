@@ -1,428 +1,209 @@
-<x-app-layout>
-    <style>
-    .brand-teal { color: #2B909A; }
-    .bg-brand-teal { background-color: #2B909A; }
-    .input-field { border: 1px solid #e2e8f0; border-radius: 0.375rem; width: 100%; padding: 0.6rem; font-size: 15px; }
-    .admin-card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid #f1f5f9; }
-    svg.icon-fix { width: 28px !important; height: 28px !important; flex-shrink: 0; }
-    .admin-watermark {
-        position: fixed; top: 52%; left: 50%; transform: translate(-50%, -50%);
-        width: 1000px; height: 800px;
-        background-image: url('{{ asset("img/favicon.png") }}');
-        background-size: contain; background-repeat: no-repeat; background-position: center;
-        opacity: 0.05; pointer-events: none; z-index: 0; transition: all 0.3s ease;
-    }
-    @media (max-width: 768px) {
-        .admin-watermark { width: 300px; height: 300px; opacity: 0.03; }
-        .admin-card { padding: 1rem; }
-        .input-field { font-size: 16px; }
-        h2 { font-size: 1.25rem; }
-    }
-    </style>
-
-    <x-slot name="header">
-        <h2 class="font-bold text-xl text-black leading-tight uppercase tracking-widest">
-            BIENVENUE SUR SOLUTCLOUD GESTION
-        </h2>
-    </x-slot>
-
-    <div class="py-8 relative min-h-screen">
-        <div class="admin-watermark"></div>
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 relative z-10">
-
-            {{-- STATISTIQUES --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                
-                {{-- Carte 1 : Total Entreprises --}}
-                <div class="admin-card p-5 border-l-4 border-cyan-500 bg-white/95 backdrop-blur-md shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Total Entreprises</p>
-                            <h3 class="text-xl font-black text-gray-800 mt-1">
-                                {{ $totalCount }} <span class="text-[10px] text-gray-500">ENTREPRISE(S)</span>
-                            </h3>
-                        </div>
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5M9 9.75h1.5M9 12.75h1.5M9 15.75h1.5m4.5-9H15m-1.5 3H15m-1.5 3H15m-1.5 3H15" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Carte 2 : En attente d'installation --}}
-                <div class="admin-card p-5 border-l-4 border-amber-500 bg-white/95 backdrop-blur-md shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">En attente d'installation</p>
-                            <h3 class="text-xl font-black {{ $pendingCount > 0 ? 'text-amber-600' : 'text-gray-800' }} mt-1">
-                                {{ $pendingCount }} <span class="text-[10px] text-gray-500">A INSTALLER</span>
-                            </h3>
-                        </div>
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
-                            <svg class="w-6 h-6 {{ $pendingCount > 0 ? 'text-amber-600 animate-pulse' : 'text-gray-400' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Carte 3 : Instances Actives --}}
-                <div class="admin-card p-5 border-l-4 border-brand-teal bg-white/95 backdrop-blur-md shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Instances Actives</p>
-                            <h3 class="text-xl font-black text-gray-800 mt-1">
-                                {{ $activeCount }} <span class="text-[10px] text-gray-500">CLIENT(S)</span>
-                            </h3>
-                        </div>
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-brand-teal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a2.25 2.25 0 01-2.25-2.25V6.75A2.25 2.25 0 015.25 4.5h13.5a2.25 2.25 0 012.25 2.25v5.25a2.25 2.25 0 01-2.25 2.25m-13.5 0L3 16.5m15.75-2.25l2.25 2.25M3.75 20.25h16.5M18.75 20.25h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Carte 4 : Alertes --}}
-                <div class="admin-card p-5 border-l-4 {{ $alerts > 0 ? 'border-orange-500' : 'border-gray-200' }} bg-white/95 backdrop-blur-md shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">Alertes Échéances (7j)</p>
-                            <h3 class="text-xl font-black {{ $alerts > 0 ? 'text-orange-600' : 'text-gray-800' }} mt-1">
-                                {{ $alerts }} <span class="text-[10px] text-gray-500">CRITIQUE(S)</span>
-                            </h3>
-                        </div>
-                        <div class="w-12 h-12 {{ $alerts > 0 ? 'bg-orange-50 border-orange-100' : '' }} rounded-2xl flex items-center justify-center">
-                            <svg class="w-6 h-6 {{ $alerts > 0 ? 'text-orange-600 animate-pulse' : 'text-gray-400' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
+<x-admin-layout
+    title="SOLUTCLOUD — Administration"
+    page-title="Tableau de bord"
+    description="Vue d’ensemble des clients, instances et échéances."
+>
+    <section class="relative overflow-hidden rounded-3xl bg-[#0a3034] px-5 py-7 text-white shadow-xl shadow-[#0a3034]/10 sm:px-8 sm:py-9">
+        <div class="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-[#2b909a]/40 blur-3xl"></div>
+        <div class="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div class="max-w-3xl">
+                <p class="text-xs font-extrabold uppercase tracking-[.2em] text-[#8bd4da]">Centre de pilotage</p>
+                <h2 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Bienvenue dans SOLUTCLOUD Gestion</h2>
+                <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">Suivez vos clients, confirmez les installations et gérez les opérations commerciales depuis un espace unique.</p>
             </div>
-
-            @if (session('status'))
-                <div class="relative z-50 mb-6 p-4 bg-brand-teal text-white font-bold rounded-xl shadow-lg flex items-center animate-bounce">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="relative z-50 mb-6 p-4 bg-red-600 text-white rounded-xl shadow-lg">
-                    <ul class="list-disc list-inside font-bold">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            {{-- FORMULAIRE D'AJOUT --}}
-            <div class="admin-card p-10 mb-12 bg-white/90 backdrop-blur-sm">
-                <div class="flex items-center mb-8 border-b pb-4">
-                    <svg class="icon-fix brand-teal mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                    </svg>
-                    <h3 class="text-lg font-extrabold text-gray-800 uppercase">Nouveau Client</h3>
-                </div>
-
-                <form action="{{ route('admin.companies.store') }}" method="POST">
-                    @csrf
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dénomination Sociale</label>
-                            <input type="text" id="company_name" name="name" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="Saisir la raison sociale">
-                        </div>
-                        <div>
-                            <label id="label-domain" class="block text-xs font-bold text-gray-500 uppercase mb-1">Identifiant d'instance</label>
-                            <input type="text" id="input-domain" name="subdomain" class="input-field bg-gray-50 cursor-not-allowed focus:ring-0" required readonly placeholder="Par dénomination">
-                            <p id="hint-domain" class="text-[10px] text-gray-400 mt-1">Adresse : <span id="preview-url" class="font-bold text-cyan-600">...</span>.solutcloud.com</p>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Client</label>
-                            <input type="email" name="email" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="client@email.com">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Téléphone Client</label>
-                            <input type="tel" name="phone" class="input-field focus:border-cyan-600 focus:ring-0" placeholder="+225 07 00 00 00 00">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Mot de passe</label>
-                            <input type="password" name="password" class="input-field focus:border-cyan-600 focus:ring-0" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Forfait</label>
-                            <select name="package" class="input-field">
-                                <option value="start">Forfait START</option>
-                                <option value="business">Forfait BUSINESS</option>
-                                <option value="premium">Forfait PREMIUM</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Engagement Initial</label>
-                            <select name="duration" class="input-field bg-gray-100 cursor-not-allowed" readonly>
-                                <option value="12" selected>12 Mois (1 an)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-8 text-right">
-                        <button type="submit" class="bg-brand-teal hover:bg-cyan-800 text-white font-bold py-3 px-5 rounded-lg shadow-lg transition-all uppercase text-sm tracking-widest">
-                            Créer instance
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            {{-- TABLEAU DES CLIENTS --}}
-            <div class="admin-card overflow-hidden bg-white/90 backdrop-blur-sm">
-                <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 class="text-sm font-black text-gray-700 uppercase tracking-tighter">Instances Déployées</h3>
-                    <span class="px-3 py-1 bg-brand-teal/10 text-brand-teal text-[10px] font-black rounded-full uppercase">
-                        {{ $companies->count() }} Client(s)
-                    </span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-gray-900 text-white">
-                            <tr>
-                                <th class="px-8 py-4 text-left text-[11px] font-bold uppercase tracking-widest">Entreprise & URL</th>
-                                <th class="px-6 py-4 text-center text-[11px] font-bold uppercase tracking-widest">Forfait</th>
-                                <th class="px-6 py-4 text-center text-[11px] font-bold uppercase tracking-widest">Statut</th>
-                                <th class="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-widest">Échéance</th>
-                                <th class="px-8 py-4 text-right text-[11px] font-bold uppercase tracking-widest">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @forelse($companies as $company)
-                            <tr class="hover:bg-teal-50/30 transition-colors">
-                                <td class="px-8 py-5">
-                                    <div class="font-bold text-gray-900">{{ $company->name }}</div>
-                                    <div class="text-[11px] text-teal-600 font-medium">
-                                    @if($company->package === 'premium')
-                                    https://{{ $company->subdomain }}
-                                    @else
-                                    https://{{ $company->subdomain }}.solutcloud.com
-                                    @endif
-                                    </div>
-                                    <div class="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        <a href="mailto:{{ $company->email ?? $company->users->first()->email ?? '' }}" class="hover:text-teal-600 hover:underline">
-                                            {{ $company->email ?? $company->users->first()->email ?? 'Email non défini' }}
-                                        </a>
-                                    </div>
-                                    @if($company->phone)
-                                    <div class="flex items-center gap-1 text-[10px] text-gray-400 mt-0.5">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                        </svg>
-                                        <a href="tel:{{ $company->phone }}" class="hover:text-teal-600 hover:underline">{{ $company->phone }}</a>
-                                    </div>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-5 text-center">
-                                    <span class="px-3 py-1 rounded text-[10px] font-black uppercase {{ $company->package == 'premium' ? 'bg-amber-100 text-amber-700 border border-amber-200' : ($company->package == 'business' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600') }}">
-                                        {{ $company->package }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-5 text-center">
-                                    @if($company->status == 'pending')
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold uppercase">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
-                                            Attente Install
-                                        </span>
-                                    @elseif($company->status == 'active')
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-bold uppercase">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                                            Actif
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-[10px] font-bold uppercase">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                            Suspendu
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-5">
-                                    <div class="text-sm font-bold text-gray-700">
-                                        {{ $company->expires_at ? $company->expires_at->format('d/m/Y') : 'N/A' }}
-                                    </div>
-                                    <div class="text-[11px] text-gray-600 tracking-tighter">
-                                        @if($company->expires_at)
-                                        @if(now()->gt($company->expires_at))
-                                        <span class="text-red-500 font-bold">Expiré</span>
-                                        @else
-                                        Expire dans {{ (int) now()->diffInDays($company->expires_at) }} jours
-                                        @endif
-                                        @endif
-                                    </div>
-                                </td>
-                                <td class="px-8 py-5 text-right">
-                                    <div class="flex justify-end items-center gap-4">
-                                        @if($company->status == 'pending')
-                                            <button onclick="openFinalizeModal('{{ $company->id }}', '{{ $company->name }}')"
-                                                    class="bg-blue-600 text-white px-3 py-1 rounded-md font-black text-[10px] hover:bg-blue-700 transition-all uppercase">
-                                                Finaliser l'activation
-                                            </button>
-                                        @else
-                                            @if($company->status == 'active')
-                                                <form action="{{ route('admin.suspend', $company->id) }}" method="POST" onsubmit="return confirm('Suspendre cet accès ?')">
-                                                    @csrf
-                                                    <button class="text-red-600 font-black text-[11px] hover:underline tracking-tighter uppercase">Suspendre</button>
-                                                </form>
-                                            @else
-                                                <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="inline-flex items-center gap-2">
-                                                    @csrf
-
-                                                    <select 
-                                                        name="duration" 
-                                                        class="text-[10px] py-1 px-2 border-gray-300 rounded-lg bg-white font-semibold focus:border-[#2B909A] focus:ring-[#2B909A]"
-                                                        required
-                                                    >
-                                                        <option value="1">1 Mois</option>
-                                                        <option value="2">2 Mois</option>
-                                                        <option value="3">3 Mois</option>
-                                                        <option value="6">6 Mois</option>
-                                                        <option value="12">12 Mois</option>
-                                                    </select>
-
-                                                    <button 
-                                                        class="text-green-600 font-black text-[11px] hover:underline tracking-tighter uppercase"
-                                                    >
-                                                        Réactiver
-                                                    </button>
-
-                                                </form>
-                                            @endif
-                                        @endif
-    
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="px-8 py-10 text-center text-gray-400 font-semibold">
-                                    Aucune instance déployée pour le moment.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+            <div class="grid grid-cols-2 gap-3 sm:flex">
+                <a href="{{ route('admin.payments.index') }}#payment-form" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-4 text-center text-sm font-extrabold text-[#176f78] transition hover:bg-[#e5f5f6] focus:outline-none focus:ring-2 focus:ring-white/50">Nouveau paiement</a>
+                <a href="#new-instance" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/20 bg-white/[.08] px-4 text-center text-sm font-extrabold text-white transition hover:bg-white/[.14] focus:outline-none focus:ring-2 focus:ring-white/50">Créer une instance</a>
             </div>
         </div>
+    </section>
 
-        {{-- MODAL DE FINALISATION --}}
-        <dialog id="modal-finalize" class="rounded-2xl p-0 border-none shadow-2xl backdrop:bg-black/50">
-            <div class="p-8 w-[450px] bg-white">
-                <div class="flex items-center mb-6">
-                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-black text-gray-800 uppercase">Finaliser l'installation</h3>
-                        <p id="finalize-client-name" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"></p>
-                    </div>
+    <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicateurs administrateur">
+        @php
+            $metrics = [
+                ['label' => 'Total entreprises', 'value' => $totalCount, 'note' => 'Comptes enregistrés', 'color' => 'text-[#207b84]', 'bg' => 'bg-[#e5f5f6]', 'icon' => 'company'],
+                ['label' => "En attente d'installation", 'value' => $pendingCount, 'note' => 'À préparer', 'color' => 'text-amber-700', 'bg' => 'bg-amber-50', 'icon' => 'clock'],
+                ['label' => 'Instances actives', 'value' => $activeCount, 'note' => 'Clients opérationnels', 'color' => 'text-emerald-700', 'bg' => 'bg-emerald-50', 'icon' => 'server'],
+                ['label' => 'Échéances sous 7 jours', 'value' => $alerts, 'note' => 'À surveiller', 'color' => $alerts > 0 ? 'text-red-700' : 'text-slate-600', 'bg' => $alerts > 0 ? 'bg-red-50' : 'bg-slate-100', 'icon' => 'alert'],
+            ];
+        @endphp
+        @foreach ($metrics as $metric)
+            <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div class="flex items-start justify-between gap-4">
+                    <div><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">{{ $metric['label'] }}</p><p class="mt-3 text-3xl font-extrabold text-slate-950">{{ $metric['value'] }}</p><p class="mt-1 text-xs font-semibold text-slate-500">{{ $metric['note'] }}</p></div>
+                    <span class="flex shrink-0 items-center justify-center {{ $metric['color'] }}">
+                        @if ($metric['icon'] === 'company')<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h1M14 10h1M9 14h1M14 14h1M10 21v-3h4v3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        @elseif ($metric['icon'] === 'clock')<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>
+                        @elseif ($metric['icon'] === 'server')<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h7M11 17h7" stroke-linecap="round"/></svg>
+                        @else<svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 4l9 16H3l9-16z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/></svg>@endif
+                    </span>
                 </div>
-                <form id="form-finalize" method="POST">
+            </article>
+        @endforeach
+    </section>
+
+    @if (session('status'))
+        <div class="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" role="status"><svg class="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ session('status') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800" role="alert">{{ session('error') }}</div>
+    @endif
+    @if ($errors->any())
+        <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert"><p class="font-extrabold">Une vérification est nécessaire.</p><ul class="mt-2 list-disc space-y-1 pl-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+    @endif
+
+    <section id="new-instance" class="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm" aria-labelledby="instance-create-title">
+        <div class="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+            <div class="flex items-start gap-3">
+                <span class="flex shrink-0 items-center justify-center text-[#207b84]">
+                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <rect x="3" y="4" width="13" height="6" rx="2"/><rect x="3" y="14" width="13" height="6" rx="2"/>
+                        <path d="M7 7h.01M7 17h.01M11 7h2M11 17h2M20 8v8M16 12h8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <div><h2 id="instance-create-title" class="text-lg font-extrabold text-slate-950">Créer une instance payée</h2><p class="mt-1 text-xs leading-5 text-slate-500">Seuls les paiements confirmés par Moneroo sont proposés.</p></div>
+            </div>
+            <a href="{{ route('admin.payments.index') }}" class="inline-flex min-h-10 w-fit items-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-extrabold text-slate-700 transition hover:border-[#2b909a]/40 hover:text-[#207b84]">Ouvrir Paiement</a>
+        </div>
+
+        <div class="p-5 sm:p-7">
+            @if ($availablePayments->isEmpty())
+                <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-800"><strong>Aucun paiement disponible.</strong> Créez un paiement et attendez sa confirmation avant de lancer l’installation.</div>
+            @else
+                <form action="{{ route('admin.companies.store') }}" method="POST" id="instance-create-form">
                     @csrf
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Identifiant ERP créé</label>
-                            <input type="text" name="erp_login" class="input-field focus:border-blue-600" required placeholder="ex: admin_solut">
+                    <div class="grid min-w-0 gap-5 lg:grid-cols-2">
+                        <div class="min-w-0">
+                            <label for="instance-payment" class="mb-2 block text-xs font-extrabold uppercase tracking-[.1em] text-slate-500">Paiement confirmé</label>
+                            <select id="instance-payment" name="payment_id" class="min-h-12 w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-[#2b909a] focus:ring-[#2b909a]" required>
+                                <option value="">Sélectionner un paiement payé</option>
+                                @foreach ($availablePayments as $payment)
+                                    <option value="{{ $payment->id }}" data-company="{{ $payment->company_name }}" data-email="{{ $payment->customer_email }}" data-package="{{ $payment->package }}" @selected((string) old('payment_id', $selectedPaymentId) === (string) $payment->id)>{{ $payment->reference }} · {{ $payment->company_name }} · {{ number_format($payment->amount, 0, ',', ' ') }} {{ $payment->currency }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-500 uppercase mb-1">Mot de passe ERP créé</label>
-                            <input type="text" name="erp_password" class="input-field focus:border-blue-600" required placeholder="Saisir le mot de passe">
+                        <div class="min-w-0">
+                            <label id="label-domain" for="input-domain" class="mb-2 block text-xs font-extrabold uppercase tracking-[.1em] text-slate-500">Identifiant d’instance</label>
+                            <input type="text" id="input-domain" name="domain" value="{{ old('domain') }}" class="min-h-12 w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-[#2b909a] focus:ring-[#2b909a]" required placeholder="entreprise">
+                            <p id="hint-domain" class="mt-2 break-all text-xs text-slate-400">Adresse : <span class="font-bold text-[#207b84]">...</span>.solutcloud.com</p>
+                        </div>
+                        <div class="min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:col-span-2">
+                            <p class="text-[11px] font-extrabold uppercase tracking-[.12em] text-slate-400">Client sélectionné</p><p id="selected-company" class="mt-2 break-words font-extrabold text-slate-900">—</p><p id="selected-email" class="mt-1 break-all text-xs text-slate-500">Sélectionnez un paiement</p>
                         </div>
                     </div>
-                    <div class="mt-8 flex justify-end gap-3">
-                        <button type="button" onclick="document.getElementById('modal-finalize').close()" class="text-[10px] font-black text-gray-400 uppercase hover:text-gray-600">Annuler</button>
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-black text-[10px] uppercase shadow-lg shadow-blue-200">
-                            Activer & Envoyer l'Email
-                        </button>
+                    <div class="mt-6 flex flex-col gap-4 rounded-2xl border border-[#2b909a]/15 bg-[#2b909a]/[.04] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="max-w-3xl text-xs leading-5 text-slate-600">Le client recevra les informations d’installation puis le lien sécurisé pour créer son mot de passe.</p>
+                        <button type="submit" class="min-h-12 shrink-0 rounded-xl bg-[#2b909a] px-6 text-sm font-extrabold text-white shadow-lg shadow-[#2b909a]/15 transition hover:bg-[#217b84] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30">Créer et notifier</button>
                     </div>
                 </form>
-            </div>
-        </dialog>
-    </div>
+            @endif
+        </div>
+    </section>
+
+    <section class="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm" aria-labelledby="instances-title">
+        <div class="flex items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-5 sm:px-7">
+            <div><p class="text-xs font-extrabold uppercase tracking-[.15em] text-[#2b909a]">Infrastructure clients</p><h2 id="instances-title" class="mt-1 text-lg font-extrabold text-slate-950">Instances Déployées</h2></div>
+            <span class="shrink-0 rounded-full bg-[#e5f5f6] px-3 py-1 text-xs font-extrabold text-[#207b84]">{{ $companies->count() }}</span>
+        </div>
+
+        <div class="grid gap-4 p-4 lg:hidden">
+            @forelse ($companies as $company)
+                <article class="min-w-0 rounded-2xl border border-slate-200 p-4">
+                    <div class="flex min-w-0 items-start justify-between gap-3"><div class="min-w-0"><h3 class="break-words font-extrabold text-slate-950">{{ $company->name }}</h3><p class="mt-1 break-all text-xs font-semibold text-[#207b84]">{{ $company->instance_url }}</p></div><span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase {{ $company->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($company->status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700') }}">{{ $company->status === 'active' ? 'Actif' : ($company->status === 'pending' ? 'Installation' : 'Suspendu') }}</span></div>
+                    <dl class="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3 text-xs"><div><dt class="text-slate-400">Offre</dt><dd class="mt-1 font-extrabold uppercase text-slate-700">{{ $company->package }}</dd></div><div><dt class="text-slate-400">Échéance</dt><dd class="mt-1 font-extrabold text-slate-700">{{ $company->expires_at?->format('d/m/Y') ?: '—' }}</dd></div><div class="col-span-2"><dt class="text-slate-400">Contact</dt><dd class="mt-1 break-all font-semibold text-slate-700">{{ $company->email }}</dd></div></dl>
+                    <div class="mt-4">
+                        @if ($company->status === 'pending')
+                            <button type="button" data-finalize-company data-company-id="{{ $company->id }}" data-company-name="{{ $company->name }}" class="min-h-11 w-full rounded-xl bg-[#2b909a] px-4 text-xs font-extrabold uppercase text-white">Finaliser l’activation</button>
+                        @elseif ($company->status === 'active')
+                            <form action="{{ route('admin.suspend', $company->id) }}" method="POST" onsubmit="return confirm('Suspendre cet accès ?')">@csrf<button class="min-h-11 w-full rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-extrabold uppercase text-red-700">Suspendre</button></form>
+                        @else
+                            <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="grid grid-cols-[1fr_auto] gap-2">@csrf<select name="duration" class="min-h-11 rounded-xl border-slate-300 text-sm" required>@foreach ([1,2,3,6,12] as $duration)<option value="{{ $duration }}">{{ $duration }} mois</option>@endforeach</select><button class="min-h-11 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold uppercase text-white">Réactiver</button></form>
+                        @endif
+                    </div>
+                </article>
+            @empty
+                <div class="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm font-semibold text-slate-400">Aucune instance déployée pour le moment.</div>
+            @endforelse
+        </div>
+
+        <div class="hidden overflow-x-auto lg:block">
+            <table class="min-w-[1050px] w-full text-sm">
+                <thead class="bg-[#0d282b] text-white"><tr><th class="px-6 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Entreprise</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Contact</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Offre</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Statut</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Échéance</th><th class="px-6 py-4 text-right text-[10px] font-extrabold uppercase tracking-widest">Actions</th></tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($companies as $company)
+                        <tr class="align-middle transition hover:bg-[#2b909a]/[.03]">
+                            <td class="px-6 py-5"><p class="font-extrabold text-slate-900">{{ $company->name }}</p><p class="mt-1 max-w-64 break-all text-xs text-[#207b84]">{{ $company->instance_url }}</p></td>
+                            <td class="px-5 py-5"><p class="break-all font-semibold text-slate-700">{{ $company->email }}</p><p class="mt-1 text-xs text-slate-400">{{ $company->phone ?: 'Non renseigné' }}</p></td>
+                            <td class="px-5 py-5 text-center"><span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-extrabold uppercase text-slate-700">{{ $company->package }}</span></td>
+                            <td class="px-5 py-5 text-center"><span class="rounded-full px-3 py-1 text-[10px] font-extrabold uppercase {{ $company->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($company->status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700') }}">{{ $company->status === 'active' ? 'Actif' : ($company->status === 'pending' ? 'Installation' : 'Suspendu') }}</span></td>
+                            <td class="px-5 py-5"><p class="font-bold text-slate-700">{{ $company->expires_at?->format('d/m/Y') ?: '—' }}</p>@if ($company->expires_at)<p class="mt-1 text-xs {{ now()->gt($company->expires_at) ? 'font-bold text-red-600' : 'text-slate-400' }}">{{ now()->gt($company->expires_at) ? 'Expirée' : ((int) now()->diffInDays($company->expires_at)).' jours restants' }}</p>@endif</td>
+                            <td class="px-6 py-5 text-right">
+                                @if ($company->status === 'pending')
+                                    <button type="button" data-finalize-company data-company-id="{{ $company->id }}" data-company-name="{{ $company->name }}" class="min-h-9 rounded-lg bg-[#2b909a] px-3 text-[10px] font-extrabold uppercase text-white">Finaliser</button>
+                                @elseif ($company->status === 'active')
+                                    <form action="{{ route('admin.suspend', $company->id) }}" method="POST" onsubmit="return confirm('Suspendre cet accès ?')">@csrf<button class="min-h-9 rounded-lg border border-red-200 bg-red-50 px-3 text-[10px] font-extrabold uppercase text-red-700">Suspendre</button></form>
+                                @else
+                                    <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="inline-flex items-center gap-2">@csrf<select name="duration" class="min-h-9 rounded-lg border-slate-300 py-1 text-xs" required>@foreach ([1,2,3,6,12] as $duration)<option value="{{ $duration }}">{{ $duration }} mois</option>@endforeach</select><button class="min-h-9 rounded-lg bg-emerald-600 px-3 text-[10px] font-extrabold uppercase text-white">Réactiver</button></form>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="px-6 py-16 text-center text-sm font-semibold text-slate-400">Aucune instance déployée pour le moment.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <dialog id="modal-finalize" class="m-auto w-[min(520px,calc(100vw-2rem))] rounded-3xl border-0 p-0 shadow-2xl backdrop:bg-slate-950/60 backdrop:backdrop-blur-sm">
+        <div class="bg-white p-5 sm:p-7">
+            <div class="flex items-start justify-between gap-4"><div><p class="text-xs font-extrabold uppercase tracking-[.16em] text-[#2b909a]">Installation ERP</p><h2 class="mt-2 text-xl font-extrabold text-slate-950">Finaliser l’instance</h2><p id="finalize-client-name" class="mt-1 text-sm text-slate-500"></p></div><button type="button" data-close-finalize class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600" aria-label="Fermer"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg></button></div>
+            <form id="form-finalize" method="POST" class="mt-6">@csrf<div class="space-y-4"><div><label for="erp_login" class="mb-2 block text-xs font-extrabold uppercase tracking-[.1em] text-slate-500">Identifiant ERP créé</label><input id="erp_login" type="text" name="erp_login" class="min-h-12 w-full rounded-xl border-slate-300 text-sm focus:border-[#2b909a] focus:ring-[#2b909a]" required></div><div><label for="erp_password" class="mb-2 block text-xs font-extrabold uppercase tracking-[.1em] text-slate-500">Mot de passe ERP créé</label><input id="erp_password" type="text" name="erp_password" class="min-h-12 w-full rounded-xl border-slate-300 text-sm focus:border-[#2b909a] focus:ring-[#2b909a]" required></div></div><div class="mt-6 grid gap-3 sm:grid-cols-2"><button type="button" data-close-finalize class="min-h-12 rounded-xl border border-slate-200 px-5 text-sm font-extrabold text-slate-600">Annuler</button><button type="submit" class="min-h-12 rounded-xl bg-[#2b909a] px-5 text-sm font-extrabold text-white">Activer et envoyer l’e-mail</button></div></form>
+        </div>
+    </dialog>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const inputName = document.getElementById('company_name');
-        const inputDomain = document.getElementById('input-domain');
-        const packageSelect = document.querySelector('select[name="package"]');
-        const labelDomain = document.getElementById('label-domain');
-        const hintDomain = document.getElementById('hint-domain');
+        document.addEventListener('DOMContentLoaded', () => {
+            const paymentSelect = document.getElementById('instance-payment');
+            const inputDomain = document.getElementById('input-domain');
+            const labelDomain = document.getElementById('label-domain');
+            const hintDomain = document.getElementById('hint-domain');
+            const selectedCompany = document.getElementById('selected-company');
+            const selectedEmail = document.getElementById('selected-email');
+            const finalizeModal = document.getElementById('modal-finalize');
+            const finalizeForm = document.getElementById('form-finalize');
+            const finalizeName = document.getElementById('finalize-client-name');
 
-        const slugify = (text) => {
-            return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
-                .replace(/\s+/g, '').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
-        };
+            const slugify = (text) => text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]+/g, '').replace(/--+/g, '-').replace(/^-|-$/g, '');
+            const updateDomainHint = (packageName) => {
+                if (!inputDomain || !hintDomain) return;
+                hintDomain.innerHTML = packageName === 'premium'
+                    ? 'Domaine final : <span class="font-bold text-[#207b84]">' + (inputDomain.value || 'entreprise.com') + '</span>'
+                    : 'Adresse : <span class="font-bold text-[#207b84]">' + (inputDomain.value || '...') + '</span>.solutcloud.com';
+            };
+            const fillPayment = () => {
+                if (!paymentSelect || !inputDomain) return;
+                const option = paymentSelect.options[paymentSelect.selectedIndex];
+                const packageName = option?.dataset.package || '';
+                const companyName = option?.dataset.company || '';
+                selectedCompany.textContent = companyName || '—';
+                selectedEmail.textContent = option?.dataset.email || 'Sélectionnez un paiement';
+                labelDomain.textContent = packageName === 'premium' ? 'Nom de domaine dédié' : 'Identifiant d’instance';
+                inputDomain.placeholder = packageName === 'premium' ? 'entreprise.com' : 'entreprise';
+                if (option?.value) inputDomain.value = packageName === 'premium' ? '' : slugify(companyName);
+                updateDomainHint(packageName);
+            };
+            paymentSelect?.addEventListener('change', fillPayment);
+            inputDomain?.addEventListener('input', () => updateDomainHint(paymentSelect?.options[paymentSelect.selectedIndex]?.dataset.package || ''));
+            if (paymentSelect?.value) fillPayment();
 
-        const toggleDomainMode = (mode) => {
-            if (mode === 'premium') {
-                inputDomain.readOnly = false;
-                inputDomain.classList.remove('bg-gray-50', 'cursor-not-allowed');
-                labelDomain.innerText = "Nom de Domaine Dédié";
-                if(inputDomain.value === "" || inputDomain.value.indexOf('.') === -1) { inputDomain.value = "www."; }
-                
-                const span = document.createElement('span');
-                span.className = 'text-orange-500 font-bold';
-                span.textContent = "Format obligatoire : www.nomdomaine.com";
-                hintDomain.replaceChildren(span);
-            } else {
-                inputDomain.readOnly = true;
-                inputDomain.classList.add('bg-gray-50', 'cursor-not-allowed');
-                labelDomain.innerText = "Identifiant d'instance";
-                const formatted = slugify(inputName.value);
-                inputDomain.value = formatted;
-                
-                const previewSpan = document.createElement('span');
-                previewSpan.id = 'preview-url';
-                previewSpan.className = 'font-bold brand-teal';
-                previewSpan.textContent = formatted || '...';
-
-                hintDomain.replaceChildren(
-                    document.createTextNode('Adresse : '),
-                    previewSpan,
-                    document.createTextNode('.solutcloud.com')
-                );
-            }
-        };
-        inputDomain.addEventListener('blur', function() {
-            if (packageSelect.value === 'premium') {
-                let val = this.value.trim().toLowerCase();
-                if (val !== "" && !val.startsWith('www.')) { this.value = 'www.' + val; }
-            }
+            document.querySelectorAll('[data-finalize-company]').forEach((button) => button.addEventListener('click', () => {
+                finalizeName.textContent = 'Client : ' + button.dataset.companyName;
+                finalizeForm.action = "{{ url('/admin/companies') }}/" + button.dataset.companyId + '/finalize';
+                finalizeModal.showModal();
+            }));
+            document.querySelectorAll('[data-close-finalize]').forEach((button) => button.addEventListener('click', () => finalizeModal.close()));
+            finalizeModal?.addEventListener('click', (event) => { if (event.target === finalizeModal) finalizeModal.close(); });
         });
-        inputName.addEventListener('input', function() {
-            if (packageSelect.value !== 'premium') {
-                const formatted = slugify(this.value);
-                inputDomain.value = formatted;
-                const preview = document.getElementById('preview-url');
-                if(preview) preview.innerText = formatted || '...';
-            }
-        });
-        packageSelect.addEventListener('change', function () { toggleDomainMode(this.value); });
-    });
-
-    window.openFinalizeModal = function(id, name) {
-        const modal = document.getElementById('modal-finalize');
-        const form = document.getElementById('form-finalize');
-        const nameDisplay = document.getElementById('finalize-client-name');
-        if (modal && form && nameDisplay) {
-            nameDisplay.innerText = "Client : " + name;
-            form.action = "/companies/" + id + "/finalize";
-            modal.showModal();
-        }
-    }
-</script>
-</x-app-layout>
+    </script>
+</x-admin-layout>

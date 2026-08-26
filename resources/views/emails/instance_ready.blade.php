@@ -19,10 +19,6 @@
     <p>Lors de votre première connexion, vérifiez les informations de votre organisation et créez les comptes des collaborateurs autorisés.</p>
 @endsection
 
-@section('action')
-    <a href="{{ $url }}" class="email-button">Ouvrir mon instance</a>
-@endsection
-
 @section('notice')
     Modifiez le mot de passe initial après votre première connexion. Notre équipe ne vous demandera jamais de le communiquer par e-mail.
 @endsection

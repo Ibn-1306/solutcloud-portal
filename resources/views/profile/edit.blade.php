@@ -1,18 +1,8 @@
-<x-app-layout>
-
-    <x-slot name="header">
-
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">
-                Mon profil
-            </h2>
-
-            <p class="text-sm text-gray-500 mt-1">
-                Gérez les informations de votre compte administrateur SOLUTCLOUD.
-            </p>
-        </div>
-
-    </x-slot>
+<x-admin-layout
+    title="SOLUTCLOUD — Profil administrateur"
+    page-title="Mon profil"
+    description="Gérez les informations et la sécurité du compte administrateur."
+>
 
 
     <div class="py-12 bg-gray-50 min-h-screen">
@@ -102,4 +92,4 @@
     </div>
 
 
-</x-app-layout>
+</x-admin-layout>

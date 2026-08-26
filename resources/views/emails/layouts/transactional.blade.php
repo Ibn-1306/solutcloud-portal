@@ -55,7 +55,7 @@
                                         <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
                                                 <td width="38" height="38" align="center" valign="middle" style="width:38px;height:38px">
-                                                    <img src="{{ $message->embed(public_path('img/favicon.png')) }}" width="38" height="38" alt="SOLUTCLOUD" style="display:block;width:38px;height:38px;object-fit:contain">
+                                                    <img src="{{ config('mail.brand_logo_url') }}" width="38" height="38" alt="SOLUTCLOUD" style="display:block;width:38px;height:38px;object-fit:contain">
                                                 </td>
                                                 <td style="padding-left:11px;color:#2b909a;font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:800;letter-spacing:.8px">SOLUTCLOUD</td>
                                             </tr>
@@ -83,9 +83,9 @@
                             </div>
 
                             @hasSection('action')
-                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:30px">
+                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;margin-top:30px">
                                     <tr>
-                                        <td>@yield('action')</td>
+                                        <td align="center">@yield('action')</td>
                                     </tr>
                                 </table>
                             @endif
@@ -98,15 +98,15 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="email-pad" style="padding-top:24px;padding-bottom:26px;border-top:1px solid #eceff1;background:#f8f9fa">
-                            <p style="margin:0 0 8px;color:#3c4043;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700">I-SOLUTIONS · SOLUTCLOUD</p>
-                            <p style="margin:0 0 10px;color:#80868b;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6">Yopougon Ananeraie · 21 BP 4069 Abidjan 21 · Côte d’Ivoire</p>
-                            <p style="margin:0;color:#80868b;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6">
+                        <td class="email-pad" align="center" data-email-footer="centered" style="padding-top:26px;padding-bottom:28px;border-top:1px solid #eceff1;background:#f8f9fa;text-align:center">
+                            <p style="margin:0 0 9px;color:#3c4043;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;line-height:1.5;text-align:center">I-SOLUTIONS · SOLUTCLOUD</p>
+                            <p style="margin:0 0 11px;color:#80868b;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.65;text-align:center">Yopougon Ananeraie · 21 BP 4069 Abidjan 21 · Côte d’Ivoire</p>
+                            <p style="margin:0;color:#80868b;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.65;text-align:center">
                                 <a href="https://solutcloud.com" style="color:#2b909a;text-decoration:none">solutcloud.com</a>
                                 <span style="padding:0 7px;color:#bdc8ca">•</span>
                                 <a href="mailto:sales@i-solutions.ci" style="color:#2b909a;text-decoration:none">sales@i-solutions.ci</a>
                             </p>
-                            <p style="margin:12px 0 0;color:#a0abad;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.5">© {{ now()->year }} I-SOLUTIONS. Message transactionnel envoyé par SOLUTCLOUD.</p>
+                            <p style="margin:12px 0 0;color:#a0abad;font-family:Arial,Helvetica,sans-serif;font-size:10px;line-height:1.5;text-align:center">© {{ now()->year }} I-SOLUTIONS.</p>
                         </td>
                     </tr>
                 </table>

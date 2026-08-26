@@ -19,13 +19,16 @@ class WebsiteLeadReceived extends Mailable
     public function envelope(): Envelope
     {
         $label = match ($this->lead->type) {
-            'trial' => 'Demande d’essai',
+            'trial' => 'Demande de test',
+            'order' => 'Nouvelle commande',
             'quote' => 'Demande de devis',
             default => 'Message de contact',
         };
 
+        $offer = $this->lead->offer ? ' '.$this->lead->offer : '';
+
         return new Envelope(
-            subject: "SOLUTCLOUD — {$label} — {$this->lead->fullname}",
+            subject: "SOLUTCLOUD — {$label}{$offer} — {$this->lead->fullname}",
             replyTo: [new Address($this->lead->email, $this->lead->fullname)],
         );
     }

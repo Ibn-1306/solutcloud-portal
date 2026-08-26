@@ -28,10 +28,6 @@
     <p style="font-size:13px;color:#70757a">Inscription enregistrée pour <strong>{{ $subscriber->email }}</strong>.</p>
 @endsection
 
-@section('action')
-    <a href="https://solutcloud.com" class="email-button">Découvrir la plateforme</a>
-@endsection
-
 @section('notice')
     Vous recevez ce message parce que cette adresse a été inscrite à la newsletter depuis solutcloud.com.
 @endsection

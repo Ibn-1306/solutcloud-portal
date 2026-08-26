@@ -19,8 +19,11 @@
                     <x-nav-link :href="route('admin.demos.index')" :active="request()->routeIs('admin.demos.*')">
                         {{ __('Démonstration') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('admin.quotes.index')" :active="request()->routeIs('admin.quotes.*')">
-                        {{ __('Devis') }}
+                    <x-nav-link :href="route('admin.orders.index')" :active="request()->routeIs('admin.orders.*')">
+                        {{ __('Commande') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('admin.payments.index')" :active="request()->routeIs('admin.payments.*')">
+                        {{ __('Paiement') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -79,8 +82,11 @@
             <x-responsive-nav-link :href="route('admin.demos.index')" :active="request()->routeIs('admin.demos.*')">
                 {{ __('Démonstration') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.quotes.index')" :active="request()->routeIs('admin.quotes.*')">
-                {{ __('Devis') }}
+            <x-responsive-nav-link :href="route('admin.orders.index')" :active="request()->routeIs('admin.orders.*')">
+                {{ __('Commande') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.payments.index')" :active="request()->routeIs('admin.payments.*')">
+                {{ __('Paiement') }}
             </x-responsive-nav-link>
         </div>
 

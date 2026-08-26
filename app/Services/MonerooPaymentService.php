@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Quote;
+use App\Models\Payment;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -13,40 +13,43 @@ class MonerooPaymentService
     /**
      * @return array{id: string, checkout_url: string}
      */
-    public function initializeQuote(Quote $quote): array
+    public function initialize(Payment $payment): array
     {
-        $nameParts = explode(' ', trim($quote->customer_name), 2);
+        [$firstName, $lastName] = $this->splitName($payment->customer_name);
+
         $customer = [
-            'first_name' => $nameParts[0],
-            'last_name' => $nameParts[1] ?? $nameParts[0],
-            'email' => $quote->customer_email,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $payment->customer_email,
         ];
 
-        if (is_string($quote->customer_phone) && trim($quote->customer_phone) !== '') {
-            $customer['phone'] = $quote->customer_phone;
+        if (filled($payment->customer_phone)) {
+            $customer['phone'] = $payment->customer_phone;
         }
 
-        return $this->initialize([
-            'amount' => (int) $quote->amount,
-            'currency' => 'XOF',
-            'customer' => $customer,
-            'description' => "Règlement du devis SOLUTCLOUD {$quote->quote_number}",
-            'return_url' => config('services.moneroo.return_url'),
-            'metadata' => [
-                'payment_type' => 'quote',
-                'quote_id' => (string) $quote->id,
-                'quote_number' => $quote->quote_number,
-            ],
-        ]);
-    }
+        $metadata = [
+            'payment_id' => (string) $payment->id,
+            'payment_reference' => (string) $payment->reference,
+            'package' => strtoupper((string) $payment->package),
+            'purpose' => (string) ($payment->purpose ?: Payment::PURPOSE_INITIAL),
+        ];
 
-    /**
-     * @param  array<string, mixed>  $payload
-     * @return array{id: string, checkout_url: string}
-     */
-    public function initialize(array $payload): array
-    {
-        $response = $this->request()->post('/v1/payments/initialize', $payload);
+        if ($payment->duration_months !== null) {
+            $metadata['duration_months'] = (int) $payment->duration_months;
+        }
+
+        if ($payment->company_id !== null) {
+            $metadata['company_id'] = (int) $payment->company_id;
+        }
+
+        $response = $this->request()->post('/v1/payments/initialize', [
+            'amount' => $payment->amount,
+            'currency' => $payment->currency,
+            'description' => $payment->description,
+            'return_url' => route('payments.return'),
+            'customer' => $customer,
+            'metadata' => $metadata,
+        ]);
 
         if (! $response->successful()) {
             throw new RuntimeException($this->errorMessage($response, 'Impossible d’initialiser le paiement Moneroo.'));
@@ -108,7 +111,19 @@ class MonerooPaymentService
             ->withToken($secret)
             ->acceptJson()
             ->asJson()
+            ->connectTimeout(4)
             ->timeout((int) config('services.moneroo.timeout', 10));
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function splitName(string $name): array
+    {
+        $parts = preg_split('/\s+/', trim($name), 2) ?: [];
+        $firstName = $parts[0] ?? 'Client';
+
+        return [$firstName, $parts[1] ?? $firstName];
     }
 
     private function errorMessage(Response $response, string $fallback): string
