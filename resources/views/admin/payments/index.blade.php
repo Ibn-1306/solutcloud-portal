@@ -50,9 +50,9 @@
             </div>
 
             @if($paymentCurrency !== 'XOF')
-                <div class="rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-900">
-                    <strong>Mode de test Moneroo :</strong> la passerelle prédéfinie Sandbox utilise {{ $paymentCurrency }}. Les montants saisis ici sont fictifs et ne remplacent pas les tarifs commerciaux en XOF.
-                </div>
+                <p class="px-1 text-sm leading-6 text-[#176f78]">
+                    <strong class="font-extrabold">Mode de test Moneroo :</strong> la passerelle prédéfinie Sandbox utilise {{ $paymentCurrency }}. Les montants saisis ici sont fictifs et ne remplacent pas les tarifs commerciaux en XOF.
+                </p>
             @endif
 
             <section class="payment-card overflow-hidden">
@@ -120,7 +120,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-7 flex flex-col gap-3 rounded-xl border border-[#2b909a]/15 bg-[#2b909a]/[.045] p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="mt-7 flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between">
                         <p class="max-w-3xl text-xs leading-5 text-gray-600">La clé Moneroo reste côté serveur. Le statut <strong>Payé</strong> n’est appliqué qu’après vérification du montant, de la devise et de l’identifiant auprès de Moneroo.</p>
                         <button class="shrink-0 rounded-lg bg-[#2b909a] px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[#2b909a]/15 transition hover:bg-[#237781]">
                             Générer et envoyer
@@ -140,7 +140,7 @@
 
                 <div class="overflow-x-auto">
                     <table class="payment-table min-w-full text-sm">
-                        <thead class="bg-gray-900 text-white">
+                        <thead class="bg-[#2b909a] text-white">
                             <tr>
                                 <th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Référence</th>
                                 <th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Client</th>

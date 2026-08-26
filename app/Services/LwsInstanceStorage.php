@@ -40,6 +40,11 @@ class LwsInstanceStorage
             '/',
         ).'/abonnement-expire';
         $content = self::SUSPENSION_MARKER."\n"
+            ."<IfModule mod_headers.c>\n"
+            ."    Header always set Cache-Control \"no-store, no-cache, must-revalidate, max-age=0\"\n"
+            ."    Header always set Pragma \"no-cache\"\n"
+            ."    Header always set Expires \"0\"\n"
+            ."</IfModule>\n"
             ."RewriteEngine On\n"
             .'RewriteRule ^ '.str_replace(' ', '%20', $suspensionUrl).' [L,R=302]';
 

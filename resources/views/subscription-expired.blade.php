@@ -14,6 +14,7 @@
             --brand: #2b909a;
             --brand-dark: #176f77;
             --brand-soft: #edf8f8;
+            --danger: #dc2626;
             --ink: #0b1220;
             --muted: #64748b;
             --line: #dde6ec;
@@ -99,7 +100,7 @@
             align-items: center;
             gap: 9px;
             margin-bottom: 22px;
-            color: var(--brand-dark);
+            color: var(--danger);
             font-size: 12px;
             font-weight: 800;
             letter-spacing: .14em;
@@ -147,13 +148,6 @@
             font-size: 15px;
             font-weight: 800;
             text-decoration: none;
-            transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
-        }
-
-        .primary-action:hover {
-            background: var(--brand-dark);
-            box-shadow: 0 15px 34px rgba(23, 111, 119, .24);
-            transform: translateY(-2px);
         }
 
         .primary-action:focus-visible,
@@ -192,6 +186,7 @@
         .support-card h2 {
             position: relative;
             margin: 0;
+            white-space: nowrap;
             font-size: clamp(1.35rem, 2vw, 1.75rem);
             letter-spacing: -.03em;
         }

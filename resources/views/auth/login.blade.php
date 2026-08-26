@@ -14,6 +14,29 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <script>
+        (() => {
+            const storageKey = 'solutcloud-login-preloader-seen';
+            const navigationEntry = performance.getEntriesByType?.('navigation')?.[0];
+            const navigationType = navigationEntry?.type
+                ?? (performance.navigation?.type === 1 ? 'reload' : 'navigate');
+            let shouldShow = false;
+
+            try {
+                shouldShow = navigationType === 'reload' || sessionStorage.getItem(storageKey) !== '1';
+                sessionStorage.setItem(storageKey, '1');
+            } catch {
+                shouldShow = true;
+            }
+
+            window.solutcloudLoginPreloaderShouldShow = shouldShow;
+
+            if (shouldShow) {
+                document.documentElement.classList.add('solutcloud-preloader-active');
+            }
+        })();
+    </script>
+
     <style>
         :root {
             --brand: #2B909A;
@@ -1228,10 +1251,108 @@
                 animation: none !important;
             }
         }
+        html.solutcloud-preloader-active body.is-preloading {
+            overflow: hidden;
+        }
+
+        .solutcloud-preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 255, 255, 0.96);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 260ms ease, visibility 260ms ease;
+        }
+
+        html.solutcloud-preloader-active .solutcloud-preloader {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            animation: solutcloud-preloader-fallback 260ms ease 2s forwards;
+        }
+
+        .solutcloud-preloader.is-leaving {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .solutcloud-preloader-stage {
+            position: relative;
+            display: grid;
+            width: clamp(154px, 19vw, 184px);
+            aspect-ratio: 1;
+            place-items: center;
+        }
+
+        .solutcloud-preloader-ring {
+            position: absolute;
+            inset: 0;
+            border: 5px solid #dfecee;
+            border-top-color: var(--brand);
+            border-radius: 50%;
+            box-shadow: 0 18px 44px rgba(25, 83, 89, 0.12);
+            animation: solutcloud-preloader-spin 760ms linear infinite;
+        }
+
+        .solutcloud-preloader-logo {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 72%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .solutcloud-preloader-label {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @keyframes solutcloud-preloader-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes solutcloud-preloader-fallback {
+            to {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .solutcloud-preloader-ring {
+                animation-duration: 1.5s !important;
+            }
+        }
     </style>
 </head>
 
-<body>
+<body class="is-preloading">
+
+<div class="solutcloud-preloader" id="solutcloud-preloader" role="status" aria-live="polite" aria-label="Chargement de SOLUTCLOUD">
+    <div class="solutcloud-preloader-stage">
+        <span class="solutcloud-preloader-ring" aria-hidden="true"></span>
+        <img class="solutcloud-preloader-logo" src="{{ asset('img/LOGO_SOLUTCLOUD_Sans_fond.png') }}" alt="SOLUTCLOUD" decoding="async" loading="eager" fetchpriority="high">
+        <span class="solutcloud-preloader-label">Chargement de SOLUTCLOUD</span>
+    </div>
+</div>
 
 <div class="login-shell">
 
@@ -1500,6 +1621,33 @@
     </main>
 
 </div>
+
+<script>
+    (() => {
+        const root = document.documentElement;
+        const loader = document.getElementById('solutcloud-preloader');
+
+        if (!loader) {
+            root.classList.remove('solutcloud-preloader-active');
+            document.body.classList.remove('is-preloading');
+            return;
+        }
+
+        if (!window.solutcloudLoginPreloaderShouldShow) {
+            document.body.classList.remove('is-preloading');
+            loader.remove();
+            return;
+        }
+
+        window.setTimeout(() => {
+            loader.classList.add('is-leaving');
+            root.classList.remove('solutcloud-preloader-active');
+            document.body.classList.remove('is-preloading');
+
+            window.setTimeout(() => loader.remove(), 320);
+        }, 2000);
+    })();
+</script>
 
 </body>
 </html>

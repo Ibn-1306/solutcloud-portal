@@ -3,17 +3,19 @@
     page-title="Tableau de bord"
     description="Vue d’ensemble des clients, instances et échéances."
 >
-    <section class="relative overflow-hidden rounded-3xl bg-[#0a3034] px-5 py-7 text-white shadow-xl shadow-[#0a3034]/10 sm:px-8 sm:py-9">
-        <div class="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-[#2b909a]/40 blur-3xl"></div>
-        <div class="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div class="max-w-3xl">
-                <p class="text-xs font-extrabold uppercase tracking-[.2em] text-[#8bd4da]">Centre de pilotage</p>
-                <h2 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Bienvenue dans SOLUTCLOUD Gestion</h2>
-                <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">Suivez vos clients, confirmez les installations et gérez les opérations commerciales depuis un espace unique.</p>
+    <section class="py-2 sm:py-4" aria-labelledby="admin-welcome-title">
+        <div class="flex flex-col gap-7 xl:flex-row xl:items-end xl:justify-between">
+            <div class="max-w-4xl">
+                <p class="text-xs font-extrabold uppercase tracking-[.2em] text-[#2b909a]">Centre de pilotage</p>
+                <h2 id="admin-welcome-title" class="mt-4 text-3xl font-extrabold leading-[1.22] tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
+                    <span class="box-decoration-clone bg-[#2b909a] px-2 py-1 text-white">Bienvenue dans</span>
+                    <span> SOLUTCLOUD Gestion</span>
+                </h2>
+                <p class="mt-5 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">Suivez vos clients, confirmez les installations et gérez les opérations commerciales depuis un espace unique.</p>
             </div>
-            <div class="grid grid-cols-2 gap-3 sm:flex">
-                <a href="{{ route('admin.payments.index') }}#payment-form" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-4 text-center text-sm font-extrabold text-[#176f78] transition hover:bg-[#e5f5f6] focus:outline-none focus:ring-2 focus:ring-white/50">Nouveau paiement</a>
-                <a href="#new-instance" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/20 bg-white/[.08] px-4 text-center text-sm font-extrabold text-white transition hover:bg-white/[.14] focus:outline-none focus:ring-2 focus:ring-white/50">Créer une instance</a>
+            <div class="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2">
+                <a href="{{ route('admin.payments.index') }}#payment-form" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#2b909a] px-5 text-center text-sm font-extrabold text-white transition hover:bg-[#237781] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30 focus:ring-offset-2">Nouveau paiement</a>
+                <a href="#new-instance" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-center text-sm font-extrabold text-slate-800 transition hover:border-[#2b909a] hover:text-[#207b84] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30 focus:ring-offset-2">Créer une instance</a>
             </div>
         </div>
     </section>
@@ -68,7 +70,7 @@
 
         <div class="p-5 sm:p-7">
             @if ($availablePayments->isEmpty())
-                <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-800"><strong>Aucun paiement disponible.</strong> Créez un paiement et attendez sa confirmation avant de lancer l’installation.</div>
+                <p class="py-2 text-sm leading-6 text-amber-700"><strong class="font-extrabold">Aucun paiement disponible.</strong> Créez un paiement et attendez sa confirmation avant de lancer l’installation.</p>
             @else
                 <form action="{{ route('admin.companies.store') }}" method="POST" id="instance-create-form">
                     @csrf
@@ -128,7 +130,7 @@
 
         <div class="hidden overflow-x-auto lg:block">
             <table class="min-w-[1050px] w-full text-sm">
-                <thead class="bg-[#0d282b] text-white"><tr><th class="px-6 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Entreprise</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Contact</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Offre</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Statut</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Échéance</th><th class="px-6 py-4 text-right text-[10px] font-extrabold uppercase tracking-widest">Actions</th></tr></thead>
+                <thead class="bg-[#2b909a] text-white"><tr><th class="px-6 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Entreprise</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Contact</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Offre</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Statut</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Échéance</th><th class="px-6 py-4 text-right text-[10px] font-extrabold uppercase tracking-widest">Actions</th></tr></thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($companies as $company)
                         <tr class="align-middle transition hover:bg-[#2b909a]/[.03]">

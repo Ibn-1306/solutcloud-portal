@@ -389,6 +389,10 @@ class AdminPaymentsTest extends TestCase
             'https://login.solutcloud.com/abonnement-expire',
             Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
         );
+        $this->assertStringContainsString(
+            'Cache-Control "no-store, no-cache, must-revalidate, max-age=0"',
+            Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
+        );
         $this->assertSame('suspended', $company->fresh()->status);
 
         $this->actingAs($admin)

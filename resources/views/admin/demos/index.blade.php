@@ -104,7 +104,7 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
-                        <thead class="bg-gray-900 text-white">
+                        <thead class="bg-[#2b909a] text-white">
                             <tr>
                                 <th class="px-8 py-4 text-left text-[11px] font-bold uppercase tracking-widest">Entreprise</th>
                                 <th class="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-widest">Email</th>

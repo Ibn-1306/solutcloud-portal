@@ -11,13 +11,13 @@
 @endphp
 
 <x-client-layout title="SOLUTCLOUD — Tableau de bord" page-title="Tableau de bord">
-    <section class="relative overflow-hidden rounded-3xl bg-[#0a3034] px-5 py-7 text-white shadow-xl shadow-[#0a3034]/10 sm:px-8 sm:py-9">
-        <div class="pointer-events-none absolute -right-20 -top-28 h-72 w-72 rounded-full bg-[#2b909a]/35 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-24 right-1/3 h-52 w-52 rounded-full bg-cyan-300/10 blur-3xl"></div>
-        <div class="relative max-w-3xl">
-            <p class="text-xs font-extrabold uppercase tracking-[.2em] text-[#8bd4da]">Bienvenue {{ $company->name }} ! <span aria-hidden="true">👋</span></p>
-            <h1 class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Mon espace SOLUTCLOUD</h1>
-            <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">Gérez votre solution, votre abonnement et vos services depuis un espace simple et sécurisé.</p>
+    <section class="py-2 sm:py-4" aria-labelledby="client-welcome-title">
+        <div class="max-w-4xl">
+            <p class="text-xs font-extrabold uppercase tracking-[.2em] text-[#2b909a]">Bienvenue {{ $company->name }}</p>
+            <h1 id="client-welcome-title" class="mt-4 text-3xl font-extrabold leading-[1.22] tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
+                <span class="box-decoration-clone bg-[#2b909a] px-2 py-1 text-white">Mon espace SOLUTCLOUD</span>
+            </h1>
+            <p class="mt-5 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">Gérez votre solution, votre abonnement et vos services depuis un espace simple et sécurisé.</p>
         </div>
     </section>
 
