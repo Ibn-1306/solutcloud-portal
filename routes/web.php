@@ -9,6 +9,7 @@ use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\SubscriptionController;
 use App\Http\Controllers\PaymentReturnController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SubscriptionExpiredController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -27,7 +28,11 @@ Route::get('/', function () {
 Route::get('/payments/return', PaymentReturnController::class)
     ->name('payments.return');
 
-Route::view('/abonnement-expire', 'subscription-expired')
+Route::get('/abonnement-expire/statut', [SubscriptionExpiredController::class, 'status'])
+    ->middleware('throttle:30,1')
+    ->name('subscription.expired.status');
+
+Route::get('/abonnement-expire', [SubscriptionExpiredController::class, 'show'])
     ->name('subscription.expired');
 
 /*

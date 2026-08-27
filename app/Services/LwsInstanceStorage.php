@@ -38,7 +38,9 @@ class LwsInstanceStorage
         $suspensionUrl = rtrim(
             (string) config('services.solutcloud.portal_url', 'https://login.solutcloud.com'),
             '/',
-        ).'/abonnement-expire';
+        ).'/abonnement-expire?'.http_build_query([
+            'instance' => $company->instance_url,
+        ], '', '&', PHP_QUERY_RFC3986);
         $content = self::SUSPENSION_MARKER."\n"
             ."<IfModule mod_headers.c>\n"
             ."    Header always set Cache-Control \"no-store, no-cache, must-revalidate, max-age=0\"\n"

@@ -132,6 +132,14 @@
             color: var(--ink);
         }
 
+        .auto-refresh-status {
+            max-width: 720px;
+            margin: 18px 0 0;
+            color: var(--brand-dark);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
         .primary-action {
             display: inline-flex;
             min-height: 56px;
@@ -360,6 +368,12 @@
                     et procédez au paiement sécurisé. L’instance pourra ensuite être réactivée.
                 </p>
 
+                @if ($statusUrl)
+                    <p class="auto-refresh-status" id="auto-refresh-status" role="status" aria-live="polite">
+                        Cette page vérifie automatiquement la réactivation de votre instance.
+                    </p>
+                @endif
+
                 <a class="primary-action" href="{{ route('client.renew') }}">
                     Renouveler mon abonnement
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -410,5 +424,48 @@
             <span>Service client et assistance au renouvellement</span>
         </footer>
     </div>
+    @if ($statusUrl)
+        <script>
+            (() => {
+                const statusUrl = @json($statusUrl);
+                const statusMessage = document.getElementById('auto-refresh-status');
+                let checking = false;
+
+                async function checkSubscriptionStatus() {
+                    if (checking) return;
+
+                    checking = true;
+
+                    try {
+                        const response = await fetch(statusUrl, {
+                            headers: { Accept: 'application/json' },
+                            cache: 'no-store',
+                            credentials: 'same-origin',
+                        });
+
+                        if (!response.ok) return;
+
+                        const payload = await response.json();
+
+                        if (payload.status === 'active' && payload.redirect_url) {
+                            statusMessage.textContent = 'Abonnement réactivé. Retour vers votre instance…';
+                            window.location.replace(payload.redirect_url);
+                        }
+                    } catch (error) {
+                        // Une coupure réseau temporaire ne bloque pas les prochains contrôles.
+                    } finally {
+                        checking = false;
+                    }
+                }
+
+                checkSubscriptionStatus();
+                window.setInterval(checkSubscriptionStatus, 5000);
+                window.addEventListener('online', checkSubscriptionStatus);
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) checkSubscriptionStatus();
+                });
+            })();
+        </script>
+    @endif
 </body>
 </html>

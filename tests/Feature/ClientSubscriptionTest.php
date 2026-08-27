@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ClientSubscriptionTest extends TestCase
@@ -143,6 +144,35 @@ class ClientSubscriptionTest extends TestCase
         app(PaymentSynchronizer::class)->synchronize($payment->fresh());
 
         $this->assertSame('2026-12-14 16:26:00', $company->fresh()->expires_at->format('Y-m-d H:i:s'));
+    }
+
+    public function test_paid_renewal_reactivates_a_suspended_instance_and_removes_the_ftp_lock(): void
+    {
+        config()->set('services.moneroo.secret', 'test-secret');
+        Storage::fake('lws');
+        [, $company] = $this->client('start', Carbon::parse('2026-08-14 16:26:00'));
+        $company->update(['status' => 'suspended']);
+
+        $root = 'i-solutions-start.solutcloud.com';
+        Storage::disk('lws')->put($root.'/index.php', '<?php');
+        Storage::disk('lws')->put($root.'/main.inc.php', '<?php');
+        Storage::disk('lws')->put($root.'/.htaccess', '# SOLUTCLOUD INSTANCE SUSPENDED');
+        Storage::disk('lws')->put($root.'/.htaccess.solutcloud-backup', 'Original Dolibarr rules');
+
+        $payment = $this->subscriptionPayment($company, [
+            'package' => 'start',
+            'purpose' => Payment::PURPOSE_RENEWAL,
+            'duration_months' => 1,
+            'moneroo_payment_id' => 'suspended_renewal_paid',
+            'status' => Payment::STATUS_INITIATED,
+        ]);
+        Http::fake($this->verifyResponse($payment));
+
+        app(PaymentSynchronizer::class)->synchronize($payment);
+
+        $this->assertSame('active', $company->fresh()->status);
+        Storage::disk('lws')->assertMissing($root.'/.htaccess.solutcloud-backup');
+        $this->assertSame('Original Dolibarr rules', Storage::disk('lws')->get($root.'/.htaccess'));
     }
 
     public function test_paid_upgrade_changes_start_to_business(): void

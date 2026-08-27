@@ -10,7 +10,10 @@ use RuntimeException;
 
 class PaymentSynchronizer
 {
-    public function __construct(private MonerooPaymentService $moneroo) {}
+    public function __construct(
+        private MonerooPaymentService $moneroo,
+        private LwsInstanceStorage $lws,
+    ) {}
 
     public function synchronize(Payment $payment): Payment
     {
@@ -74,6 +77,10 @@ class PaymentSynchronizer
         $startsAt = $company->expires_at?->isFuture()
             ? $company->expires_at->copy()
             : now();
+
+        if ($company->status === 'suspended') {
+            $this->lws->reactivate($company);
+        }
 
         $company->forceFill([
             'package' => $payment->purpose === Payment::PURPOSE_UPGRADE

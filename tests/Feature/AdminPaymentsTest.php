@@ -367,6 +367,52 @@ class AdminPaymentsTest extends TestCase
             ->assertSee('tel:+2250101559505', false);
     }
 
+    public function test_expired_page_tracks_subdomains_and_dedicated_domains_until_reactivation(): void
+    {
+        $start = $this->company([
+            'subdomain' => 'djemafatis',
+            'package' => 'start',
+            'status' => 'suspended',
+        ]);
+
+        $this->get(route('subscription.expired', ['instance' => $start->instance_url]))
+            ->assertOk()
+            ->assertSee('Cette page vérifie automatiquement la réactivation')
+            ->assertSee('window.location.replace', false)
+            ->assertSee('djemafatis.solutcloud.com', false);
+
+        $this->getJson(route('subscription.expired.status', ['instance' => $start->instance_url]))
+            ->assertOk()
+            ->assertHeader('Cache-Control')
+            ->assertJson([
+                'status' => 'suspended',
+                'redirect_url' => null,
+            ]);
+
+        $start->update(['status' => 'active']);
+
+        $this->getJson(route('subscription.expired.status', ['instance' => 'djemafatis.solutcloud.com']))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'active',
+                'redirect_url' => 'https://djemafatis.solutcloud.com',
+            ]);
+
+        $premium = $this->company([
+            'subdomain' => 'premium-client',
+            'custom_domain' => 'gestion-client.ci',
+            'package' => 'premium',
+            'status' => 'active',
+        ]);
+
+        $this->getJson(route('subscription.expired.status', ['instance' => 'https://gestion-client.ci/espace']))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'active',
+                'redirect_url' => $premium->instance_url,
+            ]);
+    }
+
     public function test_admin_suspends_and_reactivates_a_start_instance_at_the_ftp_root(): void
     {
         Storage::fake('lws');
@@ -388,6 +434,10 @@ class AdminPaymentsTest extends TestCase
         Storage::disk('lws')->assertExists('alpha.solutcloud.com/.htaccess.solutcloud-backup');
         $this->assertStringContainsString(
             'https://login.solutcloud.com/abonnement-expire',
+            Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
+        );
+        $this->assertStringContainsString(
+            'instance=https%3A%2F%2Falpha.solutcloud.com',
             Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
         );
         $this->assertStringContainsString(
