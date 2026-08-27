@@ -361,7 +361,7 @@ class AdminPaymentsTest extends TestCase
             ->assertOk()
             ->assertSee('Votre abonnement est arrivé à expiration.')
             ->assertSee('Renouveler mon abonnement')
-            ->assertSee(route('client.renew'), false)
+            ->assertSee(route('login'), false)
             ->assertSee('sales@i-solutions.ci')
             ->assertSee('+225 01 01 55 95 05')
             ->assertSee('tel:+2250101559505', false);
@@ -379,6 +379,16 @@ class AdminPaymentsTest extends TestCase
             ->assertOk()
             ->assertSee('Cette page vérifie automatiquement la réactivation')
             ->assertSee('window.location.replace', false)
+            ->assertSee('djemafatis.solutcloud.com', false)
+            ->assertSee(route('subscription.expired.renew', [
+                'instance' => 'djemafatis.solutcloud.com',
+            ]), false);
+
+        $this->get(route('subscription.expired', [
+            'instance' => 'httpsAFFdjemafatis.solutcloud.com',
+        ]))
+            ->assertOk()
+            ->assertSee('Cette page vérifie automatiquement la réactivation')
             ->assertSee('djemafatis.solutcloud.com', false);
 
         $this->getJson(route('subscription.expired.status', ['instance' => $start->instance_url]))
@@ -391,7 +401,9 @@ class AdminPaymentsTest extends TestCase
 
         $start->update(['status' => 'active']);
 
-        $this->getJson(route('subscription.expired.status', ['instance' => 'djemafatis.solutcloud.com']))
+        $this->getJson(route('subscription.expired.status', [
+            'instance' => 'httpsAFFdjemafatis.solutcloud.com',
+        ]))
             ->assertOk()
             ->assertJson([
                 'status' => 'active',
@@ -411,6 +423,33 @@ class AdminPaymentsTest extends TestCase
                 'status' => 'active',
                 'redirect_url' => $premium->instance_url,
             ]);
+    }
+
+    public function test_expired_subscription_renewal_uses_the_matching_client_session(): void
+    {
+        $company = $this->company([
+            'subdomain' => 'djemafatis',
+            'status' => 'suspended',
+        ]);
+        $renewUrl = route('subscription.expired.renew', [
+            'instance' => 'djemafatis.solutcloud.com',
+        ]);
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->get($renewUrl)
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('url.intended', $renewUrl);
+        $this->assertGuest();
+
+        $client = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'company_id' => $company->id,
+        ]);
+
+        $this->actingAs($client)
+            ->get($renewUrl)
+            ->assertRedirect(route('client.renew'));
     }
 
     public function test_admin_suspends_and_reactivates_a_start_instance_at_the_ftp_root(): void
@@ -437,7 +476,7 @@ class AdminPaymentsTest extends TestCase
             Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
         );
         $this->assertStringContainsString(
-            'instance=https%3A%2F%2Falpha.solutcloud.com',
+            'instance=alpha.solutcloud.com',
             Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
         );
         $this->assertStringContainsString(

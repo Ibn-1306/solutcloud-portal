@@ -126,12 +126,12 @@ class PaymentReturnFlowTest extends TestCase
         $this->assertSame(2, User::count());
     }
 
-    public function test_expired_subscription_links_directly_to_renewal_management(): void
+    public function test_expired_subscription_links_to_a_safe_renewal_entry_point(): void
     {
         $this->get(route('subscription.expired'))
             ->assertOk()
             ->assertSee('Renouveler mon abonnement')
-            ->assertSee(route('client.renew'), false)
+            ->assertSee(route('login'), false)
             ->assertDontSee('Accéder à mon espace client');
     }
 

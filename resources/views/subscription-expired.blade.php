@@ -374,7 +374,7 @@
                     </p>
                 @endif
 
-                <a class="primary-action" href="{{ route('client.renew') }}">
+                <a class="primary-action" href="{{ $renewUrl }}">
                     Renouveler mon abonnement
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M5 12h14M13 6l6 6-6 6"></path>

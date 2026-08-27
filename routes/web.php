@@ -32,6 +32,10 @@ Route::get('/abonnement-expire/statut', [SubscriptionExpiredController::class, '
     ->middleware('throttle:30,1')
     ->name('subscription.expired.status');
 
+Route::get('/abonnement-expire/renouveler', [SubscriptionExpiredController::class, 'renew'])
+    ->middleware('throttle:30,1')
+    ->name('subscription.expired.renew');
+
 Route::get('/abonnement-expire', [SubscriptionExpiredController::class, 'show'])
     ->name('subscription.expired');
 

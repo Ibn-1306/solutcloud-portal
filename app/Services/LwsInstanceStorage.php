@@ -39,7 +39,9 @@ class LwsInstanceStorage
             (string) config('services.solutcloud.portal_url', 'https://login.solutcloud.com'),
             '/',
         ).'/abonnement-expire?'.http_build_query([
-            'instance' => $company->instance_url,
+            // Un nom d'hôte simple évite qu'Apache/LWS altère les caractères
+            // encodés de "https://" dans la cible d'une RewriteRule.
+            'instance' => (string) parse_url($company->instance_url, PHP_URL_HOST),
         ], '', '&', PHP_QUERY_RFC3986);
         $content = self::SUSPENSION_MARKER."\n"
             ."<IfModule mod_headers.c>\n"

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class SubscriptionExpiredController extends Controller
@@ -17,7 +19,38 @@ class SubscriptionExpiredController extends Controller
             'statusUrl' => $company
                 ? route('subscription.expired.status', ['instance' => $this->hostname($company->instance_url)])
                 : null,
+            'renewUrl' => $company
+                ? route('subscription.expired.renew', ['instance' => $this->hostname($company->instance_url)])
+                : route('login'),
         ]);
+    }
+
+    public function renew(Request $request): RedirectResponse
+    {
+        $company = $this->companyFor($request);
+
+        abort_if($company === null, 404);
+
+        $user = $request->user();
+
+        if ($user instanceof User && $user->isClient() && $user->company_id === $company->id) {
+            return redirect()->route('client.renew');
+        }
+
+        if ($user !== null) {
+            auth()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        $request->session()->put('url.intended', route('subscription.expired.renew', [
+            'instance' => $this->hostname($company->instance_url),
+        ]));
+
+        return redirect()->route('login')->with(
+            'status',
+            'Connectez-vous avec le compte client associé à cette instance pour renouveler votre abonnement.',
+        );
     }
 
     public function status(Request $request): JsonResponse
@@ -65,6 +98,10 @@ class SubscriptionExpiredController extends Controller
         if ($value === '') {
             return null;
         }
+
+        // Compatibilité avec les anciennes redirections LWS où Apache a
+        // transformé "https%3A%2F%2F" en "httpsAFF".
+        $value = preg_replace('/^https?AFF/i', 'https://', $value) ?? $value;
 
         $url = str_contains($value, '://') ? $value : 'https://'.$value;
         $hostname = parse_url($url, PHP_URL_HOST);
