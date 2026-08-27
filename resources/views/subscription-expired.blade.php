@@ -360,8 +360,8 @@
                     et procédez au paiement sécurisé. L’instance pourra ensuite être réactivée.
                 </p>
 
-                <a class="primary-action" href="{{ route('dashboard') }}">
-                    Accéder à mon espace client
+                <a class="primary-action" href="{{ route('client.renew') }}">
+                    Renouveler mon abonnement
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M5 12h14M13 6l6 6-6 6"></path>
                     </svg>

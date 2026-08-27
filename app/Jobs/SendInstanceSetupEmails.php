@@ -45,20 +45,22 @@ class SendInstanceSetupEmails implements ShouldQueue
             ]);
         }
 
-        try {
-            $token = Password::createToken($user);
-            $resetUrl = url('/reset-password/'.$token.'?email='.urlencode($user->email));
-            Mail::to($user->email)->send(new AccountInvitationMail(
-                $user,
-                $resetUrl,
-                $company,
-                $company->payment,
-            ));
-        } catch (Throwable $exception) {
-            Log::error('ACCOUNT_INVITATION_MAIL_FAILED', [
-                'user_id' => $user->id,
-                'message' => $exception->getMessage(),
-            ]);
+        if ($user->password_initialized_at === null) {
+            try {
+                $token = Password::createToken($user);
+                $resetUrl = url('/reset-password/'.$token.'?email='.urlencode($user->email));
+                Mail::to($user->email)->send(new AccountInvitationMail(
+                    $user,
+                    $resetUrl,
+                    $company,
+                    $company->payment,
+                ));
+            } catch (Throwable $exception) {
+                Log::error('ACCOUNT_INVITATION_MAIL_FAILED', [
+                    'user_id' => $user->id,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
         }
     }
 }

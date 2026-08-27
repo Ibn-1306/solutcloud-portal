@@ -360,7 +360,8 @@ class AdminPaymentsTest extends TestCase
         $this->get(route('subscription.expired'))
             ->assertOk()
             ->assertSee('Votre abonnement est arrivé à expiration.')
-            ->assertSee('Accéder à mon espace client')
+            ->assertSee('Renouveler mon abonnement')
+            ->assertSee(route('client.renew'), false)
             ->assertSee('sales@i-solutions.ci')
             ->assertSee('+225 01 01 55 95 05')
             ->assertSee('tel:+2250101559505', false);

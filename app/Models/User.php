@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Company;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
@@ -14,10 +13,11 @@ class User extends Authenticatable
 
     /**
      * CONSTANTES DE RÔLES
-     * Je centralise les rôles ici pour pouvoir les utiliser partout 
+     * Je centralise les rôles ici pour pouvoir les utiliser partout
      * (ex: User::ROLE_ADMIN) au lieu de manipuler des chaînes de caractères.
      */
-    const ROLE_ADMIN  = 'admin';
+    const ROLE_ADMIN = 'admin';
+
     const ROLE_CLIENT = 'client';
 
     /**
@@ -27,6 +27,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'password_initialized_at',
         'role',
         'company_id',
     ];
@@ -46,6 +47,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'password_initialized_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

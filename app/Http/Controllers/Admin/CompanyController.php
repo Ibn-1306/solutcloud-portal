@@ -72,9 +72,15 @@ class CompanyController extends Controller
                     ]);
                 }
 
-                if (User::where('email', $payment->customer_email)->exists()) {
+                $customerEmail = mb_strtolower(trim($payment->customer_email));
+                $user = User::query()
+                    ->lockForUpdate()
+                    ->where('email', $customerEmail)
+                    ->first();
+
+                if ($user !== null && (! $user->isClient() || $user->company_id !== null)) {
                     throw ValidationException::withMessages([
-                        'payment_id' => 'Un compte client utilise déjà cette adresse e-mail.',
+                        'payment_id' => 'Un compte déjà rattaché utilise cette adresse e-mail.',
                     ]);
                 }
 
@@ -100,13 +106,20 @@ class CompanyController extends Controller
                     'expires_at' => now()->addYear(),
                 ]);
 
-                $user = User::create([
-                    'name' => $payment->customer_name,
-                    'email' => $payment->customer_email,
-                    'password' => Hash::make(Str::random(32)),
-                    'role' => 'client',
-                    'company_id' => $company->id,
-                ]);
+                if ($user === null) {
+                    $user = User::create([
+                        'name' => $payment->customer_name,
+                        'email' => $customerEmail,
+                        'password' => Hash::make(Str::random(32)),
+                        'role' => User::ROLE_CLIENT,
+                        'company_id' => $company->id,
+                    ]);
+                } else {
+                    $user->forceFill([
+                        'name' => $payment->customer_name,
+                        'company_id' => $company->id,
+                    ])->save();
+                }
 
                 $payment->forceFill(['company_id' => $company->id])->save();
 
