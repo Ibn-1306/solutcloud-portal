@@ -34,6 +34,39 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('client.dashboard', absolute: false));
     }
 
+    public function test_client_keeps_the_intended_destination_after_login(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_CLIENT]);
+        $intended = route('subscription.expired.renew', [
+            'instance' => 'djemafatis.solutcloud.com',
+        ]);
+
+        $response = $this->withSession(['url.intended' => $intended])->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($user);
+        $response->assertRedirect($intended);
+    }
+
+    public function test_admin_ignores_a_client_intended_destination_after_login(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $response = $this->withSession([
+            'url.intended' => route('client.renew'),
+        ])->post('/login', [
+            'email' => $admin->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticatedAs($admin);
+        $response
+            ->assertRedirect(route('admin.dashboard'))
+            ->assertSessionMissing('url.intended');
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();

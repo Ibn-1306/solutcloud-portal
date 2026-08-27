@@ -33,7 +33,12 @@ class AuthenticatedSessionController extends Controller
 
         // Administrateur : accès à l'espace de gestion.
         if ($user->role === 'admin') {
-            return redirect()->intended(route('admin.dashboard'));
+            // Une destination client peut avoir été mémorisée avant la connexion
+            // (par exemple depuis la page d'abonnement expiré). Elle ne doit
+            // jamais enfermer un administrateur dans une boucle login/403.
+            $request->session()->forget('url.intended');
+
+            return redirect()->route('admin.dashboard');
         }
 
         // Client : accès au portail client.
@@ -43,7 +48,9 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Sécurité : rôle non reconnu.
-        return redirect()->intended('/');
+        $request->session()->forget('url.intended');
+
+        return redirect('/');
     }
 
     /**
