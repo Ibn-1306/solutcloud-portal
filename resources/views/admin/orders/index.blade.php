@@ -46,15 +46,20 @@
         <div class="admin-watermark" aria-hidden="true"></div>
 
         <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="admin-card border-l-4 border-l-[#2b909a] p-5">
                     <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Total reçu</p>
                     <p class="mt-2 text-2xl font-black text-gray-900">{{ $orders->total() }}</p>
                 </div>
 
-                <div class="admin-card border-l-4 border-l-blue-500 p-5">
-                    <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Commandes</p>
-                    <p class="mt-2 text-2xl font-black text-gray-900">{{ $orderCount }}</p>
+                <div class="admin-card border-l-4 border-l-[#2b909a] p-5">
+                    <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Commandes START</p>
+                    <p class="mt-2 text-2xl font-black text-gray-900">{{ $startOrderCount }}</p>
+                </div>
+
+                <div class="admin-card border-l-4 border-l-indigo-500 p-5">
+                    <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Commandes BUSINESS</p>
+                    <p class="mt-2 text-2xl font-black text-gray-900">{{ $businessOrderCount }}</p>
                 </div>
 
                 <div class="admin-card border-l-4 border-l-amber-500 p-5">
@@ -75,7 +80,7 @@
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="orders-table min-w-full text-sm">
+                    <table class="admin-data-table orders-table min-w-full text-sm">
                         <thead class="bg-[#2b909a] text-white">
                             <tr>
                                 <th class="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Référence</th>
@@ -101,9 +106,13 @@
                                             <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-black uppercase text-amber-800">
                                                 Demande de devis
                                             </span>
+                                        @elseif($order->offer === 'BUSINESS')
+                                            <span class="inline-flex rounded-full bg-indigo-100 px-2.5 py-1 text-[10px] font-black uppercase text-indigo-800">
+                                                Commande BUSINESS
+                                            </span>
                                         @else
-                                            <span class="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-black uppercase text-blue-800">
-                                                Commande
+                                            <span class="inline-flex rounded-full bg-cyan-100 px-2.5 py-1 text-[10px] font-black uppercase text-cyan-800">
+                                                Commande START
                                             </span>
                                         @endif
 
@@ -130,7 +139,7 @@
                                     </td>
 
                                     <td class="px-6 py-5 text-xs leading-5 text-gray-600">
-                                        <div class="order-message">{{ $order->message ?: 'Aucune précision.' }}</div>
+                                        <div class="order-message">{{ $order->clientNotes() ?: 'Aucune précision.' }}</div>
                                     </td>
 
                                     <td class="px-6 py-5">

@@ -13,8 +13,14 @@ class OrderController extends Controller
         $commercialRequests = WebsiteLead::query()
             ->whereIn('type', ['order', 'quote']);
 
-        $orderCount = (clone $commercialRequests)
+        $startOrderCount = (clone $commercialRequests)
             ->where('type', 'order')
+            ->where('offer', 'START')
+            ->count();
+
+        $businessOrderCount = (clone $commercialRequests)
+            ->where('type', 'order')
+            ->where('offer', 'BUSINESS')
             ->count();
 
         $quoteRequestCount = (clone $commercialRequests)
@@ -28,7 +34,8 @@ class OrderController extends Controller
 
         return view('admin.orders.index', compact(
             'orders',
-            'orderCount',
+            'startOrderCount',
+            'businessOrderCount',
             'quoteRequestCount',
         ));
     }

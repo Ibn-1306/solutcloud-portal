@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\HasSolutcloudDelivery;
 use App\Models\Company;
 use App\Models\Payment;
 use App\Models\User;
@@ -15,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
 
 class AccountInvitationMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use HasSolutcloudDelivery, Queueable, SerializesModels;
 
     public User $user;
 
@@ -45,7 +46,7 @@ class AccountInvitationMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        return new Envelope(
+        return $this->solutcloudEnvelope(
             subject: "SOLUTCLOUD — {$this->user->name}, activez votre espace client",
         );
     }
@@ -65,6 +66,7 @@ class AccountInvitationMail extends Mailable
     {
         return new Headers(text: [
             'X-Mailin-Tag' => 'solutcloud-account-activation',
+            'X-Auto-Response-Suppress' => 'OOF, AutoReply',
             'X-Entity-Ref-ID' => 'solutcloud-account-'.$this->user->id,
         ]);
     }

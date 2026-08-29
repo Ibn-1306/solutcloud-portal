@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\DemoAccessMail;
 use App\Models\Demo;
+use App\Models\WebsiteLead;
+use App\Rules\InternationalPhoneNumber;
+use App\Support\InternationalPhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -14,8 +17,9 @@ class DemoController extends Controller
     public function index()
     {
         $demos = Demo::latest()->get();
+        $pendingDemoRequests = WebsiteLead::pendingTrialRequests();
 
-        return view('admin.demos.index', compact('demos'));
+        return view('admin.demos.index', compact('demos', 'pendingDemoRequests'));
     }
 
     public function store(Request $request)
@@ -23,17 +27,19 @@ class DemoController extends Controller
         $data = $request->validate([
             'company_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:30',
+            'phone' => ['nullable', 'string', 'max:30', new InternationalPhoneNumber],
             'erp_login' => 'required|string|max:255',
             'erp_password' => 'required|string|max:255',
         ]);
 
         try {
+            $data['email'] = mb_strtolower(trim($data['email']));
+
             $demo = Demo::create([
                 'company_name' => $data['company_name'],
                 'subdomain' => Demo::DEFAULT_SUBDOMAIN,
                 'email' => $data['email'],
-                'phone' => $data['phone'] ?? null,
+                'phone' => InternationalPhone::normalize($data['phone'] ?? null),
                 'erp_login' => $data['erp_login'],
                 'erp_password' => $data['erp_password'],
             ]);

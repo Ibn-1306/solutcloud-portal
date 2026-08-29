@@ -1,3 +1,5 @@
+@import 'intl-tel-input/styles';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -173,4 +175,39 @@
 
     background: #dc2626;
 
+}
+/* SOLUTCLOUD — téléphone international */
+.iti {
+    width: 100%;
+    --iti-border-color: #dbe5e7;
+    --iti-dialcode-color: #475569;
+    --iti-dropdown-bg: #ffffff;
+    --iti-hover-color: rgba(43, 144, 154, .09);
+}
+
+.iti input[data-phone-input] {
+    width: 100%;
+}
+
+.iti__selected-country {
+    border-radius: .625rem 0 0 .625rem;
+}
+
+.iti__country-list {
+    z-index: 80;
+    max-width: min(360px, calc(100vw - 2rem));
+    border-color: #dbe5e7;
+    border-radius: .75rem;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, .16);
+}
+
+.iti__search-input {
+    border-color: #cbd5e1;
+    border-radius: .55rem;
+}
+
+.iti__search-input:focus {
+    border-color: #2b909a;
+    box-shadow: 0 0 0 3px rgba(43, 144, 154, .13);
+    outline: none;
 }

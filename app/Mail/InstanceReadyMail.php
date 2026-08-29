@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\HasSolutcloudDelivery;
 use App\Models\Company;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
 
 class InstanceReadyMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use HasSolutcloudDelivery, Queueable, SerializesModels;
 
     // J'ajoute les types devant chaque propriété pour supprimer le rouge
     public Company $company;
@@ -37,7 +38,7 @@ class InstanceReadyMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(
+        return $this->solutcloudEnvelope(
             subject: 'SOLUTCLOUD — Votre instance est opérationnelle',
         );
     }
@@ -46,6 +47,7 @@ class InstanceReadyMail extends Mailable
     {
         return new Content(
             view: 'emails.instance_ready',
+            text: 'emails.text.instance_ready',
         );
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountSuspendedController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\DemoController;
 use App\Http\Controllers\Admin\OrderController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Client\SubscriptionController;
 use App\Http\Controllers\PaymentReturnController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubscriptionExpiredController;
+use App\Http\Middleware\EnsureClientCompanyIsNotAdministrativelySuspended;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +41,13 @@ Route::get('/abonnement-expire/renouveler', [SubscriptionExpiredController::clas
 Route::get('/abonnement-expire', [SubscriptionExpiredController::class, 'show'])
     ->name('subscription.expired');
 
+Route::get('/compte-suspendu/statut', [AccountSuspendedController::class, 'status'])
+    ->middleware('throttle:30,1')
+    ->name('account.suspended.status');
+
+Route::get('/compte-suspendu', [AccountSuspendedController::class, 'show'])
+    ->name('account.suspended');
+
 /*
 |--------------------------------------------------------------------------
 | REDIRECTION DASHBOARD
@@ -57,7 +66,7 @@ Route::get('/dashboard', function () {
 
     return redirect()->route('client.dashboard');
 
-})->middleware(['auth'])->name('dashboard');
+})->middleware(['auth', EnsureClientCompanyIsNotAdministrativelySuspended::class])->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -145,7 +154,7 @@ Route::middleware(['auth', 'can:admin-only'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', EnsureClientCompanyIsNotAdministrativelySuspended::class])->group(function () {
 
     Route::get('/profile',
         [ProfileController::class, 'edit']
@@ -167,7 +176,7 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'can:client-only'])
+Route::middleware(['auth', 'can:client-only', EnsureClientCompanyIsNotAdministrativelySuspended::class])
     ->prefix('client')
     ->group(function () {
 

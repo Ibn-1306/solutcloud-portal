@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\HasSolutcloudDelivery;
 use App\Models\Payment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -12,13 +13,13 @@ use Illuminate\Queue\SerializesModels;
 
 class PaymentLinkMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use HasSolutcloudDelivery, Queueable, SerializesModels;
 
     public function __construct(public Payment $payment) {}
 
     public function envelope(): Envelope
     {
-        return new Envelope(
+        return $this->solutcloudEnvelope(
             subject: "SOLUTCLOUD — Règlement {$this->payment->reference}",
         );
     }
@@ -35,6 +36,7 @@ class PaymentLinkMail extends Mailable
     {
         return new Headers(text: [
             'X-Mailin-Tag' => 'solutcloud-payment-link',
+            'X-Auto-Response-Suppress' => 'OOF, AutoReply',
             'X-Entity-Ref-ID' => 'solutcloud-payment-'.$this->payment->reference,
         ]);
     }

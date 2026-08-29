@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\HasSolutcloudDelivery;
 use App\Models\WebsiteLead;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
 
 class WebsiteLeadAcknowledgement extends Mailable
 {
-    use Queueable, SerializesModels;
+    use HasSolutcloudDelivery, Queueable, SerializesModels;
 
     public function __construct(public WebsiteLead $lead) {}
 
@@ -25,11 +26,14 @@ class WebsiteLeadAcknowledgement extends Mailable
             default => 'SOLUTCLOUD — Votre message est bien reçu',
         };
 
-        return new Envelope(subject: $subject);
+        return $this->solutcloudEnvelope(subject: $subject);
     }
 
     public function content(): Content
     {
-        return new Content(view: 'emails.website_lead_acknowledgement');
+        return new Content(
+            view: 'emails.website_lead_acknowledgement',
+            text: 'emails.text.website_lead_acknowledgement',
+        );
     }
 }

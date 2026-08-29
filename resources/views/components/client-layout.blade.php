@@ -165,7 +165,7 @@
         </div>
     </aside>
 
-    <div class="min-h-screen min-w-0 transition-[padding] duration-300 ease-out" :class="sidebarCollapsed ? 'lg:pl-[88px]' : 'lg:pl-[286px]'">
+    <div class="min-h-screen min-w-0 transition-[padding] duration-300 ease-out" :class="sidebarCollapsed ? 'lg:pl-22' : 'lg:pl-[286px]'">
         <header class="sticky top-0 z-30 border-b border-slate-200/90 bg-white/95 backdrop-blur">
             <div class="flex min-h-[72px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
                 <div class="flex min-w-0 items-center gap-3">
@@ -220,5 +220,33 @@
             </div>
         </main>
     </div>
-</body>
+    <script>
+        (() => {
+            const statusUrl = @json(route('account.suspended.status'));
+            const suspendedUrl = @json(route('account.suspended'));
+
+            const checkAccountAccess = async () => {
+                try {
+                    const separator = statusUrl.includes('?') ? '&' : '?';
+                    const response = await fetch(statusUrl + separator + '_=' + Date.now(), {
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        headers: { Accept: 'application/json' },
+                    });
+
+                    if (!response.ok) return;
+                    const payload = await response.json();
+
+                    if (payload.status === 'suspended' && payload.suspension_reason === 'administrative') {
+                        window.location.replace(suspendedUrl);
+                    }
+                } catch (_) {
+                    // La vérification suivante reprendra automatiquement.
+                }
+            };
+
+            checkAccountAccess();
+            window.setInterval(checkAccountAccess, 4000);
+        })();
+    </script></body>
 </html>

@@ -44,6 +44,12 @@ class AuthenticatedSessionController extends Controller
         // Client : accès au portail client.
         // Les contrôles métier restent gérés par le portail.
         if ($user->role === 'client') {
+            if ($user->company?->isAdministrativelySuspended()) {
+                $request->session()->forget('url.intended');
+
+                return redirect()->route('account.suspended');
+            }
+
             return redirect()->intended(route('client.dashboard'));
         }
 

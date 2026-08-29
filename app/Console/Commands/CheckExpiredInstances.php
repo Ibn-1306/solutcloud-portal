@@ -38,7 +38,10 @@ class CheckExpiredInstances extends Command
                 $lws->block($company);
 
                 // 3. Mise à jour de la base de données
-                $company->update(['status' => 'suspended']);
+                $company->update([
+                    'status' => 'suspended',
+                    'suspension_reason' => Company::SUSPENSION_EXPIRATION,
+                ]);
 
                 $this->info("✓ {$company->name} suspendue avec succès.");
 

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendWebsiteLeadEmails;
 use App\Models\WebsiteLead;
+use App\Rules\InternationalPhoneNumber;
+use App\Support\InternationalPhone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -18,11 +20,11 @@ class WebsiteLeadController extends Controller
             'type' => ['required', 'string', Rule::in(['contact', 'trial', 'order', 'quote'])],
             'fullname' => ['required', 'string', 'max:255', 'not_regex:/[\r\n]/'],
             'email' => ['required', 'email:rfc', 'max:255'],
-            'phone' => ['nullable', 'required_if:type,trial,order,quote', 'string', 'max:30'],
+            'phone' => ['nullable', 'required_if:type,trial,order,quote', 'string', 'max:30', new InternationalPhoneNumber],
             'company_name' => ['nullable', 'required_if:type,trial,order,quote', 'string', 'max:255'],
             'profile' => ['nullable', 'string', 'max:100'],
             'offer' => ['nullable', 'string', Rule::in(['START', 'BUSINESS', 'PREMIUM'])],
-            'message' => ['required', 'string', 'max:5000'],
+            'message' => ['nullable', 'required_if:type,contact,trial', 'string', 'max:5000'],
         ]);
 
         if ($data['type'] === 'order' && ! in_array($data['offer'] ?? null, ['START', 'BUSINESS'], true)) {
@@ -38,6 +40,7 @@ class WebsiteLeadController extends Controller
         }
 
         $data['email'] = mb_strtolower(trim($data['email']));
+        $data['phone'] = InternationalPhone::normalize($data['phone'] ?? null);
         $recipient = (string) config('services.solutcloud.contact_recipient', 'sales@i-solutions.ci');
 
         if (filter_var($recipient, FILTER_VALIDATE_EMAIL) === false) {

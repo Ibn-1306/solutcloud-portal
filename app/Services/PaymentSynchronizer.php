@@ -87,6 +87,7 @@ class PaymentSynchronizer
                 ? $payment->package
                 : $company->package,
             'status' => 'active',
+            'suspension_reason' => null,
             'expires_at' => $startsAt->addMonthsNoOverflow($payment->duration_months),
             'subscription_started_at' => $company->subscription_started_at ?? now(),
         ])->save();

@@ -75,7 +75,7 @@
                                     data-phone="{{ $lead->phone }}"
                                     data-company="{{ $lead->company_name }}"
                                     data-package="{{ strtolower($lead->offer ?? '') }}"
-                                    data-description="Règlement {{ $lead->commercialReference() }} — SOLUTCLOUD {{ $lead->offer }}"
+                                    data-description="{{ $lead->clientNotes() }}"
                                     @selected((string) old('website_lead_id', $preselectedLeadId) === (string) $lead->id)
                                 >
                                     {{ $lead->commercialReference() }} · {{ $lead->company_name ?: $lead->fullname }} · {{ $lead->offer ?: 'Sans offre' }}
@@ -95,7 +95,7 @@
                         </div>
                         <div>
                             <label for="customer_phone" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-gray-500">Téléphone</label>
-                            <input id="customer_phone" name="customer_phone" value="{{ old('customer_phone') }}" class="payment-input" placeholder="+225 07 00 00 00 00">
+                            <input id="customer_phone" type="tel" name="customer_phone" value="{{ old('customer_phone') }}" class="payment-input" placeholder="Numéro de téléphone" autocomplete="tel" data-phone-input>
                         </div>
                         <div>
                             <label for="company_name" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-gray-500">Entreprise</label>
@@ -115,8 +115,31 @@
                             <input id="amount" type="number" min="{{ $paymentCurrency === 'XOF' ? 100 : 1 }}" step="1" name="amount" value="{{ old('amount') }}" class="payment-input" required placeholder="{{ $defaultPaymentAmounts['start'] }}">
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
-                            <label for="description" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-gray-500">Description / Notes additionnelles</label>
-                            <textarea id="description" name="description" maxlength="500" rows="3" class="payment-input resize-y" required placeholder="Précisez les éléments convenus avec le client">{{ old('description') }}</textarea>
+                            <p class="mb-2 text-[10px] font-black uppercase tracking-wider text-gray-500">Éléments compris dans l’offre</p>
+                            <div id="offer-details-placeholder" class="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-5 py-4 text-sm text-gray-500">
+                                Sélectionnez une offre pour afficher son contenu.
+                            </div>
+                            @foreach($offerCatalog as $packageKey => $offer)
+                                <article data-offer-details="{{ $packageKey }}" class="hidden rounded-xl border border-[#2b909a]/20 bg-[#2b909a]/[.045] p-5" aria-live="polite">
+                                    <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                                        <h4 class="text-sm font-black text-gray-900">SOLUTCLOUD {{ $offer['label'] }}</h4>
+                                        <p class="text-xs font-semibold text-[#237781]">{{ $offer['audience'] }}</p>
+                                    </div>
+                                    <dl class="mt-4 grid gap-3 sm:grid-cols-2">
+                                        @foreach($offer['details'] as $detail)
+                                            <div class="rounded-lg border border-white/80 bg-white px-4 py-3">
+                                                <dt class="text-[10px] font-black uppercase tracking-wider text-gray-400">{{ $detail['label'] }}</dt>
+                                                <dd class="mt-1 text-xs font-semibold leading-5 text-gray-700">{{ $detail['value'] }}</dd>
+                                            </div>
+                                        @endforeach
+                                    </dl>
+                                </article>
+                            @endforeach
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3">
+                            <label for="description" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-gray-500">Précisions du client / Notes additionnelles</label>
+                            <textarea id="description" name="description" maxlength="5000" rows="3" class="payment-input resize-y" placeholder="Précisions communiquées par le client">{{ old('description') }}</textarea>
+                            <p class="mt-1.5 text-xs leading-5 text-gray-500">Ce champ contient uniquement les précisions du client. Les références de commande, de devis et de paiement sont conservées séparément.</p>
                         </div>
                     </div>
 
@@ -139,7 +162,7 @@
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="payment-table min-w-full text-sm">
+                    <table class="admin-data-table payment-table min-w-full text-sm">
                         <thead class="bg-[#2b909a] text-white">
                             <tr>
                                 <th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Référence</th>
@@ -257,10 +280,25 @@
             };
             const defaultAmounts = @json($defaultPaymentAmounts);
             const prefilledFieldNames = ['name', 'email', 'phone', 'company', 'package', 'description', 'amount'];
+            const offerDetailsPlaceholder = document.getElementById('offer-details-placeholder');
+            const offerDetailCards = document.querySelectorAll('[data-offer-details]');
+
+            const displayOfferDetails = (packageName = '') => {
+                let hasVisibleOffer = false;
+
+                offerDetailCards.forEach((card) => {
+                    const isVisible = card.dataset.offerDetails === packageName;
+                    card.classList.toggle('hidden', !isVisible);
+                    hasVisibleOffer ||= isVisible;
+                });
+
+                offerDetailsPlaceholder?.classList.toggle('hidden', hasVisibleOffer);
+            };
 
             const clearManualFields = () => {
                 for (const key of prefilledFieldNames) {
                     if (fields[key]) fields[key].value = '';
+                    if (key === 'phone') fields[key]?.dispatchEvent(new CustomEvent('phone:set-number', { detail: { number: '' } }));
                 }
             };
 
@@ -269,17 +307,31 @@
 
                 if (!option || !option.value) {
                     clearManualFields();
+                    displayOfferDetails('');
                     return;
                 }
 
                 for (const key of ['name', 'email', 'phone', 'company', 'package', 'description']) {
                     if (fields[key]) fields[key].value = option.dataset[key] || '';
+                    if (key === 'phone') fields[key]?.dispatchEvent(new CustomEvent('phone:set-number', { detail: { number: option.dataset[key] || '' } }));
                 }
                 if (fields.amount) fields.amount.value = defaultAmounts[option.dataset.package] || '';
+                displayOfferDetails(option.dataset.package || '');
             };
 
             lead.addEventListener('change', fillFromLead);
-            if (lead.value) fillFromLead();
+            fields.package?.addEventListener('change', () => {
+                displayOfferDetails(fields.package.value);
+                if (!lead.value && fields.amount && !fields.amount.value) {
+                    fields.amount.value = defaultAmounts[fields.package.value] || '';
+                }
+            });
+
+            if (lead.value) {
+                fillFromLead();
+            } else {
+                displayOfferDetails(fields.package?.value || '');
+            }
         });
     </script>
 </x-admin-layout>

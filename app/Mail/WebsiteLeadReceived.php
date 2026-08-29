@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\HasSolutcloudDelivery;
 use App\Models\WebsiteLead;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -12,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 
 class WebsiteLeadReceived extends Mailable
 {
-    use Queueable, SerializesModels;
+    use HasSolutcloudDelivery, Queueable, SerializesModels;
 
     public function __construct(public WebsiteLead $lead) {}
 
@@ -27,7 +28,7 @@ class WebsiteLeadReceived extends Mailable
 
         $offer = $this->lead->offer ? ' '.$this->lead->offer : '';
 
-        return new Envelope(
+        return $this->solutcloudEnvelope(
             subject: "SOLUTCLOUD — {$label}{$offer} — {$this->lead->fullname}",
             replyTo: [new Address($this->lead->email, $this->lead->fullname)],
         );
@@ -35,6 +36,9 @@ class WebsiteLeadReceived extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.website_lead_received');
+        return new Content(
+            view: 'emails.website_lead_received',
+            text: 'emails.text.website_lead_received',
+        );
     }
 }

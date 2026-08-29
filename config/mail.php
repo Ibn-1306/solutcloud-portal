@@ -111,8 +111,13 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'address' => env('MAIL_FROM_ADDRESS', 'sales@i-solutions.ci'),
+        'name' => env('MAIL_FROM_NAME', 'SOLUTCLOUD'),
+    ],
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS', env('MAIL_FROM_ADDRESS', 'sales@i-solutions.ci')),
+        'name' => env('MAIL_REPLY_TO_NAME', env('MAIL_FROM_NAME', 'SOLUTCLOUD')),
     ],
 
     'brand_logo_url' => env('SOLUTCLOUD_EMAIL_LOGO_URL', 'https://solutcloud.com/img/favicon.png'),

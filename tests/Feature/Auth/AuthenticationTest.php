@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -65,6 +66,30 @@ class AuthenticationTest extends TestCase
         $response
             ->assertRedirect(route('admin.dashboard'))
             ->assertSessionMissing('url.intended');
+    }
+
+    public function test_administratively_suspended_client_is_sent_to_the_suspension_page_after_login(): void
+    {
+        $company = Company::create([
+            'name' => 'Entreprise suspendue',
+            'email' => 'client@example.com',
+            'subdomain' => 'entreprise-suspendue',
+            'package' => 'start',
+            'status' => 'suspended',
+            'suspension_reason' => Company::SUSPENSION_ADMINISTRATIVE,
+            'expires_at' => now()->addMonth(),
+        ]);
+        $client = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'company_id' => $company->id,
+        ]);
+
+        $this->post('/login', [
+            'email' => $client->email,
+            'password' => 'password',
+        ])->assertRedirect(route('account.suspended'));
+
+        $this->assertAuthenticatedAs($client);
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void

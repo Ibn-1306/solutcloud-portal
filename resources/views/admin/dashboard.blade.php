@@ -14,17 +14,226 @@
                 <p class="mt-5 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">Suivez vos clients, confirmez les installations et gérez les opérations commerciales depuis un espace unique.</p>
             </div>
             <div class="grid w-full grid-cols-1 gap-3 sm:w-auto sm:grid-cols-2">
-                <a href="{{ route('admin.payments.index') }}#payment-form" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#2b909a] px-5 text-center text-sm font-extrabold text-white transition hover:bg-[#237781] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30 focus:ring-offset-2">Nouveau paiement</a>
+                <a href="{{ route('admin.payments.index') }}#payment-form" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-[#2b909a] px-5 text-center text-sm font-extrabold text-white transition hover:bg-[#237781] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30 focus:ring-offset-2">Voir paiement</a>
                 <a href="#new-instance" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-center text-sm font-extrabold text-slate-800 transition hover:border-[#2b909a] hover:text-[#207b84] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30 focus:ring-offset-2">Créer une instance</a>
             </div>
         </div>
     </section>
 
-    <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicateurs administrateur">
+    <style>
+        @keyframes dashboard-alert-arrow {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(7px); }
+        }
+
+        @keyframes dashboard-alert-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(43, 144, 154, .24); }
+            50% { box-shadow: 0 0 0 8px rgba(43, 144, 154, 0); }
+        }
+
+        .dashboard-action-card--active .dashboard-action-arrow {
+            animation: dashboard-alert-arrow 1.15s ease-in-out infinite;
+        }
+
+        .dashboard-action-card--active .dashboard-action-dot {
+            animation: dashboard-alert-pulse 1.8s ease-out infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .dashboard-action-card--active .dashboard-action-arrow,
+            .dashboard-action-card--active .dashboard-action-dot {
+                animation: none;
+            }
+        }
+    </style>
+
+    @php
+        $operationalPriorityCount = $newCommercialRequestCount + $availablePayments->count() + $pendingCount + $pendingDemoRequestCount;
+        $latestCommercialRequest = $newCommercialRequests->first();
+        $nextPaidPayment = $availablePayments->first();
+    @endphp
+
+    <section class="mt-7" aria-labelledby="admin-priorities-title" aria-live="polite">
+        <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+                <p class="text-xs font-extrabold uppercase tracking-[.16em] text-[#2b909a]">Alertes opérationnelles</p>
+                <h2 id="admin-priorities-title" class="mt-1 text-xl font-extrabold text-slate-950">Priorités à traiter</h2>
+            </div>
+            <span class="w-fit rounded-full px-3 py-1 text-xs font-extrabold {{ $operationalPriorityCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
+                {{ $operationalPriorityCount > 0 ? $operationalPriorityCount.' action(s) requise(s)' : 'Tout est à jour' }}
+            </span>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <a
+                href="{{ route('admin.orders.index') }}"
+                @class([
+                    'dashboard-action-card group relative overflow-hidden rounded-3xl border p-5 transition duration-300 focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30 focus:ring-offset-2',
+                    'dashboard-action-card--active border-[#2b909a]/35 bg-gradient-to-br from-[#edf9fa] to-white shadow-lg shadow-[#2b909a]/10 hover:-translate-y-0.5' => $newCommercialRequestCount > 0,
+                    'border-slate-200 bg-white hover:border-[#2b909a]/30' => $newCommercialRequestCount === 0,
+                ])
+            >
+                <div class="flex items-start justify-between gap-4">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#2b909a] text-white">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M7 3h10a2 2 0 012 2v16l-7-4-7 4V5a2 2 0 012-2z"/><path d="M9 8h6M9 12h6" stroke-linecap="round"/></svg>
+                    </span>
+                    <span class="dashboard-action-dot flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-black {{ $newCommercialRequestCount > 0 ? 'bg-[#2b909a] text-white' : 'bg-slate-100 text-slate-500' }}">{{ $newCommercialRequestCount }}</span>
+                </div>
+                <p class="mt-5 text-xs font-extrabold uppercase tracking-[.13em] text-[#207b84]">Commandes et devis</p>
+                <h3 class="mt-2 text-lg font-extrabold leading-snug text-slate-950">
+                    {{ $newCommercialRequestCount > 0 ? ($newCommercialRequestCount === 1 ? 'Nouvelle demande à traiter' : 'Nouvelles demandes à traiter') : 'Aucune nouvelle demande' }}
+                </h3>
+                <p class="mt-2 min-h-10 text-sm leading-5 text-slate-600">
+                    @if ($latestCommercialRequest)
+                        {{ $latestCommercialRequest->commercialReference() }} · {{ $latestCommercialRequest->company_name ?: $latestCommercialRequest->fullname }} · {{ $latestCommercialRequest->offer ?: 'Offre à préciser' }}
+                    @else
+                        Toutes les demandes commerciales reçues ont déjà un paiement associé.
+                    @endif
+                </p>
+                <span class="mt-5 inline-flex items-center gap-3 text-sm font-extrabold text-[#207b84]">
+                    Ouvrir les commandes
+                    <svg class="dashboard-action-arrow h-5 w-7" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 10h22M17 3l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+            </a>
+
+            <a
+                href="{{ $nextPaidPayment ? route('admin.dashboard', ['payment' => $nextPaidPayment->id]).'#new-instance' : route('admin.payments.index') }}"
+                @class([
+                    'dashboard-action-card group relative overflow-hidden rounded-3xl border p-5 transition duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:ring-offset-2',
+                    'dashboard-action-card--active border-emerald-300 bg-gradient-to-br from-emerald-50 to-white shadow-lg shadow-emerald-600/10 hover:-translate-y-0.5' => $availablePayments->isNotEmpty(),
+                    'border-slate-200 bg-white hover:border-emerald-300' => $availablePayments->isEmpty(),
+                ])
+            >
+                <div class="flex items-start justify-between gap-4">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-white">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3M15 15l2 2 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="dashboard-action-dot flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-black {{ $availablePayments->isNotEmpty() ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $availablePayments->count() }}</span>
+                </div>
+                <p class="mt-5 text-xs font-extrabold uppercase tracking-[.13em] text-emerald-700">Paiements confirmés</p>
+                <h3 class="mt-2 text-lg font-extrabold leading-snug text-slate-950">
+                    {{ $availablePayments->isNotEmpty() ? ($availablePayments->count() === 1 ? 'Accès client à préparer' : 'Accès clients à préparer') : 'Aucun accès en attente' }}
+                </h3>
+                <p class="mt-2 min-h-10 text-sm leading-5 text-slate-600">
+                    @if ($nextPaidPayment)
+                        {{ $nextPaidPayment->reference }} · {{ $nextPaidPayment->company_name }} · {{ number_format($nextPaidPayment->amount, 0, ',', ' ') }} {{ $nextPaidPayment->currency }}
+                    @else
+                        Aucun paiement initial confirmé n’attend la création de son instance.
+                    @endif
+                </p>
+                <span class="mt-5 inline-flex items-center gap-3 text-sm font-extrabold text-emerald-700">
+                    {{ $nextPaidPayment ? 'Préparer les accès' : 'Ouvrir les paiements' }}
+                    <svg class="dashboard-action-arrow h-5 w-7" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 10h22M17 3l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+            </a>
+
+            <a
+                href="#instances-title"
+                @class([
+                    'dashboard-action-card group relative overflow-hidden rounded-3xl border p-5 transition duration-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:ring-offset-2',
+                    'dashboard-action-card--active border-amber-300 bg-gradient-to-br from-amber-50 to-white shadow-lg shadow-amber-600/10 hover:-translate-y-0.5' => $pendingCount > 0,
+                    'border-slate-200 bg-white hover:border-amber-300' => $pendingCount === 0,
+                ])
+            >
+                <div class="flex items-start justify-between gap-4">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500 text-white">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M12 7h6M12 17h6" stroke-linecap="round"/></svg>
+                    </span>
+                    <span class="dashboard-action-dot flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-black {{ $pendingCount > 0 ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $pendingCount }}</span>
+                </div>
+                <p class="mt-5 text-xs font-extrabold uppercase tracking-[.13em] text-amber-700">Installation ERP</p>
+                <h3 class="mt-2 text-lg font-extrabold leading-snug text-slate-950">
+                    {{ $pendingCount > 0 ? ($pendingCount === 1 ? 'Instance à finaliser' : 'Instances à finaliser') : 'Installations finalisées' }}
+                </h3>
+                <p class="mt-2 min-h-10 text-sm leading-5 text-slate-600">
+                    {{ $pendingCount > 0 ? 'Renseignez les accès ERP puis envoyez-les aux clients concernés.' : 'Aucune instance ne se trouve actuellement en cours d’installation.' }}
+                </p>
+                <span class="mt-5 inline-flex items-center gap-3 text-sm font-extrabold text-amber-700">
+                    Voir les instances
+                    <svg class="dashboard-action-arrow h-5 w-7" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 10h22M17 3l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+            </a>
+
+            <a
+                href="{{ route('admin.demos.index') }}#demo-requests"
+                @class([
+                    'dashboard-action-card group relative overflow-hidden rounded-3xl border p-5 transition duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:ring-offset-2',
+                    'dashboard-action-card--active border-violet-300 bg-gradient-to-br from-violet-50 to-white shadow-lg shadow-violet-600/10 hover:-translate-y-0.5' => $pendingDemoRequestCount > 0,
+                    'border-slate-200 bg-white hover:border-violet-300' => $pendingDemoRequestCount === 0,
+                ])
+            >
+                <div class="flex items-start justify-between gap-4">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 9l6 3-6 3V9z" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="dashboard-action-dot flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-black {{ $pendingDemoRequestCount > 0 ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $pendingDemoRequestCount }}</span>
+                </div>
+                <p class="mt-5 text-xs font-extrabold uppercase tracking-[.13em] text-violet-700">Demandes de démo</p>
+                <h3 class="mt-2 text-lg font-extrabold leading-snug text-slate-950">
+                    {{ $pendingDemoRequestCount > 0 ? ($pendingDemoRequestCount === 1 ? 'Demande de démo à traiter' : 'Demandes de démo à traiter') : 'Aucune demande en attente' }}
+                </h3>
+                <p class="mt-2 min-h-10 text-sm leading-5 text-slate-600">
+                    @if ($latestPendingDemoRequest)
+                        {{ $latestPendingDemoRequest->company_name ?: $latestPendingDemoRequest->fullname }} · {{ $latestPendingDemoRequest->email }}
+                    @else
+                        Toutes les demandes de démonstration ont reçu leurs accès.
+                    @endif
+                </p>
+                <span class="mt-5 inline-flex items-center gap-3 text-sm font-extrabold text-violet-700">
+                    Voir les demandes
+                    <svg class="dashboard-action-arrow h-5 w-7" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 10h22M17 3l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+            </a>
+        </div>
+    </section>
+
+    <section class="mt-8" aria-labelledby="admin-overview-title">
+        <div class="mb-4">
+            <h2 id="admin-overview-title" class="text-xl font-extrabold text-slate-950">Ma vue générale</h2>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <article class="rounded-3xl border border-[#2b909a]/35 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Commandes</p><span class="text-2xl font-black text-slate-950">{{ $totalCommercialRequestCount }}</span></div>
+                <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Commandes</dt><dd class="mt-1 font-extrabold text-slate-800">{{ $orderCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Devis</dt><dd class="mt-1 font-extrabold text-slate-800">{{ $quoteRequestCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-[#207b84]">À traiter</dt><dd class="mt-1 font-extrabold text-[#207b84]">{{ $newCommercialRequestCount }}</dd></div>
+                </dl>
+            </article>
+
+            <article class="rounded-3xl border border-emerald-300 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Paiements</p><span class="text-2xl font-black text-slate-950">{{ $totalPaymentCount }}</span></div>
+                <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Payés</dt><dd class="mt-1 font-extrabold text-emerald-700">{{ $paidPaymentCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">En cours</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingPaymentCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Accès</dt><dd class="mt-1 font-extrabold text-[#207b84]">{{ $availablePayments->count() }}</dd></div>
+                </dl>
+            </article>
+
+            <article class="rounded-3xl border border-blue-300 bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Instances</p><span class="text-2xl font-black text-slate-950">{{ $totalCount }}</span></div>
+                <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Actives</dt><dd class="mt-1 font-extrabold text-emerald-700">{{ $activeCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Installation</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Suspendues</dt><dd class="mt-1 font-extrabold text-red-700">{{ $suspendedCount }}</dd></div>
+                </dl>
+            </article>
+
+            <article class="rounded-3xl border {{ $pendingDemoRequestCount > 0 ? 'border-amber-300' : 'border-violet-300' }} bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Démonstrations</p><span class="text-2xl font-black text-slate-950">{{ $totalDemoRequestCount }}</span></div>
+                <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Demandes</dt><dd class="mt-1 font-extrabold text-slate-800">{{ $totalDemoRequestCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-amber-700">À traiter</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingDemoRequestCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Accès créés</dt><dd class="mt-1 font-extrabold text-violet-700">{{ $demoCount }}</dd></div>
+                </dl>
+            </article>
+        </div>
+    </section>
+    <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Indicateurs administrateur">
         @php
             $metrics = [
                 ['label' => 'Total entreprises', 'value' => $totalCount, 'note' => 'Comptes enregistrés', 'color' => 'text-[#207b84]', 'bg' => 'bg-[#e5f5f6]', 'icon' => 'company'],
-                ['label' => "En attente d'installation", 'value' => $pendingCount, 'note' => 'À préparer', 'color' => 'text-amber-700', 'bg' => 'bg-amber-50', 'icon' => 'clock'],
                 ['label' => 'Instances actives', 'value' => $activeCount, 'note' => 'Clients opérationnels', 'color' => 'text-emerald-700', 'bg' => 'bg-emerald-50', 'icon' => 'server'],
                 ['label' => 'Échéances sous 7 jours', 'value' => $alerts, 'note' => 'À surveiller', 'color' => $alerts > 0 ? 'text-red-700' : 'text-slate-600', 'bg' => $alerts > 0 ? 'bg-red-50' : 'bg-slate-100', 'icon' => 'alert'],
             ];
@@ -65,7 +274,6 @@
                 </span>
                 <div><h2 id="instance-create-title" class="text-lg font-extrabold text-slate-950">Créer une instance payée</h2><p class="mt-1 text-xs leading-5 text-slate-500">Seuls les paiements confirmés par Moneroo sont proposés.</p></div>
             </div>
-            <a href="{{ route('admin.payments.index') }}" class="inline-flex min-h-10 w-fit items-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-extrabold text-slate-700 transition hover:border-[#2b909a]/40 hover:text-[#207b84]">Ouvrir Paiement</a>
         </div>
 
         <div class="p-5 sm:p-7">
@@ -119,7 +327,7 @@
                         @elseif ($company->status === 'active')
                             <form action="{{ route('admin.suspend', $company->id) }}" method="POST" onsubmit="return confirm('Suspendre cet accès ?')">@csrf<button class="min-h-11 w-full rounded-xl border border-red-200 bg-red-50 px-4 text-xs font-extrabold uppercase text-red-700">Suspendre</button></form>
                         @else
-                            <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="grid grid-cols-[1fr_auto] gap-2">@csrf<select name="duration" class="min-h-11 rounded-xl border-slate-300 text-sm" required>@foreach ([1,2,3,6,12] as $duration)<option value="{{ $duration }}">{{ $duration }} mois</option>@endforeach</select><button class="min-h-11 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold uppercase text-white">Réactiver</button></form>
+                            <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="grid grid-cols-[1fr_auto] gap-2">@csrf<select name="duration" class="min-h-11 rounded-xl border-slate-300 text-sm" required>@foreach ([0 => '0 mois · échéance inchangée', 1 => '1 mois', 2 => '2 mois', 3 => '3 mois', 6 => '6 mois', 12 => '12 mois'] as $duration => $label)<option value="{{ $duration }}">{{ $label }}</option>@endforeach</select><button class="min-h-11 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold uppercase text-white">Réactiver</button></form>
                         @endif
                     </div>
                 </article>
@@ -129,7 +337,7 @@
         </div>
 
         <div class="hidden overflow-x-auto lg:block">
-            <table class="min-w-[1050px] w-full text-sm">
+            <table class="admin-data-table min-w-[1050px] w-full text-sm">
                 <thead class="bg-[#2b909a] text-white"><tr><th class="px-6 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Entreprise</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Contact</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Offre</th><th class="px-5 py-4 text-center text-[10px] font-extrabold uppercase tracking-widest">Statut</th><th class="px-5 py-4 text-left text-[10px] font-extrabold uppercase tracking-widest">Échéance</th><th class="px-6 py-4 text-right text-[10px] font-extrabold uppercase tracking-widest">Actions</th></tr></thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($companies as $company)
@@ -145,7 +353,7 @@
                                 @elseif ($company->status === 'active')
                                     <form action="{{ route('admin.suspend', $company->id) }}" method="POST" onsubmit="return confirm('Suspendre cet accès ?')">@csrf<button class="min-h-9 rounded-lg border border-red-200 bg-red-50 px-3 text-[10px] font-extrabold uppercase text-red-700">Suspendre</button></form>
                                 @else
-                                    <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="inline-flex items-center gap-2">@csrf<select name="duration" class="min-h-9 rounded-lg border-slate-300 py-1 text-xs" required>@foreach ([1,2,3,6,12] as $duration)<option value="{{ $duration }}">{{ $duration }} mois</option>@endforeach</select><button class="min-h-9 rounded-lg bg-emerald-600 px-3 text-[10px] font-extrabold uppercase text-white">Réactiver</button></form>
+                                    <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="inline-flex items-center gap-2">@csrf<select name="duration" class="min-h-9 rounded-lg border-slate-300 py-1 text-xs" required>@foreach ([0 => '0 mois · échéance inchangée', 1 => '1 mois', 2 => '2 mois', 3 => '3 mois', 6 => '6 mois', 12 => '12 mois'] as $duration => $label)<option value="{{ $duration }}">{{ $label }}</option>@endforeach</select><button class="min-h-9 rounded-lg bg-emerald-600 px-3 text-[10px] font-extrabold uppercase text-white">Réactiver</button></form>
                                 @endif
                             </td>
                         </tr>

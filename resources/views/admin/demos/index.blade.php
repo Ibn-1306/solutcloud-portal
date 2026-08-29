@@ -48,8 +48,33 @@
                 </div>
             @endif
 
+            <section id="demo-requests" class="admin-card mb-8 overflow-hidden bg-white/90 backdrop-blur-sm" aria-labelledby="demo-requests-title">
+                <div class="flex flex-col gap-2 border-b border-gray-100 bg-gray-50/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 id="demo-requests-title" class="text-sm font-black uppercase tracking-wider text-gray-800">Demandes de démonstration à traiter</h2>
+                        <p class="mt-1 text-xs text-gray-500">Sélectionnez une demande pour préremplir la création de ses accès.</p>
+                    </div>
+                    <span class="w-fit rounded-full px-3 py-1 text-[10px] font-black uppercase {{ $pendingDemoRequests->isNotEmpty() ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">{{ $pendingDemoRequests->count() }} en attente</span>
+                </div>
+
+                <div class="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+                    @forelse ($pendingDemoRequests as $request)
+                        <article class="rounded-2xl border border-violet-200 bg-violet-50/40 p-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0"><h3 class="break-words font-extrabold text-gray-900">{{ $request->company_name ?: $request->fullname }}</h3><p class="mt-1 break-all text-xs font-semibold text-violet-700">{{ $request->email }}</p></div>
+                                <span class="shrink-0 text-[10px] font-bold text-gray-400">{{ $request->created_at->format('d/m/Y') }}</span>
+                            </div>
+                            <p class="mt-3 text-xs leading-5 text-gray-600">{{ $request->fullname }}{{ $request->profile ? ' · '.$request->profile : '' }}{{ $request->phone ? ' · '.$request->phone : '' }}</p>
+                            <p class="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">{{ $request->message }}</p>
+                            <button type="button" data-prepare-demo data-company="{{ $request->company_name }}" data-email="{{ $request->email }}" data-phone="{{ $request->phone }}" class="mt-4 min-h-10 w-full rounded-lg bg-violet-600 px-4 text-xs font-black uppercase tracking-wide text-white transition hover:bg-violet-700">Préparer les accès</button>
+                        </article>
+                    @empty
+                        <p class="py-5 text-sm font-semibold text-gray-500 md:col-span-2 xl:col-span-3">Aucune demande de démonstration n’attend de traitement.</p>
+                    @endforelse
+                </div>
+            </section>
             {{-- FORMULAIRE D'ENVOI DE DEMO --}}
-            <div class="admin-card p-10 mb-12 bg-white/90 backdrop-blur-sm">
+            <div id="demo-create-form" class="admin-card p-10 mb-12 bg-white/90 backdrop-blur-sm">
                 <div class="flex items-center mb-8 border-b border-gray-100 pb-4">
                     <svg class="icon-fix brand-teal mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
@@ -62,7 +87,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Dénomination Sociale</label>
-                            <input type="text" name="company_name" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="Saisir la raison sociale">
+                            <input id="demo-company-name" type="text" name="company_name" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="Saisir la raison sociale">
                         </div>
                         <div>
                             <label for="demo-subdomain" class="block text-xs font-bold text-gray-500 uppercase mb-1">Identifiant d'instance</label>
@@ -71,11 +96,11 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Client</label>
-                            <input type="email" name="email" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="client@email.com">
+                            <input id="demo-email" type="email" name="email" class="input-field focus:border-cyan-600 focus:ring-0" required placeholder="client@email.com">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Téléphone Client</label>
-                            <input type="tel" name="phone" class="input-field focus:border-cyan-600 focus:ring-0" placeholder="+225 07 00 00 00 00">
+                            <input id="demo-phone" type="tel" name="phone" value="{{ old('phone') }}" class="input-field focus:border-cyan-600 focus:ring-0" placeholder="Numéro de téléphone" autocomplete="tel" data-phone-input>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Identifiant ERP</label>
@@ -103,7 +128,7 @@
                     </span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
+                    <table class="admin-data-table min-w-full text-sm">
                         <thead class="bg-[#2b909a] text-white">
                             <tr>
                                 <th class="px-8 py-4 text-left text-[11px] font-bold uppercase tracking-widest">Entreprise</th>
@@ -162,4 +187,20 @@
             </div>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('[data-prepare-demo]').forEach((button) => {
+            button.addEventListener('click', () => {
+                document.getElementById('demo-company-name').value = button.dataset.company || '';
+                document.getElementById('demo-email').value = button.dataset.email || '';
+
+                const phone = document.getElementById('demo-phone');
+                phone.value = button.dataset.phone || '';
+                phone.dispatchEvent(new CustomEvent('phone:set-number', {
+                    detail: { number: button.dataset.phone || '' },
+                }));
+
+                document.getElementById('demo-create-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
 </x-admin-layout>

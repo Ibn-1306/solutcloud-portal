@@ -24,7 +24,39 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>[x-cloak]{display:none!important}</style>
+    <style>
+        [x-cloak]{display:none!important}
+
+        .admin-data-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .admin-data-table > thead {
+            background: #2b909a;
+            color: #fff;
+        }
+
+        .admin-data-table > tbody > tr:nth-child(odd) {
+            background: #fff;
+        }
+
+        .admin-data-table > tbody > tr:nth-child(even) {
+            background: #f2f6f7;
+        }
+
+        .admin-data-table > tbody > tr > td {
+            border-bottom: 1px solid #dbe5e7;
+        }
+
+        .admin-data-table > tbody > tr:last-child > td {
+            border-bottom: 0;
+        }
+
+        .admin-data-table > tbody > tr:hover {
+            background: #e7f3f4;
+        }
+    </style>
 </head>
 <body
     class="min-h-screen overflow-x-hidden bg-[#f4f8f9] font-sans text-slate-900 antialiased"
@@ -161,7 +193,7 @@
         </div>
     </aside>
 
-    <div class="min-h-screen min-w-0 transition-[padding] duration-300 ease-out" :class="sidebarCollapsed ? 'lg:pl-[88px]' : 'lg:pl-[286px]'">
+    <div class="min-h-screen min-w-0 transition-[padding] duration-300 ease-out" :class="sidebarCollapsed ? 'lg:pl-22' : 'lg:pl-[286px]'">
         <header class="sticky top-0 z-30 border-b border-slate-200/90 bg-white/95 backdrop-blur">
             <div class="flex min-h-[76px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
                 <div class="flex min-w-0 items-center gap-3">

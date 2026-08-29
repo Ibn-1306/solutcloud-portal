@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\HasSolutcloudDelivery;
 use App\Models\Demo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -11,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
 
 class DemoAccessMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use HasSolutcloudDelivery, Queueable, SerializesModels;
 
     public Demo $demo;
 
@@ -22,7 +23,7 @@ class DemoAccessMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(
+        return $this->solutcloudEnvelope(
             subject: 'SOLUTCLOUD — Vos accès de démonstration',
         );
     }
@@ -31,6 +32,7 @@ class DemoAccessMail extends Mailable
     {
         return new Content(
             view: 'emails.demo_access',
+            text: 'emails.text.demo_access',
         );
     }
 }

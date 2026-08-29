@@ -147,6 +147,22 @@ class TransactionalEmailsTest extends TestCase
         $this->assertStringNotContainsString('🚀', $subject);
         $this->assertStringNotContainsString('💰', $subject);
         $this->assertStringNotContainsString('✅', $subject);
+        $content = $mailable->content();
+        $envelope = $mailable->envelope();
+        $headers = $mailable->headers();
+
+        $this->assertNotNull($content->text, $mailable::class.' doit fournir une version texte.');
+        $this->assertSame(config('mail.from.address'), $envelope->from->address);
+        $this->assertSame(config('mail.from.name'), $envelope->from->name);
+        $this->assertNotEmpty($envelope->replyTo);
+        $this->assertArrayHasKey('X-Mailin-Tag', $headers->text);
+        $this->assertSame('OOF, AutoReply', $headers->text['X-Auto-Response-Suppress']);
+
+        if ($mailable instanceof WebsiteLeadReceived) {
+            $this->assertSame($mailable->lead->email, $envelope->replyTo[0]->address);
+        } else {
+            $this->assertSame(config('mail.reply_to.address'), $envelope->replyTo[0]->address);
+        }
 
         if ($mailable instanceof PaymentLinkMail || $mailable instanceof AccountInvitationMail) {
             $this->assertStringContainsString('class="email-button"', $html);

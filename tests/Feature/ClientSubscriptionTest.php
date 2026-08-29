@@ -35,11 +35,13 @@ class ClientSubscriptionTest extends TestCase
             ->assertSee('bg-black', false)
             ->assertSee('setSidebarCollapsed(true)', false)
             ->assertSee("localStorage.getItem('solutcloud-sidebar-collapsed')", false)
-            ->assertSee("sidebarCollapsed ? 'lg:pl-[88px]' : 'lg:pl-[286px]'", false)
+            ->assertSee("sidebarCollapsed ? 'lg:pl-22' : 'lg:pl-[286px]'", false)
             ->assertSee('Ouvrir le menu SOLUTCLOUD')
             ->assertSee('Réduire le menu')
             ->assertSee('Compte')
-            ->assertSee('href="'.route('client.profile').'"', false);
+            ->assertSee('href="'.route('client.profile').'"', false)
+            ->assertSee("payload.suspension_reason === 'administrative'", false)
+            ->assertSee('window.setInterval(checkAccountAccess, 4000)', false);
 
         $this->get(route('client.profile'))
             ->assertOk()
@@ -171,7 +173,10 @@ class ClientSubscriptionTest extends TestCase
         app(PaymentSynchronizer::class)->synchronize($payment);
 
         $this->assertSame('active', $company->fresh()->status);
-        Storage::disk('lws')->assertMissing($root.'/.htaccess.solutcloud-backup');
+        $this->assertFalse(
+            Storage::disk('lws')->exists($root.'/.htaccess.solutcloud-backup'),
+            'La sauvegarde du verrou FTP doit être supprimée après la réactivation.',
+        );
         $this->assertSame('Original Dolibarr rules', Storage::disk('lws')->get($root.'/.htaccess'));
     }
 

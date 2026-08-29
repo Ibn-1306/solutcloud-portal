@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Company extends Model
 {
+    public const SUSPENSION_ADMINISTRATIVE = 'administrative';
+
+    public const SUSPENSION_EXPIRATION = 'expiration';
+
     /**
      * Attributs modifiables.
      */
@@ -19,6 +23,7 @@ class Company extends Model
         'custom_domain',
         'package',
         'status',
+        'suspension_reason',
         'expires_at',
         'erp_login',
         'erp_password',
@@ -101,6 +106,12 @@ class Company extends Model
     public function getPackageUpperAttribute(): string
     {
         return strtoupper($this->package);
+    }
+
+    public function isAdministrativelySuspended(): bool
+    {
+        return $this->status === 'suspended'
+            && $this->suspension_reason === self::SUSPENSION_ADMINISTRATIVE;
     }
 
     /**

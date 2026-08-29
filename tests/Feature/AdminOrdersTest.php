@@ -26,6 +26,16 @@ class AdminOrdersTest extends TestCase
             'message' => 'Commande SOLUTCLOUD START.',
         ]);
 
+        $businessOrder = WebsiteLead::create([
+            'type' => 'order',
+            'fullname' => 'Mariam Traoré',
+            'email' => 'mariam@example.com',
+            'phone' => '+225 05 06 07 08 09',
+            'company_name' => 'Entreprise Business',
+            'profile' => 'TPE',
+            'offer' => 'BUSINESS',
+            'message' => "Commande de l’offre SOLUTCLOUD BUSINESS.\n\nPrécisions :\nTest offre business",
+        ]);
         $quoteRequest = WebsiteLead::create([
             'type' => 'quote',
             'fullname' => 'Jean Kouassi',
@@ -51,11 +61,22 @@ class AdminOrdersTest extends TestCase
             ->get(route('admin.orders.index'))
             ->assertOk()
             ->assertSee($order->commercialReference())
+            ->assertSee($businessOrder->commercialReference())
             ->assertSee($quoteRequest->commercialReference())
             ->assertSee('Entreprise Alpha')
+            ->assertSee('Entreprise Business')
             ->assertSee('Entreprise Premium')
+            ->assertSee('Commandes START')
+            ->assertSee('Commandes BUSINESS')
+            ->assertSee('Commande START')
+            ->assertSee('Commande BUSINESS')
+            ->assertSee('Demande de devis')
             ->assertSee('SOLUTCLOUD START')
+            ->assertSee('SOLUTCLOUD BUSINESS')
             ->assertSee('SOLUTCLOUD PREMIUM')
+            ->assertSee('Test offre business')
+            ->assertDontSee('Précisions :')
+            ->assertDontSee('>Commandes</p>', false)
             ->assertDontSee('Client Test');
     }
 

@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendInstanceReadyEmail;
 use App\Jobs\SendInstanceSetupEmails;
 use App\Models\Company;
+use App\Models\Demo;
 use App\Models\Payment;
 use App\Models\User;
+use App\Models\WebsiteLead;
 use App\Services\LwsInstanceStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,14 +29,46 @@ class CompanyController extends Controller
         $totalCount = $companies->count();
         $pendingCount = $companies->where('status', 'pending')->count();
         $activeCount = $companies->where('status', 'active')->count();
+        $suspendedCount = $companies->where('status', 'suspended')->count();
         $alerts = Company::where('status', 'active')
             ->whereBetween('expires_at', [now(), now()->addDays(7)])
             ->count();
 
         $availablePayments = Payment::paid()
+            ->visibleInTracking()
+            ->where('purpose', Payment::PURPOSE_INITIAL)
             ->whereNull('company_id')
             ->latest('paid_at')
             ->get();
+
+        $commercialRequests = WebsiteLead::query()
+            ->whereIn('type', ['order', 'quote']);
+        $newCommercialRequestsQuery = (clone $commercialRequests)
+            ->whereDoesntHave('payments');
+        $newCommercialRequestCount = (clone $newCommercialRequestsQuery)->count();
+        $newCommercialRequests = $newCommercialRequestsQuery
+            ->latest()
+            ->limit(4)
+            ->get();
+        $totalCommercialRequestCount = (clone $commercialRequests)->count();
+        $orderCount = (clone $commercialRequests)->where('type', 'order')->count();
+        $quoteRequestCount = (clone $commercialRequests)->where('type', 'quote')->count();
+
+        $visiblePayments = Payment::visibleInTracking();
+        $totalPaymentCount = (clone $visiblePayments)->count();
+        $paidPaymentCount = (clone $visiblePayments)->paid()->count();
+        $pendingPaymentCount = (clone $visiblePayments)
+            ->whereIn('status', [
+                Payment::STATUS_DRAFT,
+                Payment::STATUS_INITIATED,
+                Payment::STATUS_PENDING,
+            ])
+            ->count();
+        $demoCount = Demo::query()->count();
+        $totalDemoRequestCount = WebsiteLead::query()->trials()->count();
+        $pendingDemoRequests = WebsiteLead::pendingTrialRequests();
+        $pendingDemoRequestCount = $pendingDemoRequests->count();
+        $latestPendingDemoRequest = $pendingDemoRequests->first();
 
         $selectedPaymentId = $request->integer('payment');
 
@@ -43,8 +77,21 @@ class CompanyController extends Controller
             'totalCount',
             'pendingCount',
             'activeCount',
+            'suspendedCount',
             'alerts',
             'availablePayments',
+            'newCommercialRequestCount',
+            'newCommercialRequests',
+            'totalCommercialRequestCount',
+            'orderCount',
+            'quoteRequestCount',
+            'totalPaymentCount',
+            'paidPaymentCount',
+            'pendingPaymentCount',
+            'demoCount',
+            'totalDemoRequestCount',
+            'pendingDemoRequestCount',
+            'latestPendingDemoRequest',
             'selectedPaymentId',
         ));
     }
@@ -173,8 +220,11 @@ class CompanyController extends Controller
         $company = Company::findOrFail($id);
 
         try {
-            $lws->suspend($company);
-            $company->update(['status' => 'suspended']);
+            $lws->suspend($company, Company::SUSPENSION_ADMINISTRATIVE);
+            $company->update([
+                'status' => 'suspended',
+                'suspension_reason' => Company::SUSPENSION_ADMINISTRATIVE,
+            ]);
 
             return back()->with('status', 'Instance suspendue via FTP.');
         } catch (\Exception $e) {
@@ -184,11 +234,11 @@ class CompanyController extends Controller
 
     public function activate(Request $request, int $id, LwsInstanceStorage $lws)
     {
-        $request->validate([
+        $data = $request->validate([
             'duration' => [
                 'required',
                 'integer',
-                'in:1,2,3,6,12',
+                'in:0,1,2,3,6,12',
             ],
         ], [
             'duration.in' => 'La durée de réactivation sélectionnée est invalide.',
@@ -196,27 +246,34 @@ class CompanyController extends Controller
         ]);
 
         $company = Company::findOrFail($id);
+        $months = (int) $data['duration'];
+
+        if ($months === 0 && ! $company->expires_at?->isFuture()) {
+            throw ValidationException::withMessages([
+                'duration' => 'La réactivation à 0 mois exige une échéance encore valide. Sélectionnez une prolongation.',
+            ]);
+        }
 
         try {
             $lws->reactivate($company);
 
-            $months = (int) $request->duration;
-
-            $newExpiration = $company->expires_at && $company->expires_at->isFuture()
-                ? $company->expires_at->addMonths($months)
-                : now()->addMonths($months);
+            $newExpiration = match (true) {
+                $months === 0 => $company->expires_at ?? now(),
+                $company->expires_at?->isFuture() => $company->expires_at->copy()->addMonthsNoOverflow($months),
+                default => now()->addMonthsNoOverflow($months),
+            };
 
             $company->update([
-
                 'status' => 'active',
-
+                'suspension_reason' => null,
                 'expires_at' => $newExpiration,
-
             ]);
 
             return back()->with(
                 'status',
-                "Instance réactivée pour {$months} mois."
+                $months === 0
+                    ? 'Instance réactivée sans prolongation de l’échéance.'
+                    : "Instance réactivée avec une prolongation de {$months} mois."
             );
 
         } catch (\Exception $e) {

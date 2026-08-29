@@ -32,13 +32,13 @@ class LwsInstanceStorage
         );
     }
 
-    public function suspend(Company $company): string
+    public function suspend(Company $company, string $reason = Company::SUSPENSION_EXPIRATION): string
     {
         $path = $this->resolvePath($company);
         $suspensionUrl = rtrim(
             (string) config('services.solutcloud.portal_url', 'https://login.solutcloud.com'),
             '/',
-        ).'/abonnement-expire?'.http_build_query([
+        ).($reason === Company::SUSPENSION_ADMINISTRATIVE ? '/compte-suspendu?' : '/abonnement-expire?').http_build_query([
             // Un nom d'hôte simple évite qu'Apache/LWS altère les caractères
             // encodés de "https://" dans la cible d'une RewriteRule.
             'instance' => (string) parse_url($company->instance_url, PHP_URL_HOST),

@@ -34,7 +34,9 @@ class PublicWebsiteFormsTest extends TestCase
             'message' => 'Commande SOLUTCLOUD START.',
         ])->assertCreated();
 
-        Queue::assertPushedOn('deferred', SendWebsiteLeadEmails::class, function (SendWebsiteLeadEmails $job): bool {
+        Queue::assertPushed(SendWebsiteLeadEmails::class, function (SendWebsiteLeadEmails $job): bool {
+            $this->assertSame('deferred', $job->connection);
+
             return $job->salesRecipient === 'sales@example.com';
         });
         Mail::assertNothingSent();
@@ -64,6 +66,7 @@ class PublicWebsiteFormsTest extends TestCase
             'fullname' => 'Awa Koné',
             'email' => 'awa@example.com',
             'company_name' => 'Entreprise Démo',
+            'phone' => '+2250102030405',
         ]);
 
         Mail::assertSent(WebsiteLeadReceived::class, function (WebsiteLeadReceived $mail): bool {
@@ -83,6 +86,29 @@ class PublicWebsiteFormsTest extends TestCase
         $this->assertStringContainsString('Votre message a bien été transmis', $acknowledgementHtml);
     }
 
+    public function test_order_can_be_submitted_without_additional_notes(): void
+    {
+        Queue::fake();
+        config(['services.solutcloud.contact_recipient' => 'sales@example.com']);
+
+        $this->postJson('/api/leads', [
+            'type' => 'order',
+            'offer' => 'BUSINESS',
+            'fullname' => 'Mariam Traoré',
+            'email' => 'mariam@example.com',
+            'phone' => '+225 05 06 07 08 09',
+            'company_name' => 'Entreprise Business',
+            'profile' => 'PME',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('website_leads', [
+            'type' => 'order',
+            'offer' => 'BUSINESS',
+            'email' => 'mariam@example.com',
+            'message' => null,
+        ]);
+    }
+
     public function test_invalid_leads_are_rejected_without_sending_mail(): void
     {
         Mail::fake();
@@ -99,6 +125,15 @@ class PublicWebsiteFormsTest extends TestCase
             'email' => 'client@example.com',
             'message' => 'Demande de test.',
         ])->assertUnprocessable()->assertJsonValidationErrors(['phone', 'company_name']);
+
+        $this->postJson('/api/leads', [
+            'type' => 'trial',
+            'fullname' => 'Test Client',
+            'email' => 'client@example.com',
+            'phone' => '+225 12 34',
+            'company_name' => 'Entreprise Test',
+            'message' => 'Demande de test.',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['phone']);
 
         $this->assertDatabaseCount('website_leads', 0);
         Mail::assertNothingSent();
@@ -125,7 +160,7 @@ class PublicWebsiteFormsTest extends TestCase
                 'offer' => 'PREMIUM',
                 'fullname' => 'Jean Kouassi',
                 'email' => 'jean@example.com',
-                'phone' => '+225 07 08 09 10 11',
+                'phone' => '+33 6 12 34 56 78',
                 'company_name' => 'Entreprise Premium',
                 'profile' => 'PME',
                 'message' => 'Demande de devis PREMIUM.',
@@ -147,6 +182,7 @@ class PublicWebsiteFormsTest extends TestCase
             'type' => 'quote',
             'offer' => 'PREMIUM',
             'email' => 'jean@example.com',
+            'phone' => '+33612345678',
         ]);
 
         Mail::assertSent(WebsiteLeadReceived::class, 2);

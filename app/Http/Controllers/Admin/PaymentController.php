@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendPaymentLinkEmail;
 use App\Models\Payment;
 use App\Models\WebsiteLead;
+use App\Rules\InternationalPhoneNumber;
 use App\Services\MonerooPaymentService;
 use App\Services\PaymentSynchronizer;
+use App\Support\InternationalPhone;
+use App\Support\OfferCatalog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,6 +51,11 @@ class PaymentController extends Controller
             ->where('currency', $paymentCurrency)
             ->sum('amount');
         $preselectedLeadId = $request->integer('lead');
+        $offerCatalog = collect(['start', 'business', 'premium'])
+            ->mapWithKeys(fn (string $package): array => [
+                $package => OfferCatalog::details($package),
+            ])
+            ->all();
 
         return view('admin.payments.index', compact(
             'payments',
@@ -59,6 +67,7 @@ class PaymentController extends Controller
             'paymentCurrency',
             'defaultPaymentAmounts',
             'preselectedLeadId',
+            'offerCatalog',
         ));
     }
 
@@ -71,29 +80,39 @@ class PaymentController extends Controller
             'website_lead_id' => ['nullable', 'integer', 'exists:website_leads,id'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email:rfc', 'max:255'],
-            'customer_phone' => ['nullable', 'string', 'max:30'],
+            'customer_phone' => ['nullable', 'string', 'max:30', new InternationalPhoneNumber],
             'company_name' => ['required', 'string', 'max:255'],
             'package' => ['required', Rule::in(['start', 'business', 'premium'])],
             'amount' => ['required', 'integer', 'min:'.$minimumAmount],
-            'description' => ['required', 'string', 'max:500'],
+            'description' => ['nullable', 'string', 'max:5000'],
         ]);
 
+        $commercialRequest = null;
+
         if (isset($data['website_lead_id'])) {
-            $leadIsCommercial = WebsiteLead::query()
+            $commercialRequest = WebsiteLead::query()
                 ->whereKey($data['website_lead_id'])
                 ->whereIn('type', ['order', 'quote'])
-                ->exists();
+                ->first();
 
-            if (! $leadIsCommercial) {
+            if (! $commercialRequest) {
                 return back()->withInput()->withErrors([
                     'website_lead_id' => 'La demande sélectionnée ne peut pas être associée à un paiement.',
                 ]);
             }
         }
 
+        // Pour une demande issue du site, les notes du paiement correspondent
+        // exclusivement aux précisions saisies par le client. Les références
+        // commerciales restent dans leurs champs dédiés.
+        $data['description'] = $commercialRequest
+            ? $commercialRequest->clientNotes()
+            : (filled($data['description'] ?? null) ? trim((string) $data['description']) : null);
+
         $payment = Payment::create([
             ...$data,
             'customer_email' => mb_strtolower(trim($data['customer_email'])),
+            'customer_phone' => InternationalPhone::normalize($data['customer_phone'] ?? null),
             'currency' => $paymentCurrency,
             'purpose' => Payment::PURPOSE_INITIAL,
             'status' => Payment::STATUS_DRAFT,

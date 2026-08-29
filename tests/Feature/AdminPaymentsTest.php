@@ -9,6 +9,7 @@ use App\Mail\PaymentLinkMail;
 use App\Models\Company;
 use App\Models\Payment;
 use App\Models\User;
+use App\Models\WebsiteLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -33,10 +34,10 @@ class AdminPaymentsTest extends TestCase
 
         $this->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee("En attente d'installation")
+            ->assertDontSee("En attente d'installation")
             ->assertSee('Créer une instance payée')
             ->assertSee('Instances Déployées')
-            ->assertSee('Ouvrir Paiement')
+            ->assertDontSee('Ouvrir Paiement')
             ->assertDontSee('Ouvrir Paiements')
             ->assertDontSee('Chemin FTP');
     }
@@ -50,9 +51,82 @@ class AdminPaymentsTest extends TestCase
             ->assertOk()
             ->assertSee('Création manuelle')
             ->assertSee('Sélectionner une offre')
-            ->assertSee('Description / Notes additionnelles')
+            ->assertSee('Précisions du client / Notes additionnelles')
+            ->assertSee('Éléments compris dans l’offre')
+            ->assertSee('Pack START, CRM, projets, temps, marketing et enquêtes')
+            ->assertSee('Serveur dédié et isolé')
+            ->assertSee('data-phone-input', false)
+            ->assertSee('phone:set-number', false)
             ->assertSee('const clearManualFields = () =>', false)
             ->assertSee("fields[key].value = '';", false);
+    }
+
+    public function test_commercial_request_uses_only_the_clients_notes_as_payment_description(): void
+    {
+        Mail::fake();
+        config()->set('services.moneroo.secret', 'test-secret');
+        config()->set('services.moneroo.currency', 'XOF');
+
+        Http::fake([
+            'https://api.moneroo.io/v1/payments/initialize' => Http::response([
+                'data' => [
+                    'id' => 'pay_client_notes',
+                    'checkout_url' => 'https://checkout.moneroo.io/pay_client_notes',
+                ],
+            ], 201),
+        ]);
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $lead = WebsiteLead::create([
+            'type' => 'order',
+            'fullname' => 'Awa Koné',
+            'email' => 'awa@example.com',
+            'phone' => '+2250102030405',
+            'company_name' => 'Entreprise Alpha',
+            'profile' => 'PME',
+            'offer' => 'START',
+            'message' => "Commande de l’offre SOLUTCLOUD START.\n\nPrécisions :\nImporter les données existantes.\nPrévoir une formation comptable.",
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.payments.store'), [
+                'website_lead_id' => $lead->id,
+                'customer_name' => $lead->fullname,
+                'customer_email' => $lead->email,
+                'customer_phone' => $lead->phone,
+                'company_name' => $lead->company_name,
+                'package' => 'start',
+                'amount' => 70800,
+                'description' => 'Règlement '.$lead->commercialReference().' — SOLUTCLOUD START',
+            ])
+            ->assertRedirect(route('admin.payments.index'))
+            ->assertSessionHas('status');
+
+        $payment = Payment::firstOrFail();
+
+        $this->assertSame("Importer les données existantes.\nPrévoir une formation comptable.", $payment->description);
+        $this->assertStringNotContainsString('Commande de l’offre', $payment->description);
+        $this->assertStringNotContainsString('Précisions :', $payment->description);
+        $this->assertStringNotContainsString($lead->commercialReference(), $payment->description);
+    }
+
+    public function test_manual_payment_rejects_an_invalid_international_phone(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.payments.store'), [
+                'customer_name' => 'Awa Koné',
+                'customer_email' => 'awa@example.com',
+                'customer_phone' => '+225 12 34',
+                'company_name' => 'Entreprise Alpha',
+                'package' => 'start',
+                'amount' => 70800,
+                'description' => 'Abonnement annuel SOLUTCLOUD START',
+            ])
+            ->assertSessionHasErrors('customer_phone');
+
+        $this->assertDatabaseCount('payments', 0);
     }
 
     public function test_admin_can_remove_an_unpaid_payment_from_tracking_without_deleting_its_audit_record(): void
@@ -141,6 +215,7 @@ class AdminPaymentsTest extends TestCase
         );
         $this->assertSame(Payment::STATUS_INITIATED, $payment->status);
         $this->assertSame('awa@example.com', $payment->customer_email);
+        $this->assertSame('+2250102030405', $payment->customer_phone);
         $this->assertSame('pay_test_123', $payment->moneroo_payment_id);
         $this->assertNotNull($payment->link_sent_at);
 
@@ -472,7 +547,7 @@ class AdminPaymentsTest extends TestCase
         Storage::disk('lws')->assertExists('alpha.solutcloud.com/.htaccess');
         Storage::disk('lws')->assertExists('alpha.solutcloud.com/.htaccess.solutcloud-backup');
         $this->assertStringContainsString(
-            'https://login.solutcloud.com/abonnement-expire',
+            'https://login.solutcloud.com/compte-suspendu',
             Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
         );
         $this->assertStringContainsString(
@@ -552,6 +627,89 @@ class AdminPaymentsTest extends TestCase
 
         Storage::disk('lws')->assertExists('entreprise.com/.htaccess');
         $this->assertSame('suspended', $company->fresh()->status);
+    }
+
+    public function test_administratively_suspended_client_is_blocked_from_every_account_page(): void
+    {
+        $company = $this->company([
+            'status' => 'suspended',
+            'suspension_reason' => Company::SUSPENSION_ADMINISTRATIVE,
+        ]);
+        $client = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'company_id' => $company->id,
+        ]);
+
+        $this->actingAs($client)
+            ->get(route('client.dashboard'))
+            ->assertRedirect(route('account.suspended'));
+
+        $this->get(route('client.renew'))
+            ->assertRedirect(route('account.suspended'));
+
+        $this->get(route('profile.edit'))
+            ->assertRedirect(route('account.suspended'));
+
+        $this->get(route('account.suspended'))
+            ->assertOk()
+            ->assertHeader('Cache-Control')
+            ->assertSee('Votre espace client est')
+            ->assertSee('suspendu.')
+            ->assertSee($company->name)
+            ->assertSee('Contacter le service client')
+            ->assertDontSee('Renouveler mon abonnement');
+    }
+
+    public function test_suspension_page_refreshes_to_the_account_after_admin_reactivation(): void
+    {
+        $company = $this->company([
+            'status' => 'suspended',
+            'suspension_reason' => Company::SUSPENSION_ADMINISTRATIVE,
+        ]);
+        $client = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'company_id' => $company->id,
+        ]);
+
+        $this->actingAs($client)
+            ->getJson(route('account.suspended.status'))
+            ->assertOk()
+            ->assertJson(['status' => 'suspended', 'redirect_url' => null]);
+
+        $company->update(['status' => 'active', 'suspension_reason' => null]);
+
+        $this->getJson(route('account.suspended.status'))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'active',
+                'redirect_url' => route('client.dashboard'),
+            ]);
+    }
+
+    public function test_admin_can_reactivate_without_extending_or_creating_a_payment(): void
+    {
+        Storage::fake('lws');
+        Storage::disk('lws')->put('alpha.solutcloud.com/index.php', '<?php');
+        Storage::disk('lws')->put('alpha.solutcloud.com/main.inc.php', '<?php');
+        Storage::disk('lws')->put('alpha.solutcloud.com/.htaccess', '# SOLUTCLOUD INSTANCE SUSPENDED');
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $expiration = now()->addMonths(4)->startOfSecond();
+        $company = $this->company([
+            'status' => 'suspended',
+            'suspension_reason' => Company::SUSPENSION_ADMINISTRATIVE,
+            'expires_at' => $expiration,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.activate', $company->id), ['duration' => 0])
+            ->assertSessionHas('status', 'Instance réactivée sans prolongation de l’échéance.');
+
+        $company->refresh();
+        $this->assertSame('active', $company->status);
+        $this->assertNull($company->suspension_reason);
+        $this->assertTrue($expiration->equalTo($company->expires_at));
+        $this->assertDatabaseCount('payments', 0);
     }
 
     private function company(array $attributes = []): Company
