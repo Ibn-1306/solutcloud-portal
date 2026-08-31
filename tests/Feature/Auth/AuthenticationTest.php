@@ -23,6 +23,7 @@ class AuthenticationTest extends TestCase
             ->assertSee('Centralisez vos opérations,')
             ->assertSee('Accélérez votre croissance,')
             ->assertSee('data-typewriter', false)
+            ->assertDontSee('mobile-value-proposition', false)
             ->assertSee('schedule(3000)', false)
             ->assertSee('animation: typewriter-cursor-pulse', false)
             ->assertSee('white-space: nowrap;', false)

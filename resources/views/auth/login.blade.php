@@ -873,9 +873,6 @@
             display: none;
         }
 
-        .mobile-value-proposition {
-            display: none;
-        }
 
         .login-heading {
             margin: 0;
@@ -1242,39 +1239,6 @@
                 margin: 0 auto 24px;
             }
 
-            .mobile-value-proposition {
-                display: block;
-                min-height: 82px;
-                margin: 0 auto 28px;
-                padding: 17px 18px 18px;
-                border: 1px solid rgba(113, 203, 210, .16);
-                border-radius: 18px;
-                background: linear-gradient(135deg, #08272c 0%, #0d3439 100%);
-                box-shadow: 0 18px 40px rgba(7, 28, 32, .12);
-                text-align: center;
-            }
-
-            .mobile-value-kicker {
-                margin: 0 0 9px;
-                color: #8bd4da;
-                font-size: 9px;
-                font-weight: 800;
-                letter-spacing: .16em;
-                text-transform: uppercase;
-            }
-
-            .mobile-typewriter-title {
-                margin: 0;
-                color: #ffffff;
-                font-size: clamp(18px, 5.2vw, 27px);
-                font-weight: 700;
-                letter-spacing: -.035em;
-                line-height: 1.08;
-            }
-
-            .mobile-typewriter-title .typewriter-line--accent {
-                color: #71cbd2;
-            }
 
             .login-heading {
                 font-size: 31px;
@@ -1391,10 +1355,6 @@
                 margin-bottom: 14px;
             }
 
-            .mobile-value-proposition {
-                min-height: 68px;
-                margin-bottom: 18px;
-            }
 
             .login-welcome {
                 margin-bottom: 24px;
@@ -1621,16 +1581,6 @@
                 class="mobile-logo"
             >
 
-            <div class="mobile-value-proposition">
-                <p class="mobile-value-kicker">Votre activité, mieux pilotée</p>
-                <p class="mobile-typewriter-title" aria-label="Pilotez votre activité, sans complexité.">
-                    <span data-typewriter aria-hidden="true">
-                        <span class="typewriter-line" data-typewriter-primary>Pilotez votre activité,</span>
-                        <span class="typewriter-line typewriter-line--accent" data-typewriter-secondary>Sans complexité.</span>
-                        <span class="typewriter-cursor" data-typewriter-cursor></span>
-                    </span>
-                </p>
-            </div>
 
             <div class="login-welcome">
 
