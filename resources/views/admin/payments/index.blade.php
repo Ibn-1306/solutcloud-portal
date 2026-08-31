@@ -30,7 +30,7 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div class="payment-card border-l-4 border-l-gray-800 p-5">
                     <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Total paiements</p>
                     <p class="mt-2 text-2xl font-black text-gray-900">{{ $totalCount }}</p>
@@ -42,10 +42,6 @@
                 <div class="payment-card border-l-4 border-l-emerald-500 p-5">
                     <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Payés</p>
                     <p class="mt-2 text-2xl font-black text-emerald-700">{{ $paidCount }}</p>
-                </div>
-                <div class="payment-card border-l-4 border-l-[#2b909a] p-5">
-                    <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Montant encaissé</p>
-                    <p class="mt-2 text-xl font-black text-gray-900">{{ number_format($paidAmount, 0, ',', ' ') }} <span class="text-xs text-gray-500">{{ $paymentCurrency }}</span></p>
                 </div>
             </div>
 
@@ -144,7 +140,7 @@
                     </div>
 
                     <div class="mt-7 flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between">
-                        <p class="max-w-3xl text-xs leading-5 text-gray-600">La clé Moneroo reste côté serveur. Le statut <strong>Payé</strong> n’est appliqué qu’après vérification du montant, de la devise et de l’identifiant auprès de Moneroo.</p>
+                        <p class="max-w-3xl text-xs leading-5 text-gray-600">Une commande ou un devis ne peut créer qu’un seul dossier de paiement. Tant qu’il n’est pas payé, son lien peut être renvoyé ou régénéré depuis le tableau de suivi. Le statut <strong>Payé</strong> n’est appliqué qu’après vérification auprès de Moneroo.</p>
                         <button class="shrink-0 rounded-lg bg-[#2b909a] px-5 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[#2b909a]/15 transition hover:bg-[#237781]">
                             Générer et envoyer
                         </button>
@@ -197,7 +193,15 @@
                                         <a href="mailto:{{ $payment->customer_email }}" class="mt-1 block text-xs text-[#237781] hover:underline">{{ $payment->customer_email }}</a>
                                     </td>
                                     <td class="px-5 py-5">
-                                        <div class="font-black text-gray-800">SOLUTCLOUD {{ strtoupper($payment->package) }}</div>
+                                        @php
+                                            $purposeBadge = match($payment->purpose) {
+                                                'renewal' => 'bg-violet-100 text-violet-800',
+                                                'upgrade' => 'bg-blue-100 text-blue-800',
+                                                default => 'bg-cyan-100 text-cyan-800',
+                                            };
+                                        @endphp
+                                        <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase {{ $purposeBadge }}">{{ $payment->purposeLabel() }}</span>
+                                        <div class="mt-2 font-black text-gray-800">SOLUTCLOUD {{ strtoupper($payment->package) }}</div>
                                         <div class="mt-1 text-sm font-bold text-[#237781]">{{ number_format($payment->amount, 0, ',', ' ') }} {{ $payment->currency }}</div>
                                     </td>
                                     <td class="px-5 py-5 text-center">
@@ -219,6 +223,10 @@
                                                 <form method="POST" action="{{ route('admin.payments.initialize', $payment) }}">@csrf
                                                     <button class="rounded-md bg-gray-900 px-2.5 py-1.5 text-[10px] font-black uppercase text-white">Créer le lien</button>
                                                 </form>
+                                            @elseif($payment->canRegenerateLink())
+                                                <form method="POST" action="{{ route('admin.payments.initialize', $payment) }}" onsubmit="return confirm('Générer un nouveau lien Moneroo et l’envoyer au client ? L’ancien lien restera traçable.');">@csrf
+                                                    <button class="rounded-md bg-blue-600 px-2.5 py-1.5 text-[10px] font-black uppercase text-white">Régénérer</button>
+                                                </form>
                                             @endif
                                             @if($payment->canSendLink())
                                                 <form method="POST" action="{{ route('admin.payments.send-link', $payment) }}">@csrf
@@ -235,6 +243,11 @@
                                             @endif
                                             @if($payment->isPaid() && !$payment->company_id)
                                                 <a href="{{ route('admin.dashboard', ['payment' => $payment->id]) }}#new-instance" class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-[10px] font-black uppercase text-white">Créer instance</a>
+                                            @endif
+                                            @if($payment->purpose === 'upgrade' && $payment->isPaid() && !$payment->upgrade_reviewed_at)
+                                                <form method="POST" action="{{ route('admin.payments.review-upgrade', $payment) }}">@csrf
+                                                    <button class="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[10px] font-black uppercase text-blue-700">Évolution traitée</button>
+                                                </form>
                                             @endif
                                             @if($payment->canRemoveFromTracking())
                                                 <form

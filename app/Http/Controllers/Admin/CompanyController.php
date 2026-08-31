@@ -11,6 +11,7 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\WebsiteLead;
 use App\Services\LwsInstanceStorage;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -69,6 +70,23 @@ class CompanyController extends Controller
         $pendingDemoRequests = WebsiteLead::pendingTrialRequests();
         $pendingDemoRequestCount = $pendingDemoRequests->count();
         $latestPendingDemoRequest = $pendingDemoRequests->first();
+        $pendingUpgradePayments = Payment::query()
+            ->with('company')
+            ->paid()
+            ->where('purpose', Payment::PURPOSE_UPGRADE)
+            ->whereNull('upgrade_reviewed_at')
+            ->latest('paid_at')
+            ->get();
+        $pendingUpgradeCount = $pendingUpgradePayments->count();
+        $latestPendingUpgrade = $pendingUpgradePayments->first();
+        $totalUpgradeCount = Payment::query()
+            ->where('purpose', Payment::PURPOSE_UPGRADE)
+            ->count();
+        $paidUpgradeCount = Payment::query()
+            ->paid()
+            ->where('purpose', Payment::PURPOSE_UPGRADE)
+            ->count();
+        $activityFingerprint = $this->activityFingerprint();
 
         $selectedPaymentId = $request->integer('payment');
 
@@ -92,8 +110,37 @@ class CompanyController extends Controller
             'totalDemoRequestCount',
             'pendingDemoRequestCount',
             'latestPendingDemoRequest',
+            'pendingUpgradeCount',
+            'latestPendingUpgrade',
+            'totalUpgradeCount',
+            'paidUpgradeCount',
+            'activityFingerprint',
             'selectedPaymentId',
         ));
+    }
+
+    public function activityStatus(): JsonResponse
+    {
+        return response()->json(['fingerprint' => $this->activityFingerprint()]);
+    }
+
+    private function activityFingerprint(): string
+    {
+        $lead = WebsiteLead::query()->latest('updated_at')->first(['id', 'updated_at']);
+        $payment = Payment::query()->latest('updated_at')->first(['id', 'updated_at']);
+        $demo = Demo::query()->latest('updated_at')->first(['id', 'updated_at']);
+
+        return hash('sha256', implode('|', [
+            WebsiteLead::query()->count(),
+            $lead?->id,
+            $lead?->updated_at?->getTimestamp(),
+            Payment::query()->count(),
+            $payment?->id,
+            $payment?->updated_at?->getTimestamp(),
+            Demo::query()->count(),
+            $demo?->id,
+            $demo?->updated_at?->getTimestamp(),
+        ]));
     }
 
     public function store(Request $request)

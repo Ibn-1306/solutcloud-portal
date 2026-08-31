@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Mail\ClientPasswordResetMail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Mail;
 
 class User extends Authenticatable
 {
@@ -77,6 +79,13 @@ class User extends Authenticatable
      * Vérifie si l'utilisateur est l'administrateur de SolutCloud.
      * Utilisation : if($user->isAdmin()) { ... }
      */
+    public function sendPasswordResetNotification($token): void
+    {
+        $resetUrl = url('/reset-password/'.$token.'?email='.urlencode($this->email));
+
+        Mail::to($this->email)->send(new ClientPasswordResetMail($this, $resetUrl));
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;

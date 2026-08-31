@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Payment extends Model
 {
@@ -55,6 +56,7 @@ class Payment extends Model
         'paid_at',
         'applied_at',
         'archived_at',
+        'upgrade_reviewed_at',
     ];
 
     protected function casts(): array
@@ -69,6 +71,7 @@ class Payment extends Model
             'paid_at' => 'datetime',
             'applied_at' => 'datetime',
             'archived_at' => 'datetime',
+            'upgrade_reviewed_at' => 'datetime',
         ];
     }
 
@@ -93,6 +96,11 @@ class Payment extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function checkoutAttempts(): HasMany
+    {
+        return $this->hasMany(PaymentCheckoutAttempt::class);
+    }
+
     public function scopePaid(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_PAID);
@@ -113,6 +121,20 @@ class Payment extends Model
         return ! $this->isPaid()
             && is_string($this->checkout_url)
             && $this->checkout_url !== '';
+    }
+
+    public function canRegenerateLink(): bool
+    {
+        return ! $this->isPaid();
+    }
+
+    public function purposeLabel(): string
+    {
+        return match ($this->purpose) {
+            self::PURPOSE_RENEWAL => 'Réabonnement',
+            self::PURPOSE_UPGRADE => 'Passage START → BUSINESS',
+            default => 'Premier paiement',
+        };
     }
 
     public function canRemoveFromTracking(): bool

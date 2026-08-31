@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\VerifyMonerooPayment;
 use App\Models\Payment;
+use App\Models\PaymentCheckoutAttempt;
 use App\Services\MonerooPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,7 +33,12 @@ class MonerooWebhookController extends Controller
             return response()->json(['error' => 'Identifiant de paiement absent.'], 422);
         }
 
-        $payment = Payment::where('moneroo_payment_id', $monerooPaymentId)->first();
+        $payment = Payment::where('moneroo_payment_id', $monerooPaymentId)->first()
+            ?? PaymentCheckoutAttempt::query()
+                ->where('moneroo_payment_id', $monerooPaymentId)
+                ->with('payment')
+                ->first()
+                ?->payment;
 
         if ($payment === null) {
             Log::warning('MONEROO_WEBHOOK_PAYMENT_UNKNOWN', [
@@ -43,7 +49,7 @@ class MonerooWebhookController extends Controller
             return response()->json(['status' => 'ignored']);
         }
 
-        VerifyMonerooPayment::dispatch($payment->id)->onConnection('deferred');
+        VerifyMonerooPayment::dispatch($payment->id, $monerooPaymentId)->onConnection('deferred');
 
         return response()->json(['status' => 'received']);
     }

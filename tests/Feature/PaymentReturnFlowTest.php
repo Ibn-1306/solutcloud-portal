@@ -36,7 +36,8 @@ class PaymentReturnFlowTest extends TestCase
         $token = basename((string) parse_url($location, PHP_URL_PATH));
         parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
 
-        $this->assertTrue($payment->fresh()->isPaid());
+        $payment->refresh();
+        $this->assertTrue($payment->isPaid());
         $this->assertTrue($user->isClient());
         $this->assertNull($user->company_id);
         $this->assertSame($user->email, $query['email'] ?? null);
@@ -91,8 +92,9 @@ class PaymentReturnFlowTest extends TestCase
             ->assertRedirect(route('client.dashboard'))
             ->assertSessionHas('status');
 
-        $this->assertTrue($payment->fresh()->isPaid());
-        $this->assertNotNull($payment->fresh()->applied_at);
+        $payment->refresh();
+        $this->assertTrue($payment->isPaid());
+        $this->assertNotNull($payment->applied_at);
     }
 
     public function test_paid_initial_customer_is_attached_when_admin_creates_the_instance(): void

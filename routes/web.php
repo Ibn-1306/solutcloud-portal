@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountSuspendedController;
+use App\Http\Controllers\Admin\ClientSecurityController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\DemoController;
 use App\Http\Controllers\Admin\OrderController;
@@ -81,6 +82,9 @@ Route::middleware(['auth', 'can:admin-only'])
         Route::get('/dashboard',
             [CompanyController::class, 'index']
         )->name('admin.dashboard');
+        Route::get('/dashboard/activity-status',
+            [CompanyController::class, 'activityStatus']
+        )->middleware('throttle:60,1')->name('admin.dashboard.activity-status');
 
         Route::prefix('companies')->group(function () {
 
@@ -122,6 +126,13 @@ Route::middleware(['auth', 'can:admin-only'])
             [OrderController::class, 'index']
         )->name('admin.orders.index');
 
+        Route::get('/client-security',
+            [ClientSecurityController::class, 'index']
+        )->name('admin.client-security.index');
+
+        Route::post('/client-security/send',
+            [ClientSecurityController::class, 'send']
+        )->middleware('throttle:10,1')->name('admin.client-security.send');
         Route::get('/payments',
             [PaymentController::class, 'index']
         )->name('admin.payments.index');
@@ -137,6 +148,10 @@ Route::middleware(['auth', 'can:admin-only'])
         Route::post('/payments/{payment}/send-link',
             [PaymentController::class, 'sendLink']
         )->name('admin.payments.send-link');
+
+        Route::post('/payments/{payment}/review-upgrade',
+            [PaymentController::class, 'reviewUpgrade']
+        )->name('admin.payments.review-upgrade');
 
         Route::post('/payments/{payment}/refresh',
             [PaymentController::class, 'refresh']

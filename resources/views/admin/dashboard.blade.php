@@ -48,7 +48,7 @@
     </style>
 
     @php
-        $operationalPriorityCount = $newCommercialRequestCount + $availablePayments->count() + $pendingCount + $pendingDemoRequestCount;
+        $operationalPriorityCount = $newCommercialRequestCount + $availablePayments->count() + $pendingCount + $pendingDemoRequestCount + $pendingUpgradeCount;
         $latestCommercialRequest = $newCommercialRequests->first();
         $nextPaidPayment = $availablePayments->first();
     @endphp
@@ -64,7 +64,7 @@
             </span>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <a
                 href="{{ route('admin.orders.index') }}"
                 @class([
@@ -184,6 +184,31 @@
                     <svg class="dashboard-action-arrow h-5 w-7" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 10h22M17 3l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
             </a>
+            <a href="{{ route('admin.payments.index') }}" @class([
+                'dashboard-action-card relative overflow-hidden rounded-3xl border p-5 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2',
+                'dashboard-action-card--active border-blue-300 bg-gradient-to-br from-blue-50 to-white shadow-lg shadow-blue-600/10 hover:-translate-y-0.5 hover:border-blue-400' => $pendingUpgradeCount > 0,
+                'border-slate-200 bg-white hover:border-blue-300' => $pendingUpgradeCount === 0,
+            ])>
+                <div class="flex items-start justify-between gap-4">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M5 17L17 5M8 5h9v9" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 7v10h10" stroke-linecap="round"/></svg>
+                    </span>
+                    <span class="dashboard-action-dot flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-sm font-black {{ $pendingUpgradeCount > 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500' }}">{{ $pendingUpgradeCount }}</span>
+                </div>
+                <p class="mt-5 text-xs font-extrabold uppercase tracking-[.13em] text-blue-700">Passages à BUSINESS</p>
+                <h3 class="mt-2 text-lg font-extrabold leading-snug text-slate-950">{{ $pendingUpgradeCount > 0 ? 'Évolution ERP à vérifier' : 'Aucune évolution en attente' }}</h3>
+                <p class="mt-2 min-h-10 text-sm leading-5 text-slate-600">
+                    @if ($latestPendingUpgrade)
+                        {{ $latestPendingUpgrade->company_name }} · paiement {{ $latestPendingUpgrade->reference }} confirmé. Le compte est déjà passé à BUSINESS.
+                    @else
+                        Les passages START vers BUSINESS confirmés ont tous été traités.
+                    @endif
+                </p>
+                <span class="mt-5 inline-flex items-center gap-3 text-sm font-extrabold text-blue-700">
+                    {{ $latestPendingUpgrade ? 'Voir le paiement et traiter' : 'Voir les paiements' }}
+                    <svg class="dashboard-action-arrow h-5 w-7 shrink-0" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 10h22M17 3l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+            </a>
         </div>
     </section>
 
@@ -192,7 +217,7 @@
             <h2 id="admin-overview-title" class="text-xl font-extrabold text-slate-950">Ma vue générale</h2>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <article class="rounded-3xl border border-[#2b909a]/35 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Commandes</p><span class="text-2xl font-black text-slate-950">{{ $totalCommercialRequestCount }}</span></div>
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
@@ -207,11 +232,11 @@
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Payés</dt><dd class="mt-1 font-extrabold text-emerald-700">{{ $paidPaymentCount }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">En cours</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingPaymentCount }}</dd></div>
-                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Accès</dt><dd class="mt-1 font-extrabold text-[#207b84]">{{ $availablePayments->count() }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Instances à créer</dt><dd class="mt-1 font-extrabold text-[#207b84]">{{ $availablePayments->count() }}</dd></div>
                 </dl>
             </article>
 
-            <article class="rounded-3xl border border-blue-300 bg-white p-5 shadow-sm">
+            <article class="rounded-3xl border border-amber-300 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Instances</p><span class="text-2xl font-black text-slate-950">{{ $totalCount }}</span></div>
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Actives</dt><dd class="mt-1 font-extrabold text-emerald-700">{{ $activeCount }}</dd></div>
@@ -220,7 +245,7 @@
                 </dl>
             </article>
 
-            <article class="rounded-3xl border {{ $pendingDemoRequestCount > 0 ? 'border-amber-300' : 'border-violet-300' }} bg-white p-5 shadow-sm">
+            <article class="rounded-3xl border border-violet-300 bg-white p-5 shadow-sm">
                 <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Démonstrations</p><span class="text-2xl font-black text-slate-950">{{ $totalDemoRequestCount }}</span></div>
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Demandes</dt><dd class="mt-1 font-extrabold text-slate-800">{{ $totalDemoRequestCount }}</dd></div>
@@ -228,13 +253,19 @@
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Accès créés</dt><dd class="mt-1 font-extrabold text-violet-700">{{ $demoCount }}</dd></div>
                 </dl>
             </article>
+            <article class="rounded-3xl border {{ $pendingUpgradeCount > 0 ? 'border-blue-400' : 'border-blue-300' }} bg-white p-5 shadow-sm">
+                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Passages à BUSINESS</p><span class="text-2xl font-black text-slate-950">{{ $totalUpgradeCount }}</span></div>
+                <dl class="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 text-center">
+                    <div><dt class="text-[10px] font-bold uppercase text-slate-400">Confirmés</dt><dd class="mt-1 font-extrabold text-blue-700">{{ $paidUpgradeCount }}</dd></div>
+                    <div><dt class="text-[10px] font-bold uppercase text-amber-700">À traiter</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingUpgradeCount }}</dd></div>
+                </dl>
+            </article>
         </div>
     </section>
-    <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Indicateurs administrateur">
+    <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Indicateurs administrateur">
         @php
             $metrics = [
                 ['label' => 'Total entreprises', 'value' => $totalCount, 'note' => 'Comptes enregistrés', 'color' => 'text-[#207b84]', 'bg' => 'bg-[#e5f5f6]', 'icon' => 'company'],
-                ['label' => 'Instances actives', 'value' => $activeCount, 'note' => 'Clients opérationnels', 'color' => 'text-emerald-700', 'bg' => 'bg-emerald-50', 'icon' => 'server'],
                 ['label' => 'Échéances sous 7 jours', 'value' => $alerts, 'note' => 'À surveiller', 'color' => $alerts > 0 ? 'text-red-700' : 'text-slate-600', 'bg' => $alerts > 0 ? 'bg-red-50' : 'bg-slate-100', 'icon' => 'alert'],
             ];
         @endphp
@@ -415,5 +446,34 @@
             document.querySelectorAll('[data-close-finalize]').forEach((button) => button.addEventListener('click', () => finalizeModal.close()));
             finalizeModal?.addEventListener('click', (event) => { if (event.target === finalizeModal) finalizeModal.close(); });
         });
+    </script>
+    <script>
+        (() => {
+            let currentFingerprint = @json($activityFingerprint);
+            let requestInProgress = false;
+            const pageHasActiveInput = () => {
+                const active = document.activeElement;
+                return active && ['INPUT', 'SELECT', 'TEXTAREA'].includes(active.tagName);
+            };
+            const checkDashboardActivity = async () => {
+                if (requestInProgress || document.hidden || pageHasActiveInput()) return;
+                requestInProgress = true;
+                try {
+                    const response = await fetch(@json(route('admin.dashboard.activity-status')), {
+                        headers: { 'Accept': 'application/json' },
+                        cache: 'no-store',
+                    });
+                    if (!response.ok) return;
+                    const payload = await response.json();
+                    if (payload.fingerprint && payload.fingerprint !== currentFingerprint) {
+                        currentFingerprint = payload.fingerprint;
+                        window.location.reload();
+                    }
+                } finally {
+                    requestInProgress = false;
+                }
+            };
+            window.setInterval(checkDashboardActivity, 5000);
+        })();
     </script>
 </x-admin-layout>

@@ -140,12 +140,15 @@ class ClientSubscriptionTest extends TestCase
 
         app(PaymentSynchronizer::class)->synchronize($payment);
 
-        $this->assertSame('2026-12-14 16:26:00', $company->fresh()->expires_at->format('Y-m-d H:i:s'));
-        $this->assertNotNull($payment->fresh()->applied_at);
+        $company->refresh();
+        $payment->refresh();
+        $this->assertSame('2026-12-14 16:26:00', $company->expires_at->format('Y-m-d H:i:s'));
+        $this->assertNotNull($payment->applied_at);
 
-        app(PaymentSynchronizer::class)->synchronize($payment->fresh());
+        app(PaymentSynchronizer::class)->synchronize($payment);
 
-        $this->assertSame('2026-12-14 16:26:00', $company->fresh()->expires_at->format('Y-m-d H:i:s'));
+        $company->refresh();
+        $this->assertSame('2026-12-14 16:26:00', $company->expires_at->format('Y-m-d H:i:s'));
     }
 
     public function test_paid_renewal_reactivates_a_suspended_instance_and_removes_the_ftp_lock(): void
@@ -172,7 +175,8 @@ class ClientSubscriptionTest extends TestCase
 
         app(PaymentSynchronizer::class)->synchronize($payment);
 
-        $this->assertSame('active', $company->fresh()->status);
+        $company->refresh();
+        $this->assertSame('active', $company->status);
         $this->assertFalse(
             Storage::disk('lws')->exists($root.'/.htaccess.solutcloud-backup'),
             'La sauvegarde du verrou FTP doit être supprimée après la réactivation.',

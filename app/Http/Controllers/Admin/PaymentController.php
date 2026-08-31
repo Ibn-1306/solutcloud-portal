@@ -14,8 +14,10 @@ use App\Support\OfferCatalog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
@@ -37,6 +39,7 @@ class PaymentController extends Controller
 
         $commercialRequests = WebsiteLead::query()
             ->whereIn('type', ['order', 'quote'])
+            ->whereDoesntHave('payments')
             ->latest()
             ->limit(100)
             ->get();
@@ -47,9 +50,6 @@ class PaymentController extends Controller
             Payment::STATUS_INITIATED,
             Payment::STATUS_PENDING,
         ])->count();
-        $paidAmount = (int) Payment::visibleInTracking()->paid()
-            ->where('currency', $paymentCurrency)
-            ->sum('amount');
         $preselectedLeadId = $request->integer('lead');
         $offerCatalog = collect(['start', 'business', 'premium'])
             ->mapWithKeys(fn (string $package): array => [
@@ -63,7 +63,6 @@ class PaymentController extends Controller
             'totalCount',
             'paidCount',
             'pendingCount',
-            'paidAmount',
             'paymentCurrency',
             'defaultPaymentAmounts',
             'preselectedLeadId',
@@ -87,37 +86,43 @@ class PaymentController extends Controller
             'description' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $commercialRequest = null;
+        $payment = DB::transaction(function () use ($data, $paymentCurrency): Payment {
+            $commercialRequest = null;
 
-        if (isset($data['website_lead_id'])) {
-            $commercialRequest = WebsiteLead::query()
-                ->whereKey($data['website_lead_id'])
-                ->whereIn('type', ['order', 'quote'])
-                ->first();
+            if (isset($data['website_lead_id'])) {
+                $commercialRequest = WebsiteLead::query()
+                    ->whereKey($data['website_lead_id'])
+                    ->whereIn('type', ['order', 'quote'])
+                    ->lockForUpdate()
+                    ->first();
 
-            if (! $commercialRequest) {
-                return back()->withInput()->withErrors([
-                    'website_lead_id' => 'La demande sélectionnée ne peut pas être associée à un paiement.',
-                ]);
+                if ($commercialRequest === null) {
+                    throw ValidationException::withMessages([
+                        'website_lead_id' => 'La demande sélectionnée ne peut pas être associée à un paiement.',
+                    ]);
+                }
+
+                if ($commercialRequest->payments()->exists()) {
+                    throw ValidationException::withMessages([
+                        'website_lead_id' => 'Un paiement existe déjà pour cette commande ou demande. Utilisez sa ligne de suivi pour renvoyer ou régénérer le lien.',
+                    ]);
+                }
             }
-        }
 
-        // Pour une demande issue du site, les notes du paiement correspondent
-        // exclusivement aux précisions saisies par le client. Les références
-        // commerciales restent dans leurs champs dédiés.
-        $data['description'] = $commercialRequest
-            ? $commercialRequest->clientNotes()
-            : (filled($data['description'] ?? null) ? trim((string) $data['description']) : null);
+            // Les notes correspondent exclusivement aux précisions du client.
+            $data['description'] = $commercialRequest
+                ? $commercialRequest->clientNotes()
+                : (filled($data['description'] ?? null) ? trim((string) $data['description']) : null);
 
-        $payment = Payment::create([
-            ...$data,
-            'customer_email' => mb_strtolower(trim($data['customer_email'])),
-            'customer_phone' => InternationalPhone::normalize($data['customer_phone'] ?? null),
-            'currency' => $paymentCurrency,
-            'purpose' => Payment::PURPOSE_INITIAL,
-            'status' => Payment::STATUS_DRAFT,
-        ]);
-
+            return Payment::create([
+                ...$data,
+                'customer_email' => mb_strtolower(trim($data['customer_email'])),
+                'customer_phone' => InternationalPhone::normalize($data['customer_phone'] ?? null),
+                'currency' => $paymentCurrency,
+                'purpose' => Payment::PURPOSE_INITIAL,
+                'status' => Payment::STATUS_DRAFT,
+            ]);
+        });
         try {
             $this->initializeWithMoneroo($payment, $moneroo);
 
@@ -138,14 +143,17 @@ class PaymentController extends Controller
 
     public function initialize(Payment $payment, MonerooPaymentService $moneroo): RedirectResponse
     {
-        if (filled($payment->moneroo_payment_id) || $payment->isPaid()) {
-            return back()->withErrors('Ce paiement est déjà initialisé.');
+        if ($payment->isPaid()) {
+            return back()->withErrors('Ce paiement est confirmé : aucun nouveau lien ne peut être généré.');
         }
 
         try {
             $this->initializeWithMoneroo($payment, $moneroo);
 
-            return back()->with('status', "Le lien {$payment->reference} a été créé et envoyé au client.");
+            return back()->with(
+                'status',
+                "Un nouveau lien {$payment->reference} a été généré et envoyé au client.",
+            );
         } catch (Throwable $exception) {
             $payment->forceFill(['failure_reason' => $exception->getMessage()])->save();
 
@@ -195,17 +203,37 @@ class PaymentController extends Controller
         );
     }
 
+    public function reviewUpgrade(Payment $payment): RedirectResponse
+    {
+        if ($payment->purpose !== Payment::PURPOSE_UPGRADE || ! $payment->isPaid()) {
+            return back()->withErrors('Seul un passage à BUSINESS confirmé peut être marqué comme traité.');
+        }
+
+        $payment->forceFill(['upgrade_reviewed_at' => now()])->save();
+
+        return back()->with('status', "Le passage à BUSINESS de {$payment->company_name} est marqué comme traité.");
+    }
+
     private function initializeWithMoneroo(Payment $payment, MonerooPaymentService $moneroo): void
     {
         $initialized = $moneroo->initialize($payment);
 
-        $payment->forceFill([
-            'status' => Payment::STATUS_INITIATED,
-            'moneroo_payment_id' => $initialized['id'],
-            'checkout_url' => $initialized['checkout_url'],
-            'initialized_at' => now(),
-            'failure_reason' => null,
-        ])->save();
+        DB::transaction(function () use ($payment, $initialized): void {
+            $now = now();
+            $payment->checkoutAttempts()->whereNull('superseded_at')->update(['superseded_at' => $now]);
+            $payment->checkoutAttempts()->create([
+                'moneroo_payment_id' => $initialized['id'],
+                'checkout_url' => $initialized['checkout_url'],
+                'initialized_at' => $now,
+            ]);
+            $payment->forceFill([
+                'status' => Payment::STATUS_INITIATED,
+                'moneroo_payment_id' => $initialized['id'],
+                'checkout_url' => $initialized['checkout_url'],
+                'initialized_at' => $now,
+                'failure_reason' => null,
+            ])->save();
+        });
 
         SendPaymentLinkEmail::dispatch($payment->id)->onConnection('deferred');
     }

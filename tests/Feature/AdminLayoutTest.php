@@ -16,6 +16,7 @@ class AdminLayoutTest extends TestCase
 
     public function test_all_admin_modules_use_the_shared_responsive_navigation(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
 
         foreach ([
@@ -23,6 +24,7 @@ class AdminLayoutTest extends TestCase
             'admin.demos.index',
             'admin.orders.index',
             'admin.payments.index',
+            'admin.client-security.index',
             'admin.profile.edit',
         ] as $routeName) {
             $this->actingAs($admin)
@@ -39,6 +41,7 @@ class AdminLayoutTest extends TestCase
                 ->assertSee('Démonstrations')
                 ->assertSee('Commandes')
                 ->assertSee('Paiement')
+                ->assertSee('Sécurité clients')
                 ->assertSee('Compte')
                 ->assertSee('href="'.route('admin.profile.edit').'"', false)
                 ->assertDontSee('Informations administrateur');
@@ -47,6 +50,7 @@ class AdminLayoutTest extends TestCase
 
     public function test_dashboard_has_mobile_cards_and_desktop_instance_table(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
 
         $this->actingAs($admin)
@@ -54,6 +58,10 @@ class AdminLayoutTest extends TestCase
             ->assertOk()
             ->assertSee('grid gap-4 p-4 lg:hidden', false)
             ->assertSee('hidden overflow-x-auto lg:block', false)
+            ->assertSee('mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2', false)
+            ->assertSee('hover:border-blue-300', false)
+            ->assertSee('<article class="rounded-3xl border border-amber-300', false)
+            ->assertSee('<article class="rounded-3xl border border-violet-300', false)
             ->assertSee('admin-data-table', false)
             ->assertSee('Centre de pilotage')
             ->assertSee('Voir paiement')
@@ -64,6 +72,7 @@ class AdminLayoutTest extends TestCase
 
     public function test_dashboard_summarizes_modules_and_highlights_actionable_activity(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $lead = WebsiteLead::create([
             'type' => 'order',
@@ -131,14 +140,81 @@ class AdminLayoutTest extends TestCase
             ->assertSee('Voir les demandes')
             ->assertSee('dashboard-action-card--active', false)
             ->assertSee('dashboard-action-arrow', false)
+            ->assertDontSee('dashboard-action-arrow--always', false)
+            ->assertSee('Voir les paiements')
             ->assertSee('Ma vue générale')
             ->assertDontSee('Vue générale de l’activité')
             ->assertDontSee('Tous vos modules')
             ->assertSee('Démonstrations')
             ->assertSee('Accès créés')
+            ->assertSee('Instances à créer')
+            ->assertDontSee('Instances actives')
+            ->assertSee('window.setInterval(checkDashboardActivity, 5000)', false)
             ->assertSee('href="'.route('admin.dashboard', ['payment' => $payment->id]).'#new-instance"', false)
             ->assertSee('href="'.route('admin.orders.index').'"', false)
             ->assertSee('href="'.route('admin.payments.index').'"', false)
             ->assertSee('href="'.route('admin.demos.index').'"', false);
+    }
+
+    public function test_dashboard_alerts_paid_business_upgrades_and_refreshes_when_activity_changes(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $company = Company::create([
+            'name' => 'Entreprise Upgrade',
+            'email' => 'upgrade@example.com',
+            'subdomain' => 'entreprise-upgrade',
+            'package' => 'business',
+            'status' => 'active',
+            'expires_at' => now()->addYear(),
+        ]);
+        $upgrade = Payment::create([
+            'company_id' => $company->id,
+            'customer_name' => 'Client Upgrade',
+            'customer_email' => 'upgrade@example.com',
+            'company_name' => $company->name,
+            'package' => 'business',
+            'amount' => 59400,
+            'currency' => 'XOF',
+            'description' => 'Passage START vers BUSINESS',
+            'purpose' => Payment::PURPOSE_UPGRADE,
+            'duration_months' => 6,
+            'status' => Payment::STATUS_PAID,
+            'paid_at' => now(),
+            'applied_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Passages à BUSINESS')
+            ->assertSee('Évolution ERP à vérifier')
+            ->assertSee($upgrade->reference)
+            ->assertSee('Le compte est déjà passé à BUSINESS.')
+            ->assertSee('Voir le paiement et traiter')
+            ->assertSee('href="'.route('admin.payments.index').'"', false)
+            ->assertSee('Confirmés')
+            ->assertSee('À traiter');
+
+        $firstFingerprint = $this->getJson(route('admin.dashboard.activity-status'))
+            ->assertOk()
+            ->json('fingerprint');
+
+        WebsiteLead::create([
+            'type' => 'quote',
+            'fullname' => 'Nouveau prospect',
+            'email' => 'nouveau@example.com',
+            'company_name' => 'Nouvelle entreprise',
+            'offer' => 'PREMIUM',
+        ]);
+
+        $secondFingerprint = $this->getJson(route('admin.dashboard.activity-status'))
+            ->assertOk()
+            ->json('fingerprint');
+        $this->assertNotSame($firstFingerprint, $secondFingerprint);
+
+        $this->post(route('admin.payments.review-upgrade', $upgrade))
+            ->assertSessionHas('status');
+        $this->assertNotNull($upgrade->fresh()->upgrade_reviewed_at);
     }
 }

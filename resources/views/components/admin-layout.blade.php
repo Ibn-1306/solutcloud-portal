@@ -166,6 +166,14 @@
                 <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3" stroke-linecap="round"/></svg>
                 <span :class="sidebarCollapsed ? 'lg:hidden' : ''">Paiement</span>
             </a>
+            <a href="{{ route('admin.client-security.index') }}" @class([
+                'flex min-h-12 items-center gap-3 rounded-md px-4 text-sm font-bold text-white transition focus:outline-none focus:ring-2 focus:ring-[#51c6d0]',
+                'bg-[#2b909a] shadow-lg shadow-[#2b909a]/20' => request()->routeIs('admin.client-security.*'),
+                'hover:bg-white/[.1]' => ! request()->routeIs('admin.client-security.*'),
+            ]) :class="sidebarCollapsed ? 'lg:justify-center lg:px-0' : ''" :title="sidebarCollapsed ? 'Sécurité clients' : null" @click="sidebarOpen = false">
+                <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l7 3v5c0 4.8-2.9 8.2-7 10-4.1-1.8-7-5.2-7-10V6l7-3z"/><path d="M9 12l2 2 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span :class="sidebarCollapsed ? 'lg:hidden' : ''">Sécurité clients</span>
+            </a>
 
         </nav>
 

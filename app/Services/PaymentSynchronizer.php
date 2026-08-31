@@ -15,19 +15,21 @@ class PaymentSynchronizer
         private LwsInstanceStorage $lws,
     ) {}
 
-    public function synchronize(Payment $payment): Payment
+    public function synchronize(Payment $payment, ?string $monerooPaymentId = null): Payment
     {
-        if (! filled($payment->moneroo_payment_id)) {
+        $transactionId = $monerooPaymentId ?: $payment->moneroo_payment_id;
+
+        if (! filled($transactionId)) {
             throw new RuntimeException('Ce paiement ne possède aucun identifiant Moneroo.');
         }
 
-        $remote = $this->moneroo->verify($payment->moneroo_payment_id);
+        $remote = $this->moneroo->verify($transactionId);
 
-        return DB::transaction(function () use ($payment, $remote): Payment {
+        return DB::transaction(function () use ($payment, $remote, $transactionId): Payment {
             $locked = Payment::query()->lockForUpdate()->findOrFail($payment->id);
             $remoteId = (string) Arr::get($remote, 'id', '');
 
-            if ($remoteId !== $locked->moneroo_payment_id) {
+            if ($remoteId !== $transactionId) {
                 throw new RuntimeException('L’identifiant du paiement vérifié ne correspond pas.');
             }
 

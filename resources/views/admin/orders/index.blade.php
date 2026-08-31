@@ -52,17 +52,17 @@
                     <p class="mt-2 text-2xl font-black text-gray-900">{{ $orders->total() }}</p>
                 </div>
 
-                <div class="admin-card border-l-4 border-l-[#2b909a] p-5">
+                <div class="admin-card border-l-4 border-l-cyan-500 bg-cyan-50/20 p-5">
                     <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Commandes START</p>
                     <p class="mt-2 text-2xl font-black text-gray-900">{{ $startOrderCount }}</p>
                 </div>
 
-                <div class="admin-card border-l-4 border-l-indigo-500 p-5">
+                <div class="admin-card border-l-4 border-l-indigo-500 bg-indigo-50/20 p-5">
                     <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Commandes BUSINESS</p>
                     <p class="mt-2 text-2xl font-black text-gray-900">{{ $businessOrderCount }}</p>
                 </div>
 
-                <div class="admin-card border-l-4 border-l-amber-500 p-5">
+                <div class="admin-card border-l-4 border-l-amber-500 bg-amber-50/20 p-5">
                     <p class="text-[10px] font-black uppercase tracking-[.16em] text-gray-400">Demandes de devis</p>
                     <p class="mt-2 text-2xl font-black text-gray-900">{{ $quoteRequestCount }}</p>
                 </div>

@@ -16,7 +16,7 @@ class VerifyMonerooPayment implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(public int $paymentId) {}
+    public function __construct(public int $paymentId, public ?string $monerooPaymentId = null) {}
 
     public function handle(PaymentSynchronizer $synchronizer): void
     {
@@ -27,7 +27,7 @@ class VerifyMonerooPayment implements ShouldQueue
         }
 
         try {
-            $synchronizer->synchronize($payment);
+            $synchronizer->synchronize($payment, $this->monerooPaymentId);
         } catch (Throwable $exception) {
             Log::error('MONEROO_PAYMENT_VERIFICATION_FAILED', [
                 'payment_id' => $this->paymentId,

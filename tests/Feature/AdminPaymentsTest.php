@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Mail\AccountInvitationMail;
+use App\Mail\ClientPasswordResetMail;
 use App\Mail\InstallationPendingMail;
 use App\Mail\InstanceReadyMail;
 use App\Mail\PaymentLinkMail;
+use App\Models\ClientSecurityLink;
 use App\Models\Company;
 use App\Models\Payment;
 use App\Models\User;
@@ -30,6 +32,7 @@ class AdminPaymentsTest extends TestCase
             ->assertSee('Créer un paiement')
             ->assertSee('Tableau de suivi')
             ->assertSee('Commande ou demande associée')
+            ->assertDontSee('Montant encaissé')
             ->assertDontSee('(facultatif)');
 
         $this->get(route('admin.dashboard'))
@@ -710,6 +713,172 @@ class AdminPaymentsTest extends TestCase
         $this->assertNull($company->suspension_reason);
         $this->assertTrue($expiration->equalTo($company->expires_at));
         $this->assertDatabaseCount('payments', 0);
+    }
+
+    public function test_a_commercial_request_can_only_create_one_payment_record(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $lead = WebsiteLead::create([
+            'type' => 'order',
+            'fullname' => 'Awa Koné',
+            'email' => 'awa@example.com',
+            'company_name' => 'Entreprise Alpha',
+            'offer' => 'START',
+            'message' => 'Reprise comptable.',
+        ]);
+        $this->payment(['website_lead_id' => $lead->id]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.payments.index'))
+            ->assertOk()
+            ->assertDontSee('<option value="'.$lead->id.'"', false);
+
+        $this->post(route('admin.payments.store'), [
+            'website_lead_id' => $lead->id,
+            'customer_name' => $lead->fullname,
+            'customer_email' => $lead->email,
+            'company_name' => $lead->company_name,
+            'package' => 'start',
+            'amount' => 70800,
+        ])->assertSessionHasErrors('website_lead_id');
+
+        $this->assertSame(1, $lead->payments()->count());
+    }
+
+    public function test_admin_can_regenerate_an_unpaid_link_but_never_a_paid_one(): void
+    {
+        Mail::fake();
+        config()->set('services.moneroo.secret', 'test-secret');
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $payment = $this->payment([
+            'status' => Payment::STATUS_INITIATED,
+            'moneroo_payment_id' => 'old_link',
+            'checkout_url' => 'https://checkout.moneroo.io/old_link',
+        ]);
+        $payment->checkoutAttempts()->create([
+            'moneroo_payment_id' => 'old_link',
+            'checkout_url' => 'https://checkout.moneroo.io/old_link',
+            'initialized_at' => now()->subHour(),
+        ]);
+        Http::fake([
+            'https://api.moneroo.io/v1/payments/initialize' => Http::response([
+                'data' => [
+                    'id' => 'new_link',
+                    'checkout_url' => 'https://checkout.moneroo.io/new_link',
+                ],
+            ], 201),
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.payments.initialize', $payment))
+            ->assertSessionHas('status');
+
+        $payment->refresh();
+        $this->assertSame('new_link', $payment->moneroo_payment_id);
+        $this->assertSame(2, $payment->checkoutAttempts()->count());
+        $this->assertNotNull($payment->checkoutAttempts()->where('moneroo_payment_id', 'old_link')->firstOrFail()->superseded_at);
+        Mail::assertSent(PaymentLinkMail::class);
+
+        $payment->update(['status' => Payment::STATUS_PAID, 'paid_at' => now()]);
+        Http::fake();
+        $this->post(route('admin.payments.initialize', $payment->fresh()))
+            ->assertSessionHasErrors();
+        Http::assertNothingSent();
+    }
+
+    public function test_admin_security_module_sends_activation_then_password_reset_and_tracks_both(): void
+    {
+        Mail::fake();
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $company = $this->company();
+        /** @var User $client */
+        $client = User::factory()->create([
+            'name' => 'Awa Koné',
+            'email' => 'client@example.com',
+            'role' => User::ROLE_CLIENT,
+            'company_id' => $company->id,
+            'password_initialized_at' => null,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.client-security.send'), ['user_id' => $client->id])
+            ->assertSessionHas('status');
+        Mail::assertSent(AccountInvitationMail::class, fn ($mail) => $mail->hasTo($client->email));
+        $this->assertDatabaseHas('client_security_links', [
+            'user_id' => $client->id,
+            'requested_by' => $admin->id,
+            'type' => ClientSecurityLink::TYPE_ACTIVATION,
+            'status' => ClientSecurityLink::STATUS_SENT,
+        ]);
+
+        Mail::fake();
+        $client->update(['password_initialized_at' => now()]);
+        $this->post(route('admin.client-security.send'), ['user_id' => $client->id])
+            ->assertSessionHas('status');
+        Mail::assertSent(ClientPasswordResetMail::class, fn ($mail) => $mail->hasTo($client->email));
+        $this->assertDatabaseHas('client_security_links', [
+            'user_id' => $client->id,
+            'type' => ClientSecurityLink::TYPE_RESET,
+            'status' => ClientSecurityLink::STATUS_SENT,
+        ]);
+
+        $this->get(route('admin.client-security.index'))
+            ->assertOk()
+            ->assertSee('Sécurité clients')
+            ->assertSee('Tableau de suivi')
+            ->assertSee('Activation initiale')
+            ->assertSee('Mot de passe oublié')
+            ->assertSee('Aucun mot de passe client n’est visible ni communiqué.')
+            ->assertDontSee($client->password);
+
+        $this->get(route('admin.payments.index'))
+            ->assertOk()
+            ->assertDontSee('Sécurité de l’espace client');
+    }
+
+    public function test_a_confirmed_superseded_moneroo_link_is_still_recognized(): void
+    {
+        config()->set('services.moneroo.secret', 'test-secret');
+        config()->set('services.moneroo.webhook_secret', 'webhook-secret');
+        $payment = $this->payment([
+            'status' => Payment::STATUS_INITIATED,
+            'moneroo_payment_id' => 'new_link',
+            'checkout_url' => 'https://checkout.moneroo.io/new_link',
+        ]);
+        $payment->checkoutAttempts()->create([
+            'moneroo_payment_id' => 'old_link',
+            'checkout_url' => 'https://checkout.moneroo.io/old_link',
+            'initialized_at' => now()->subHour(),
+            'superseded_at' => now(),
+        ]);
+        Http::fake([
+            'https://api.moneroo.io/v1/payments/old_link/verify' => Http::response([
+                'data' => [
+                    'id' => 'old_link',
+                    'status' => 'success',
+                    'amount' => $payment->amount,
+                    'currency' => ['code' => $payment->currency],
+                    'metadata' => [
+                        'payment_id' => (string) $payment->id,
+                        'payment_reference' => $payment->reference,
+                    ],
+                ],
+            ]),
+        ]);
+
+        $payload = json_encode([
+            'event' => 'payment.success',
+            'data' => ['id' => 'old_link'],
+        ], JSON_THROW_ON_ERROR);
+        $signature = hash_hmac('sha256', $payload, 'webhook-secret');
+
+        $this->call('POST', route('webhooks.moneroo'), [], [], [], [
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_X_MONEROO_SIGNATURE' => $signature,
+        ], $payload)->assertOk()->assertJson(['status' => 'received']);
+
+        $this->assertTrue($payment->fresh()->isPaid());
     }
 
     private function company(array $attributes = []): Company

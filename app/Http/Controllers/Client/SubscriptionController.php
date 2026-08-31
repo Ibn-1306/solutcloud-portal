@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -88,13 +89,21 @@ class SubscriptionController extends Controller
 
         try {
             $initialized = $moneroo->initialize($payment);
-            $payment->forceFill([
-                'moneroo_payment_id' => $initialized['id'],
-                'checkout_url' => $initialized['checkout_url'],
-                'status' => Payment::STATUS_INITIATED,
-                'initialized_at' => now(),
-                'failure_reason' => null,
-            ])->save();
+            DB::transaction(function () use ($payment, $initialized): void {
+                $now = now();
+                $payment->checkoutAttempts()->create([
+                    'moneroo_payment_id' => $initialized['id'],
+                    'checkout_url' => $initialized['checkout_url'],
+                    'initialized_at' => $now,
+                ]);
+                $payment->forceFill([
+                    'moneroo_payment_id' => $initialized['id'],
+                    'checkout_url' => $initialized['checkout_url'],
+                    'status' => Payment::STATUS_INITIATED,
+                    'initialized_at' => $now,
+                    'failure_reason' => null,
+                ])->save();
+            });
 
             return redirect()->away($initialized['checkout_url']);
         } catch (Throwable $exception) {
