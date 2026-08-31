@@ -453,25 +453,32 @@ function initSolutcloudLogin3D(container) {
 
         nodeGroup.add(halo);
 
-            const label =
-                createTextSprite(
-                title, {
-                fontSize: 66,
-                color: '#ffffff',
-                weight: '700',
-                scale: 0.82,
-                opacity: 1,
-            }
+        const labelOffset =
+            title.length > 8
+                ? 0.98
+                : title.length <= 3
+                    ? 0.68
+                    : 0.8;
+
+        const label =
+            createTextSprite(
+                title,
+                {
+                    fontSize: 82,
+                    color: '#ffffff',
+                    weight: '700',
+                    scale: 0.92,
+                    opacity: 1,
+                }
             );
 
         label.position.set(
-                type === 'erp'
-                    ? -1
-                    : 1,
-                0,
-                0.15
-            );
-
+            type === 'erp'
+                ? -labelOffset
+                : labelOffset,
+            0,
+            0.15
+        );
         nodeGroup.add(label);
 
         interactiveObjects.push(mesh);
@@ -494,10 +501,10 @@ function initSolutcloudLogin3D(container) {
         createTextSprite(
             'ERP',
             {
-                fontSize: 200,
+                fontSize: 250,
                 color: '#74d0d6',
                 weight: '800',
-                scale: 0.88,
+                scale: 0.98,
             }
         );
 
@@ -567,10 +574,10 @@ function initSolutcloudLogin3D(container) {
         createTextSprite(
             'CRM',
             {
-                fontSize: 200,
+                fontSize: 250,
                 color: '#b2e7ea',
                 weight: '800',
-                scale: 0.88,
+                scale: 0.98,
             }
         );
 
