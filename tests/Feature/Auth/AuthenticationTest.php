@@ -19,6 +19,15 @@ class AuthenticationTest extends TestCase
             ->assertStatus(200)
             ->assertSee('linear-gradient(180deg, #ffffff 0%, #fbfdfd 100%)', false)
             ->assertSee('border: 1px solid #d7e1e4;', false)
+            ->assertSee('Pilotez votre activité,')
+            ->assertSee('Centralisez vos opérations,')
+            ->assertSee('Accélérez votre croissance,')
+            ->assertSee('data-typewriter', false)
+            ->assertSee('schedule(3000)', false)
+            ->assertSee('animation: typewriter-cursor-pulse', false)
+            ->assertSee('white-space: nowrap;', false)
+            ->assertSee('min-height: 100dvh;', false)
+            ->assertSee('@media (min-width: 821px) and (max-height: 760px)', false)
             ->assertDontSee('background: #050505;', false);
     }
 

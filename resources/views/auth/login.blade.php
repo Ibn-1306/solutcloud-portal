@@ -308,8 +308,39 @@
             font-weight: 800;
         }
 
-        .visual-title span {
+        .visual-title [data-typewriter] {
+            color: inherit;
+        }
+
+        .typewriter-line {
+            display: block;
+            min-height: 1em;
+            white-space: nowrap;
+        }
+
+        .visual-title .typewriter-line:first-child {
+            color: #ffffff;
+        }
+
+        .typewriter-line--accent {
             color: #71cbd2;
+        }
+
+        .typewriter-cursor {
+            display: inline-block;
+            width: .19em;
+            height: .19em;
+            margin-left: .13em;
+            border-radius: 50%;
+            background: #71cbd2;
+            box-shadow: 0 0 0 .08em rgba(113, 203, 210, .12);
+            vertical-align: .12em;
+            animation: typewriter-cursor-pulse 1.05s ease-in-out infinite;
+        }
+
+        @keyframes typewriter-cursor-pulse {
+            0%, 100% { opacity: .38; transform: scale(.72); }
+            50% { opacity: 1; transform: scale(1); }
         }
 
         .visual-description {
@@ -842,6 +873,10 @@
             display: none;
         }
 
+        .mobile-value-proposition {
+            display: none;
+        }
+
         .login-heading {
             margin: 0;
 
@@ -1173,7 +1208,7 @@
             }
 
             .visual-title {
-                font-size: 50px;
+                font-size: clamp(38px, 5vw, 50px);
             }
 
             .software-card {
@@ -1191,8 +1226,9 @@
             }
 
             .login-panel {
-                min-height: 100vh;
-                padding: 38px 22px;
+                min-height: 100svh;
+                min-height: 100dvh;
+                padding: clamp(24px, 5vw, 38px) clamp(20px, 6vw, 42px);
             }
 
             .login-container {
@@ -1201,9 +1237,43 @@
 
             .mobile-logo {
                 display: block;
-                height: 60px;
+                height: clamp(48px, 8vw, 60px);
                 width: auto;
-                margin: 0 0 60px;
+                margin: 0 auto 24px;
+            }
+
+            .mobile-value-proposition {
+                display: block;
+                min-height: 82px;
+                margin: 0 auto 28px;
+                padding: 17px 18px 18px;
+                border: 1px solid rgba(113, 203, 210, .16);
+                border-radius: 18px;
+                background: linear-gradient(135deg, #08272c 0%, #0d3439 100%);
+                box-shadow: 0 18px 40px rgba(7, 28, 32, .12);
+                text-align: center;
+            }
+
+            .mobile-value-kicker {
+                margin: 0 0 9px;
+                color: #8bd4da;
+                font-size: 9px;
+                font-weight: 800;
+                letter-spacing: .16em;
+                text-transform: uppercase;
+            }
+
+            .mobile-typewriter-title {
+                margin: 0;
+                color: #ffffff;
+                font-size: clamp(18px, 5.2vw, 27px);
+                font-weight: 700;
+                letter-spacing: -.035em;
+                line-height: 1.08;
+            }
+
+            .mobile-typewriter-title .typewriter-line--accent {
+                color: #71cbd2;
             }
 
             .login-heading {
@@ -1211,18 +1281,18 @@
             }
 
             .right-footer {
-                margin-top: 60px;
+                margin-top: 42px;
             }
         }
 
         @media (max-width: 480px) {
             .login-panel {
-                padding: 28px 20px;
+                padding: 24px 18px;
             }
 
             .mobile-logo {
-                height: 52px;
-                margin-bottom: 48px;
+                height: 48px;
+                margin-bottom: 20px;
             }
 
             .login-heading {
@@ -1234,7 +1304,7 @@
             }
 
             .right-footer {
-                margin-top: 50px;
+                margin-top: 36px;
                 flex-direction: row;
                 justify-content: space-between;
                 gap: 15px;
@@ -1242,6 +1312,108 @@
             }
         }
 
+        @media (min-width: 821px) {
+            .login-shell,
+            .login-visual,
+            .login-panel {
+                min-height: 100svh;
+                min-height: 100dvh;
+            }
+
+            .brand-logo {
+                height: clamp(70px, 9vh, 100px);
+            }
+
+            .visual-title {
+                font-size: clamp(20px, min(2.6vw, 6vh), 58px);
+                font-weight: 700;
+                line-height: 1.02;
+                letter-spacing: -.045em;
+            }
+
+            .visual-description {
+                margin-top: clamp(16px, 2.4vh, 26px);
+                font-size: clamp(13px, 1.5vh, 16px);
+            }
+
+            .login-3d-zone {
+                height: clamp(250px, 38vh, 420px);
+                margin-top: clamp(18px, 3vh, 34px);
+            }
+        }
+
+        @media (min-width: 821px) and (max-height: 760px) {
+            .login-visual {
+                padding-top: 24px;
+                padding-bottom: 24px;
+            }
+
+            .visual-kicker {
+                margin-bottom: 12px;
+            }
+
+            .visual-description {
+                line-height: 1.48;
+            }
+
+            .login-3d-zone {
+                height: clamp(210px, 32vh, 255px);
+            }
+
+            .login-panel {
+                padding-top: 30px;
+                padding-bottom: 30px;
+            }
+
+            .login-welcome {
+                margin-bottom: 26px;
+            }
+
+            .login-favicon {
+                width: 72px;
+                height: 72px;
+                margin-bottom: 20px;
+            }
+
+            .right-footer {
+                margin-top: 28px;
+            }
+        }
+
+        @media (max-width: 820px) and (max-height: 700px) {
+            .login-panel {
+                padding-top: 18px;
+                padding-bottom: 18px;
+            }
+
+            .mobile-logo {
+                height: 42px;
+                margin-bottom: 14px;
+            }
+
+            .mobile-value-proposition {
+                min-height: 68px;
+                margin-bottom: 18px;
+            }
+
+            .login-welcome {
+                margin-bottom: 24px;
+            }
+
+            .login-favicon {
+                width: 64px;
+                height: 64px;
+                margin-bottom: 14px;
+            }
+
+            .login-heading {
+                font-size: 26px;
+            }
+
+            .right-footer {
+                margin-top: 28px;
+            }
+        }
         @media (prefers-reduced-motion: reduce) {
             *,
             *::before,
@@ -1249,6 +1421,10 @@
                 scroll-behavior: auto !important;
                 transition: none !important;
                 animation: none !important;
+            }
+
+            .typewriter-cursor {
+                display: none;
             }
         }
         html.solutcloud-preloader-active body.is-preloading {
@@ -1383,9 +1559,12 @@
                 ESPACE COMPTE
             </div>
 
-            <h1 class="visual-title">
-                Pilotez votre activité.
-                <span>Sans complexité.</span>
+            <h1 class="visual-title" aria-label="Pilotez votre activité, sans complexité.">
+                <span data-typewriter aria-hidden="true">
+                    <span class="typewriter-line" data-typewriter-primary>Pilotez votre activité,</span>
+                    <span class="typewriter-line typewriter-line--accent" data-typewriter-secondary>Sans complexité.</span>
+                    <span class="typewriter-cursor" data-typewriter-cursor></span>
+                </span>
             </h1>
 
             <p class="visual-description">
@@ -1441,6 +1620,17 @@
                 alt="SOLUTCLOUD"
                 class="mobile-logo"
             >
+
+            <div class="mobile-value-proposition">
+                <p class="mobile-value-kicker">Votre activité, mieux pilotée</p>
+                <p class="mobile-typewriter-title" aria-label="Pilotez votre activité, sans complexité.">
+                    <span data-typewriter aria-hidden="true">
+                        <span class="typewriter-line" data-typewriter-primary>Pilotez votre activité,</span>
+                        <span class="typewriter-line typewriter-line--accent" data-typewriter-secondary>Sans complexité.</span>
+                        <span class="typewriter-cursor" data-typewriter-cursor></span>
+                    </span>
+                </p>
+            </div>
 
             <div class="login-welcome">
 
@@ -1623,6 +1813,91 @@
 </div>
 
 <script>
+    (() => {
+        const phrases = [
+            ['Pilotez votre activité,', 'Sans complexité.'],
+            ['Centralisez vos opérations,', 'En toute simplicité.'],
+            ['Accélérez votre croissance,', 'Avec une vision claire.'],
+        ];
+        const instances = [...document.querySelectorAll('[data-typewriter]')];
+
+        if (!instances.length) return;
+
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const render = (primary, secondary, cursorTarget = 'secondary') => {
+            for (const instance of instances) {
+                const primaryNode = instance.querySelector('[data-typewriter-primary]');
+                const secondaryNode = instance.querySelector('[data-typewriter-secondary]');
+                const cursor = instance.querySelector('[data-typewriter-cursor]');
+                primaryNode.textContent = primary;
+                secondaryNode.textContent = secondary;
+                (cursorTarget === 'primary' ? primaryNode : secondaryNode).append(cursor);
+            }
+        };
+
+        if (reducedMotion) {
+            render(...phrases[0]);
+            return;
+        }
+
+        let phraseIndex = 0;
+        let primaryLength = phrases[0][0].length;
+        let secondaryLength = phrases[0][1].length;
+        let phase = 'erase-secondary';
+
+        const schedule = (delay) => window.setTimeout(step, delay);
+        const step = () => {
+            const [primary, secondary] = phrases[phraseIndex];
+
+            if (phase === 'hold') {
+                phase = 'erase-secondary';
+                schedule(3000);
+                return;
+            }
+
+            if (phase === 'erase-secondary') {
+                secondaryLength -= 1;
+                render(primary.slice(0, primaryLength), secondary.slice(0, Math.max(0, secondaryLength)));
+                if (secondaryLength <= 0) phase = 'erase-primary';
+                schedule(22);
+                return;
+            }
+
+            if (phase === 'erase-primary') {
+                primaryLength -= 1;
+                render(primary.slice(0, Math.max(0, primaryLength)), '', 'primary');
+                if (primaryLength <= 0) {
+                    phraseIndex = (phraseIndex + 1) % phrases.length;
+                    primaryLength = 0;
+                    secondaryLength = 0;
+                    phase = 'type-primary';
+                    schedule(180);
+                    return;
+                }
+                schedule(18);
+                return;
+            }
+
+            const [nextPrimary, nextSecondary] = phrases[phraseIndex];
+
+            if (phase === 'type-primary') {
+                primaryLength += 1;
+                render(nextPrimary.slice(0, primaryLength), '', 'primary');
+                if (primaryLength >= nextPrimary.length) phase = 'type-secondary';
+                schedule(42);
+                return;
+            }
+
+            secondaryLength += 1;
+            render(nextPrimary, nextSecondary.slice(0, secondaryLength));
+            if (secondaryLength >= nextSecondary.length) phase = 'hold';
+            schedule(42);
+        };
+
+        render(...phrases[0]);
+        schedule(3000);
+    })();
+
     (() => {
         const root = document.documentElement;
         const loader = document.getElementById('solutcloud-preloader');
