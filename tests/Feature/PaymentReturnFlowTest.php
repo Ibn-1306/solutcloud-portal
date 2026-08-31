@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Company;
 use App\Models\Payment;
 use App\Models\User;
+use Illuminate\Auth\Passwords\PasswordBroker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -42,7 +43,9 @@ class PaymentReturnFlowTest extends TestCase
         $this->assertNull($user->company_id);
         $this->assertSame($user->email, $query['email'] ?? null);
         $this->assertSame('1', (string) ($query['activation'] ?? ''));
-        $this->assertTrue(Password::broker()->tokenExists($user, $token));
+        /** @var PasswordBroker $broker */
+        $broker = Password::broker();
+        $this->assertTrue($broker->tokenExists($user, $token));
 
         $this->post(route('password.store'), [
             'token' => $token,
@@ -70,6 +73,7 @@ class PaymentReturnFlowTest extends TestCase
             'expires_at' => now()->addMonth(),
             'subscription_started_at' => now()->subMonth(),
         ]);
+        /** @var User $user */
         $user = User::factory()->create([
             'name' => 'Awa Koné',
             'email' => 'awa@example.com',
@@ -101,6 +105,7 @@ class PaymentReturnFlowTest extends TestCase
     {
         Mail::fake();
 
+        /** @var User $admin */
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
         $customer = User::factory()->create([
             'name' => 'Awa Koné',
