@@ -873,6 +873,10 @@
             display: none;
         }
 
+        .mobile-value-proposition {
+            display: none;
+        }
+
 
         .login-heading {
             margin: 0;
@@ -1239,6 +1243,35 @@
                 margin: 0 auto 24px;
             }
 
+            .mobile-value-proposition {
+                display: block;
+                min-height: 82px;
+                margin: 0 auto 28px;
+                text-align: center;
+            }
+
+            .mobile-value-kicker {
+                margin: 0 0 9px;
+                color: var(--brand-dark);
+                font-size: 9px;
+                font-weight: 800;
+                letter-spacing: .16em;
+                text-transform: uppercase;
+            }
+
+            .mobile-typewriter-title {
+                margin: 0;
+                color: #0f172a;
+                font-size: clamp(22px, 5.2vw, 29px);
+                font-weight: 800;
+                letter-spacing: -.035em;
+                line-height: 1.08;
+            }
+
+            .mobile-typewriter-title .typewriter-line--accent {
+                color: var(--brand);
+            }
+
 
             .login-heading {
                 font-size: 31px;
@@ -1353,6 +1386,11 @@
             .mobile-logo {
                 height: 42px;
                 margin-bottom: 14px;
+            }
+
+            .mobile-value-proposition {
+                min-height: 68px;
+                margin-bottom: 18px;
             }
 
 
@@ -1581,6 +1619,16 @@
                 class="mobile-logo"
             >
 
+            <div class="mobile-value-proposition">
+                <p class="mobile-value-kicker">Votre activité, mieux pilotée</p>
+                <p class="mobile-typewriter-title" aria-label="Pilotez votre activité, sans complexité.">
+                    <span data-typewriter aria-hidden="true">
+                        <span class="typewriter-line" data-typewriter-primary>Pilotez votre activité,</span>
+                        <span class="typewriter-line typewriter-line--accent" data-typewriter-secondary>Sans complexité.</span>
+                        <span class="typewriter-cursor" data-typewriter-cursor></span>
+                    </span>
+                </p>
+            </div>
 
             <div class="login-welcome">
 
