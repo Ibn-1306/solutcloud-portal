@@ -117,14 +117,20 @@
         @endif
     </section>
 
-    @if (strtolower($company->package) === 'start' && $upgradePlans->isNotEmpty())
+    @if ($pendingUpgrade)
+        <section class="mt-6 rounded-3xl border border-blue-200 bg-blue-50 p-5 sm:p-7" aria-labelledby="pending-upgrade-title">
+            <p class="text-xs font-extrabold uppercase tracking-[.14em] text-blue-700">Évolution d’offre</p>
+            <h2 id="pending-upgrade-title" class="mt-2 text-xl font-extrabold text-slate-950">Votre passage à SOLUTCLOUD BUSINESS est en cours de traitement</h2>
+            <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Votre espace reste sur START jusqu’à la finalisation par notre équipe. Merci de patienter : aucune nouvelle demande ni aucun nouveau paiement ne sont nécessaires.</p>
+        </section>
+    @elseif (strtolower($company->package) === 'start' && $upgradePlans->isNotEmpty())
         <section class="relative mt-6 overflow-hidden rounded-3xl bg-[#0a3034] p-5 text-white shadow-xl shadow-[#0a3034]/10 sm:p-7 lg:p-8" aria-labelledby="upgrade-title">
             <div class="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#2b909a]/40 blur-3xl"></div>
             <div class="relative">
                 <div class="max-w-3xl">
                     <p class="text-xs font-extrabold uppercase tracking-[.16em] text-[#8bd4da]">Évolution de votre solution</p>
                     <h2 id="upgrade-title" class="mt-2 text-2xl font-extrabold">Passez à l’offre BUSINESS</h2>
-                    <p class="mt-2 text-sm leading-6 text-slate-200">Profitez de plus d’utilisateurs, du CRM, des projets et de sauvegardes quotidiennes. Le passage à BUSINESS sera appliqué après confirmation du paiement.</p>
+                    <p class="mt-2 text-sm leading-6 text-slate-200">Profitez de plus d’utilisateurs, du CRM, des projets et de sauvegardes quotidiennes. Après confirmation du paiement, notre équipe finalisera votre passage à BUSINESS.</p>
                 </div>
 
                 <form method="POST" action="{{ route('client.subscription.checkout') }}" class="mt-7" x-data="{ selectedId: null, selectedDuration: null, selectedAmount: null, formatAmount(value) { return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value) } }">

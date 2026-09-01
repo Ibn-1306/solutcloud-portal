@@ -149,9 +149,9 @@ Route::middleware(['auth', 'can:admin-only'])
             [PaymentController::class, 'sendLink']
         )->name('admin.payments.send-link');
 
-        Route::post('/payments/{payment}/review-upgrade',
-            [PaymentController::class, 'reviewUpgrade']
-        )->name('admin.payments.review-upgrade');
+        Route::post('/payments/{payment}/finalize-upgrade',
+            [PaymentController::class, 'finalizeUpgrade']
+        )->name('admin.payments.finalize-upgrade');
 
         Route::post('/payments/{payment}/refresh',
             [PaymentController::class, 'refresh']

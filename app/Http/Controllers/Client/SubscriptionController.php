@@ -24,15 +24,23 @@ class SubscriptionController extends Controller
     public function index(Request $request, SubscriptionPricingService $pricing): View
     {
         $company = $this->company($request);
+        $pendingUpgrade = Payment::query()
+            ->where('company_id', $company->id)
+            ->where('purpose', Payment::PURPOSE_UPGRADE)
+            ->whereNull('applied_at')
+            ->whereIn('status', [Payment::STATUS_INITIATED, Payment::STATUS_PENDING, Payment::STATUS_PAID])
+            ->latest()
+            ->first();
 
         return view('client.renew', [
             'company' => $company,
             'offerDetails' => OfferCatalog::details($company->package),
             'payment' => $company->payment,
             'renewalPlans' => $this->plansFor($company, $company->package, $pricing),
-            'upgradePlans' => $company->package === 'start'
+            'upgradePlans' => $company->package === 'start' && $pendingUpgrade === null
                 ? $this->plansFor($company, 'business', $pricing)
                 : collect(),
+            'pendingUpgrade' => $pendingUpgrade,
             'paymentCurrency' => $pricing->currency(),
         ]);
     }
@@ -52,6 +60,17 @@ class SubscriptionController extends Controller
         if ($isUpgrade && $company->package !== 'start') {
             throw ValidationException::withMessages([
                 'action' => 'Le passage à BUSINESS est réservé aux clients START.',
+            ]);
+        }
+
+        if ($isUpgrade && Payment::query()
+            ->where('company_id', $company->id)
+            ->where('purpose', Payment::PURPOSE_UPGRADE)
+            ->whereNull('applied_at')
+            ->whereIn('status', [Payment::STATUS_INITIATED, Payment::STATUS_PENDING, Payment::STATUS_PAID])
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'action' => 'Une évolution vers BUSINESS est déjà en cours de paiement ou de traitement.',
             ]);
         }
 
@@ -79,7 +98,7 @@ class SubscriptionController extends Controller
             'customer_phone' => $company->phone,
             'company_name' => $company->name,
             'package' => $targetPackage,
-            'amount' => $pricing->amountFor($company, $plan),
+            'amount' => $pricing->amountFor($plan),
             'currency' => $pricing->currency(),
             'description' => $description,
             'purpose' => $data['action'],
@@ -147,7 +166,7 @@ class SubscriptionController extends Controller
             ->map(fn (SubscriptionPlan $plan): array => [
                 'id' => $plan->id,
                 'duration' => $plan->duration_months,
-                'amount' => $pricing->amountFor($company, $plan),
+                'amount' => $pricing->amountFor($plan),
             ]);
     }
 }

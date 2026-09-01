@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendBusinessUpgradePendingEmail;
+use App\Mail\BusinessUpgradePendingMail;
 use App\Models\Company;
 use App\Models\Payment;
 use App\Models\SubscriptionPlan;
@@ -11,6 +13,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -41,6 +45,7 @@ class ClientSubscriptionTest extends TestCase
             ->assertSee('Compte')
             ->assertSee('href="'.route('client.profile').'"', false)
             ->assertSee("payload.suspension_reason === 'administrative'", false)
+            ->assertSee('payload.package !== currentPackage', false)
             ->assertSee('window.setInterval(checkAccountAccess, 4000)', false);
 
         $this->get(route('client.profile'))
@@ -58,11 +63,12 @@ class ClientSubscriptionTest extends TestCase
             ->assertSee('12 mois');
     }
 
-    public function test_renewal_amount_is_calculated_on_the_server_and_redirects_to_moneroo(): void
+    public function test_renewal_keeps_the_fixed_price_after_the_first_year_and_redirects_to_moneroo(): void
     {
         config()->set('services.moneroo.secret', 'test-secret');
         config()->set('services.moneroo.currency', 'XOF');
         [$client, $company] = $this->client('start');
+        $company->update(['subscription_started_at' => now()->subYears(2)]);
         $plan = $this->plan('START', 3, 17700, 30000);
         Http::fake($this->initializeResponse('renewal_checkout'));
 
@@ -184,11 +190,14 @@ class ClientSubscriptionTest extends TestCase
         $this->assertSame('Original Dolibarr rules', Storage::disk('lws')->get($root.'/.htaccess'));
     }
 
-    public function test_paid_upgrade_changes_start_to_business(): void
+    public function test_paid_upgrade_waits_for_admin_finalization_before_changing_to_business(): void
     {
+        Mail::fake();
+        Queue::fake();
         config()->set('services.moneroo.secret', 'test-secret');
-        [, $company] = $this->client('start', Carbon::parse('2026-09-14 16:26:00'));
+        [$client, $company] = $this->client('start', Carbon::parse('2026-09-14 16:26:00'));
         $payment = $this->subscriptionPayment($company, [
+            'customer_email' => $client->email,
             'package' => 'business',
             'purpose' => Payment::PURPOSE_UPGRADE,
             'duration_months' => 1,
@@ -200,8 +209,39 @@ class ClientSubscriptionTest extends TestCase
         app(PaymentSynchronizer::class)->synchronize($payment);
 
         $company->refresh();
+        $payment->refresh();
+        $this->assertSame('start', $company->package);
+        $this->assertSame('2026-09-14 16:26:00', $company->expires_at->format('Y-m-d H:i:s'));
+        $this->assertNull($payment->applied_at);
+        $this->assertNotNull($payment->upgrade_pending_notified_at);
+        Queue::assertPushed(SendBusinessUpgradePendingEmail::class, fn (SendBusinessUpgradePendingEmail $job): bool => $job->paymentId === $payment->id);
+
+        (new SendBusinessUpgradePendingEmail($payment->id))->handle();
+        Mail::assertSent(BusinessUpgradePendingMail::class, fn (BusinessUpgradePendingMail $mail): bool => $mail->hasTo($client->email));
+
+        $this->actingAs($client)
+            ->get(route('client.renew'))
+            ->assertOk()
+            ->assertSee('Votre passage à SOLUTCLOUD BUSINESS est en cours de traitement')
+            ->assertSee('Votre espace reste sur START')
+            ->assertDontSee('Passer à BUSINESS');
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $this->actingAs($admin)
+            ->post(route('admin.payments.finalize-upgrade', $payment))
+            ->assertSessionHas('status');
+
+        $company->refresh();
+        $payment->refresh();
         $this->assertSame('business', $company->package);
         $this->assertSame('2026-10-14 16:26:00', $company->expires_at->format('Y-m-d H:i:s'));
+        $this->assertNotNull($payment->applied_at);
+        $this->assertNotNull($payment->upgrade_reviewed_at);
+
+        $this->actingAs($client)
+            ->getJson(route('account.suspended.status'))
+            ->assertOk()
+            ->assertJson(['package' => 'business']);
     }
 
     /** @return array{User, Company} */
@@ -231,7 +271,7 @@ class ClientSubscriptionTest extends TestCase
     private function plans(string $package, int $monthlyPrice): void
     {
         foreach ([1, 2, 3, 6, 12] as $duration) {
-            $this->plan($package, $duration, $monthlyPrice * $duration, $monthlyPrice * 2 * $duration);
+            $this->plan($package, $duration, $monthlyPrice * $duration, $monthlyPrice * $duration);
         }
     }
 

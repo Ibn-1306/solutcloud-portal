@@ -5,19 +5,16 @@ namespace Tests\Feature;
 use App\Models\Company;
 use App\Models\Payment;
 use App\Models\User;
-use Illuminate\Auth\Passwords\PasswordBroker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class PaymentReturnFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_initial_payment_redirects_to_password_activation_then_login(): void
+    public function test_initial_payment_stays_on_the_success_page_even_after_refresh(): void
     {
         config()->set('services.moneroo.secret', 'test-secret');
 
@@ -27,39 +24,32 @@ class PaymentReturnFlowTest extends TestCase
         ]);
 
         Http::fake($this->verifyResponse($payment));
+        $url = route('payments.return', ['paymentId' => $payment->moneroo_payment_id]);
 
-        $response = $this->get(route('payments.return', [
-            'paymentId' => $payment->moneroo_payment_id,
-        ]));
-
-        $user = User::where('email', $payment->customer_email)->firstOrFail();
-        $location = (string) $response->headers->get('Location');
-        $token = basename((string) parse_url($location, PHP_URL_PATH));
-        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->get($url)
+            ->assertOk()
+            ->assertViewIs('payments.success')
+            ->assertSee('Paiement confirmé')
+            ->assertSee($payment->reference)
+            ->assertSee('Vous pouvez fermer cet onglet en toute sécurité.')
+            ->assertSee('img/favicon.png', false)
+            ->assertDontSee('<a ', false)
+            ->assertDontSee('<button', false)
+            ->assertDontSee('reset-password', false);
 
         $payment->refresh();
         $this->assertTrue($payment->isPaid());
-        $this->assertTrue($user->isClient());
-        $this->assertNull($user->company_id);
-        $this->assertSame($user->email, $query['email'] ?? null);
-        $this->assertSame('1', (string) ($query['activation'] ?? ''));
-        /** @var PasswordBroker $broker */
-        $broker = Password::broker();
-        $this->assertTrue($broker->tokenExists($user, $token));
+        $this->assertDatabaseCount('users', 0);
 
-        $this->post(route('password.store'), [
-            'token' => $token,
-            'email' => $user->email,
-            'password' => 'Nouveau-mot-de-passe-2026',
-            'password_confirmation' => 'Nouveau-mot-de-passe-2026',
-        ])->assertRedirect(route('login'));
+        $this->get($url)
+            ->assertOk()
+            ->assertViewIs('payments.success')
+            ->assertSee('Paiement confirmé');
 
-        $user->refresh();
-        $this->assertTrue(Hash::check('Nouveau-mot-de-passe-2026', $user->password));
-        $this->assertNotNull($user->password_initialized_at);
+        Http::assertSentCount(1);
     }
 
-    public function test_client_renewal_payment_redirects_to_account_dashboard(): void
+    public function test_client_renewal_payment_stays_on_the_success_page(): void
     {
         config()->set('services.moneroo.secret', 'test-secret');
 
@@ -93,8 +83,11 @@ class PaymentReturnFlowTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('payments.return', ['paymentId' => $payment->moneroo_payment_id]))
-            ->assertRedirect(route('client.dashboard'))
-            ->assertSessionHas('status');
+            ->assertOk()
+            ->assertViewIs('payments.success')
+            ->assertSee('Votre abonnement SOLUTCLOUD a été mis à jour.')
+            ->assertDontSee('<a ', false)
+            ->assertDontSee('<button', false);
 
         $payment->refresh();
         $this->assertTrue($payment->isPaid());
@@ -121,6 +114,7 @@ class PaymentReturnFlowTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.companies.store'), [
+                'creation_mode' => 'confirmed_payment',
                 'payment_id' => $payment->id,
                 'domain' => 'alpha',
             ])

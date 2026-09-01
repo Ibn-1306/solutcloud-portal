@@ -46,6 +46,7 @@ class Payment extends Model
         'purpose',
         'duration_months',
         'status',
+        'payment_channel',
         'moneroo_payment_id',
         'checkout_url',
         'failure_reason',
@@ -57,6 +58,7 @@ class Payment extends Model
         'applied_at',
         'archived_at',
         'upgrade_reviewed_at',
+        'upgrade_pending_notified_at',
     ];
 
     protected function casts(): array
@@ -72,6 +74,7 @@ class Payment extends Model
             'applied_at' => 'datetime',
             'archived_at' => 'datetime',
             'upgrade_reviewed_at' => 'datetime',
+            'upgrade_pending_notified_at' => 'datetime',
         ];
     }
 
@@ -128,6 +131,16 @@ class Payment extends Model
         return ! $this->isPaid();
     }
 
+    public function channelLabel(): string
+    {
+        return match ($this->payment_channel) {
+            'cash' => 'Espèces',
+            'bank_transfer' => 'Virement',
+            'other' => 'Paiement manuel',
+            default => 'Moneroo',
+        };
+    }
+
     public function purposeLabel(): string
     {
         return match ($this->purpose) {
@@ -155,5 +168,20 @@ class Payment extends Model
             self::STATUS_CANCELLED => 'Annulé',
             default => ucfirst($this->status),
         };
+    }
+
+    public function upgradeStatusLabel(): ?string
+    {
+        if ($this->purpose !== self::PURPOSE_UPGRADE) {
+            return null;
+        }
+
+        if (! $this->isPaid()) {
+            return 'Paiement en attente';
+        }
+
+        return $this->applied_at === null
+            ? 'À finaliser'
+            : 'Évolution finalisée';
     }
 }

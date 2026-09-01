@@ -45,7 +45,15 @@ class MonerooPaymentService
         $response = $this->request()->post('/v1/payments/initialize', [
             'amount' => $payment->amount,
             'currency' => $payment->currency,
-            'description' => $payment->description,
+            // Moneroo reçoit toujours un libellé exploitable, sans rendre les
+            // précisions du client obligatoires dans SOLUTCLOUD.
+            'description' => filled($payment->description)
+                ? trim((string) $payment->description)
+                : sprintf(
+                    'Règlement %s — SOLUTCLOUD %s',
+                    $payment->reference,
+                    strtoupper((string) $payment->package),
+                ),
             'return_url' => route('payments.return'),
             'customer' => $customer,
             'metadata' => $metadata,

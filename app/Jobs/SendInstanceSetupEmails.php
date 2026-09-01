@@ -2,8 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Mail\AccountInvitationMail;
-use App\Mail\InstallationPendingMail;
+use App\Mail\InstanceInstallationMail;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -37,30 +36,25 @@ class SendInstanceSetupEmails implements ShouldQueue
         }
 
         try {
-            Mail::to($user->email)->send(new InstallationPendingMail($company));
+            $activationUrl = null;
+
+            if ($user->password_initialized_at === null) {
+                $token = Password::createToken($user);
+                $activationUrl = url('/reset-password/'.$token.'?email='.urlencode($user->email).'&activation=1');
+            }
+
+            Mail::to($user->email)->send(new InstanceInstallationMail(
+                $user,
+                $company,
+                $company->payment,
+                $activationUrl,
+            ));
         } catch (Throwable $exception) {
-            Log::error('INSTALLATION_PENDING_MAIL_FAILED', [
+            Log::error('INSTANCE_INSTALLATION_MAIL_FAILED', [
                 'company_id' => $company->id,
+                'user_id' => $user->id,
                 'message' => $exception->getMessage(),
             ]);
-        }
-
-        if ($user->password_initialized_at === null) {
-            try {
-                $token = Password::createToken($user);
-                $resetUrl = url('/reset-password/'.$token.'?email='.urlencode($user->email));
-                Mail::to($user->email)->send(new AccountInvitationMail(
-                    $user,
-                    $resetUrl,
-                    $company,
-                    $company->payment,
-                ));
-            } catch (Throwable $exception) {
-                Log::error('ACCOUNT_INVITATION_MAIL_FAILED', [
-                    'user_id' => $user->id,
-                    'message' => $exception->getMessage(),
-                ]);
-            }
         }
     }
 }

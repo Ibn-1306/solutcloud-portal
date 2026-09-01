@@ -224,6 +224,7 @@
         (() => {
             const statusUrl = @json(route('account.suspended.status'));
             const suspendedUrl = @json(route('account.suspended'));
+            const currentPackage = @json(strtolower((string) auth()->user()?->company?->package));
 
             const checkAccountAccess = async () => {
                 try {
@@ -239,6 +240,11 @@
 
                     if (payload.status === 'suspended' && payload.suspension_reason === 'administrative') {
                         window.location.replace(suspendedUrl);
+                        return;
+                    }
+
+                    if (payload.package && currentPackage && payload.package !== currentPackage) {
+                        window.location.reload();
                     }
                 } catch (_) {
                     // La vérification suivante reprendra automatiquement.

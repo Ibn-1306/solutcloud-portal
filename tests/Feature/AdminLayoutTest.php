@@ -66,7 +66,7 @@ class AdminLayoutTest extends TestCase
             ->assertSee('Centre de pilotage')
             ->assertSee('Voir paiement')
             ->assertDontSee('Nouveau paiement')
-            ->assertSee('Créer une instance payée')
+            ->assertSee('Créer une instance')
             ->assertSee('Instances Déployées');
     }
 
@@ -105,7 +105,7 @@ class AdminLayoutTest extends TestCase
             'status' => Payment::STATUS_PAID,
             'paid_at' => now(),
         ]);
-        Company::create([
+        $pendingCompany = Company::create([
             'name' => 'Entreprise Gamma',
             'email' => 'gamma@example.com',
             'phone' => '+2250701020304',
@@ -135,6 +135,15 @@ class AdminLayoutTest extends TestCase
             ->assertSee('Accès client à préparer')
             ->assertSee($payment->reference)
             ->assertSee('Instance à finaliser')
+            ->assertSee('data-finalize-alert="'.$pendingCompany->id.'"', false)
+            ->assertSee('id="instance-'.$pendingCompany->id.'"', false)
+            ->assertSee('data-company-package="start"', false)
+            ->assertSee('name="credentials[admin][login]"', false)
+            ->assertSee('name="credentials[employee][login]"', false)
+            ->assertSee('name="credentials[employee_4][login]"', false)
+            ->assertSee('name="credentials[super_admin][login]"', false)
+            ->assertSee('target.scrollIntoView', false)
+            ->assertSee('openFinalize(button)', false)
             ->assertSee('Demande de démo à traiter')
             ->assertSee($demoRequest->company_name)
             ->assertSee('Voir les demandes')
@@ -164,7 +173,7 @@ class AdminLayoutTest extends TestCase
             'name' => 'Entreprise Upgrade',
             'email' => 'upgrade@example.com',
             'subdomain' => 'entreprise-upgrade',
-            'package' => 'business',
+            'package' => 'start',
             'status' => 'active',
             'expires_at' => now()->addYear(),
         ]);
@@ -181,20 +190,27 @@ class AdminLayoutTest extends TestCase
             'duration_months' => 6,
             'status' => Payment::STATUS_PAID,
             'paid_at' => now(),
-            'applied_at' => now(),
         ]);
 
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('Passages à BUSINESS')
-            ->assertSee('Évolution ERP à vérifier')
+            ->assertSee('Évolution BUSINESS à finaliser')
             ->assertSee($upgrade->reference)
-            ->assertSee('Le compte est déjà passé à BUSINESS.')
-            ->assertSee('Voir le paiement et traiter')
+            ->assertSee('Le compte reste sur START jusqu’à votre validation.')
+            ->assertSee('Finaliser l’évolution')
             ->assertSee('href="'.route('admin.payments.index').'"', false)
             ->assertSee('Confirmés')
             ->assertSee('À traiter');
+
+        $this->get(route('admin.payments.index'))
+            ->assertOk()
+            ->assertSee('Statut évolution')
+            ->assertSee('À finaliser')
+            ->assertSee('Offre actuelle : START')
+            ->assertSee('Finaliser l’évolution')
+            ->assertSee('action="'.route('admin.payments.finalize-upgrade', $upgrade).'"', false);
 
         $firstFingerprint = $this->getJson(route('admin.dashboard.activity-status'))
             ->assertOk()
@@ -213,8 +229,16 @@ class AdminLayoutTest extends TestCase
             ->json('fingerprint');
         $this->assertNotSame($firstFingerprint, $secondFingerprint);
 
-        $this->post(route('admin.payments.review-upgrade', $upgrade))
+        $this->post(route('admin.payments.finalize-upgrade', $upgrade))
             ->assertSessionHas('status');
+        $this->assertSame('business', $company->fresh()->package);
+        $this->assertNotNull($upgrade->fresh()->applied_at);
         $this->assertNotNull($upgrade->fresh()->upgrade_reviewed_at);
+
+        $this->get(route('admin.payments.index'))
+            ->assertOk()
+            ->assertSee('Évolution finalisée')
+            ->assertSee('BUSINESS actif')
+            ->assertDontSee('Finaliser l’évolution');
     }
 }

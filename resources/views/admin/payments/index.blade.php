@@ -135,7 +135,7 @@
                         <div class="md:col-span-2 lg:col-span-3">
                             <label for="description" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-gray-500">Précisions du client / Notes additionnelles</label>
                             <textarea id="description" name="description" maxlength="5000" rows="3" class="payment-input resize-y" placeholder="Précisions communiquées par le client">{{ old('description') }}</textarea>
-                            <p class="mt-1.5 text-xs leading-5 text-gray-500">Ce champ contient uniquement les précisions du client. Les références de commande, de devis et de paiement sont conservées séparément.</p>
+                            <p class="mt-1.5 text-xs leading-5 text-gray-500">Champ facultatif : il contient uniquement les précisions du client. Une note transmise par le site vitrine est préremplie automatiquement ; son absence ne bloque jamais la création du lien.</p>
                         </div>
                     </div>
 
@@ -164,7 +164,8 @@
                                 <th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Référence</th>
                                 <th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Client</th>
                                 <th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Offre / Montant</th>
-                                <th class="px-5 py-4 text-center text-[10px] font-bold uppercase tracking-widest">Statut</th>
+                                <th class="px-5 py-4 text-center text-[10px] font-bold uppercase tracking-widest">Paiement</th>
+                                <th class="px-5 py-4 text-center text-[10px] font-bold uppercase tracking-widest">Statut évolution</th>
                                 <th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Suivi</th>
                                 <th class="px-5 py-4 text-right text-[10px] font-bold uppercase tracking-widest">Actions</th>
                             </tr>
@@ -200,7 +201,10 @@
                                                 default => 'bg-cyan-100 text-cyan-800',
                                             };
                                         @endphp
-                                        <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase {{ $purposeBadge }}">{{ $payment->purposeLabel() }}</span>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase {{ $purposeBadge }}">{{ $payment->purposeLabel() }}</span>
+                                            <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase text-slate-700">{{ $payment->channelLabel() }}</span>
+                                        </div>
                                         <div class="mt-2 font-black text-gray-800">SOLUTCLOUD {{ strtoupper($payment->package) }}</div>
                                         <div class="mt-1 text-sm font-bold text-[#237781]">{{ number_format($payment->amount, 0, ',', ' ') }} {{ $payment->currency }}</div>
                                     </td>
@@ -208,6 +212,19 @@
                                         <span class="inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase {{ $badge }}">{{ $payment->statusLabel() }}</span>
                                         @if($payment->failure_reason)
                                             <p class="mx-auto mt-2 max-w-[180px] text-[10px] leading-4 text-red-600">{{ $payment->failure_reason }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="px-5 py-5 text-center">
+                                        @if($payment->purpose === 'upgrade')
+                                            @php
+                                                $upgradeStatusClass = ! $payment->isPaid()
+                                                    ? 'bg-amber-100 text-amber-800'
+                                                    : ($payment->applied_at ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800');
+                                            @endphp
+                                            <span class="inline-flex rounded-full px-3 py-1 text-[10px] font-black uppercase {{ $upgradeStatusClass }}">{{ $payment->upgradeStatusLabel() }}</span>
+                                            <p class="mt-2 text-[10px] font-bold text-gray-500">{{ $payment->applied_at ? 'BUSINESS actif' : 'Offre actuelle : '.strtoupper($payment->company?->package ?: 'START') }}</p>
+                                        @else
+                                            <span class="text-gray-300">—</span>
                                         @endif
                                     </td>
                                     <td class="px-5 py-5 text-xs text-gray-500">
@@ -244,9 +261,9 @@
                                             @if($payment->isPaid() && !$payment->company_id)
                                                 <a href="{{ route('admin.dashboard', ['payment' => $payment->id]) }}#new-instance" class="rounded-md bg-emerald-600 px-2.5 py-1.5 text-[10px] font-black uppercase text-white">Créer instance</a>
                                             @endif
-                                            @if($payment->purpose === 'upgrade' && $payment->isPaid() && !$payment->upgrade_reviewed_at)
-                                                <form method="POST" action="{{ route('admin.payments.review-upgrade', $payment) }}">@csrf
-                                                    <button class="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[10px] font-black uppercase text-blue-700">Évolution traitée</button>
+                                            @if($payment->purpose === 'upgrade' && $payment->isPaid() && !$payment->applied_at)
+                                                <form method="POST" action="{{ route('admin.payments.finalize-upgrade', $payment) }}" onsubmit="return confirm('Finaliser le passage de ce client à SOLUTCLOUD BUSINESS ?');">@csrf
+                                                    <button class="rounded-md border border-blue-200 bg-blue-600 px-2.5 py-1.5 text-[10px] font-black uppercase text-white">Finaliser l’évolution</button>
                                                 </form>
                                             @endif
                                             @if($payment->canRemoveFromTracking())
@@ -266,7 +283,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="px-6 py-16 text-center text-sm font-semibold text-gray-400">Aucun paiement créé pour le moment.</td></tr>
+                                <tr><td colspan="7" class="px-6 py-16 text-center text-sm font-semibold text-gray-400">Aucun paiement créé pour le moment.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

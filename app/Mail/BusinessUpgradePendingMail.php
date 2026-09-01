@@ -3,38 +3,31 @@
 namespace App\Mail;
 
 use App\Mail\Concerns\HasSolutcloudDelivery;
-use App\Models\Company;
+use App\Models\Payment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class InstanceReadyMail extends Mailable
+class BusinessUpgradePendingMail extends Mailable
 {
     use HasSolutcloudDelivery, Queueable, SerializesModels;
 
-    /**
-     * @param  array<int, array{key: string, label: string, login: string, password: string}>  $credentials
-     */
-    public function __construct(
-        public Company $company,
-        public string $url,
-        public array $credentials,
-    ) {}
+    public function __construct(public Payment $payment) {}
 
     public function envelope(): Envelope
     {
         return $this->solutcloudEnvelope(
-            subject: 'SOLUTCLOUD — Votre instance est opérationnelle',
+            subject: 'SOLUTCLOUD — Votre passage à BUSINESS est en cours de traitement',
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.instance_ready',
-            text: 'emails.text.instance_ready',
+            view: 'emails.business_upgrade_pending',
+            text: 'emails.text.business_upgrade_pending',
         );
     }
 }

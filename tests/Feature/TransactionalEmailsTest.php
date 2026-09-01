@@ -3,8 +3,9 @@
 namespace Tests\Feature;
 
 use App\Mail\AccountInvitationMail;
+use App\Mail\BusinessUpgradePendingMail;
 use App\Mail\DemoAccessMail;
-use App\Mail\InstallationPendingMail;
+use App\Mail\InstanceInstallationMail;
 use App\Mail\InstanceReadyMail;
 use App\Mail\NewsletterWelcome;
 use App\Mail\PaymentLinkMail;
@@ -92,6 +93,19 @@ class TransactionalEmailsTest extends TestCase
             'checkout_url' => 'https://checkout.moneroo.io/pay_test_42',
         ]);
 
+        $upgradePayment = new Payment([
+            'reference' => 'PAY-26-0043',
+            'customer_name' => 'Awa Koné',
+            'customer_email' => 'awa@example.com',
+            'company_name' => 'Entreprise Démonstration',
+            'package' => 'business',
+            'amount' => 59400,
+            'currency' => 'XOF',
+            'purpose' => Payment::PURPOSE_UPGRADE,
+            'duration_months' => 6,
+            'status' => Payment::STATUS_PAID,
+        ]);
+
         $user = new User([
             'name' => 'Awa Koné',
             'email' => 'awa@example.com',
@@ -101,10 +115,16 @@ class TransactionalEmailsTest extends TestCase
 
         $messages = [
             [new DemoAccessMail($demo), 'Votre démonstration est prête'],
-            [new InstanceReadyMail($company, 'https://entreprise-demo.solutcloud.com', 'admin.demo', 'mot-de-passe-test'), 'Votre instance est opérationnelle'],
-            [new InstallationPendingMail($company), 'Votre instance est en cours de préparation'],
+            [new InstanceReadyMail($company, 'https://entreprise-demo.solutcloud.com', [[
+                'key' => 'super_admin',
+                'label' => 'Super administrateur',
+                'login' => 'admin.demo',
+                'password' => 'mot-de-passe-test',
+            ]]), 'Votre instance est opérationnelle'],
+            [new InstanceInstallationMail($user, $company, $payment, 'https://login.solutcloud.com/reset-password/test-token?email=awa%40example.com&activation=1'), 'Votre instance est en cours d’installation'],
             [new AccountInvitationMail($user, 'https://login.solutcloud.com/reset-password/test-token?email=awa%40example.com', $company, $payment), 'Activez votre espace client'],
             [new PaymentLinkMail($payment), 'Votre règlement SOLUTCLOUD'],
+            [new BusinessUpgradePendingMail($upgradePayment), 'Votre passage à BUSINESS est en cours de traitement'],
             [new WebsiteLeadAcknowledgement($lead), 'Votre message a bien été transmis'],
             [new WebsiteLeadReceived($lead), 'Nouvelle demande commerciale'],
             [new WebsiteLeadAcknowledgement($orderLead), 'Votre commande est confirmée'],
@@ -164,7 +184,7 @@ class TransactionalEmailsTest extends TestCase
             $this->assertSame(config('mail.reply_to.address'), $envelope->replyTo[0]->address);
         }
 
-        if ($mailable instanceof PaymentLinkMail || $mailable instanceof AccountInvitationMail) {
+        if ($mailable instanceof PaymentLinkMail || $mailable instanceof AccountInvitationMail || $mailable instanceof InstanceInstallationMail) {
             $this->assertStringContainsString('class="email-button"', $html);
         } else {
             $this->assertStringNotContainsString('class="email-button"', $html);
@@ -280,6 +300,19 @@ class TransactionalEmailsTest extends TestCase
                 'amount' => 70800,
                 'currency' => 'XOF',
                 'description' => "Formation comptable incluse.\nImport initial convenu.",
+            ]);
+
+            $upgradePayment = new Payment([
+                'reference' => 'PAY-26-0043',
+                'customer_name' => 'Awa Koné',
+                'customer_email' => 'awa@example.com',
+                'company_name' => 'Entreprise Démonstration',
+                'package' => 'business',
+                'amount' => 59400,
+                'currency' => 'XOF',
+                'purpose' => Payment::PURPOSE_UPGRADE,
+                'duration_months' => 6,
+                'status' => Payment::STATUS_PAID,
             ]);
 
             $user = new User([

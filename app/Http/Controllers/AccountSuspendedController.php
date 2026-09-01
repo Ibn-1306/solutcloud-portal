@@ -46,6 +46,7 @@ class AccountSuspendedController extends Controller
             ->json([
                 'status' => $company->status,
                 'suspension_reason' => $company->suspension_reason,
+                'package' => strtolower($company->package),
                 'redirect_url' => $redirectUrl,
             ])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')

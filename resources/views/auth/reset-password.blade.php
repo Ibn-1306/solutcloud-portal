@@ -32,6 +32,10 @@
                     value="{{ $request->route('token') }}"
                 >
 
+                @if($request->boolean('activation'))
+                    <input type="hidden" name="activation" value="1">
+                @endif
+
 
                 <div class="space-y-5">
 

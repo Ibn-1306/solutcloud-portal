@@ -31,10 +31,18 @@ class NewPasswordController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $isInitialActivation = $request->boolean('activation')
+            && User::query()
+                ->where('email', $request->string('email')->toString())
+                ->whereNull('password_initialized_at')
+                ->exists();
+
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => $isInitialActivation
+                ? ['required', 'string', 'confirmed', 'max:255']
+                : ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we

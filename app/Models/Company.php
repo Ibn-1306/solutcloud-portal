@@ -51,9 +51,7 @@ class Company extends Model
             ->get()
             ->map(function ($plan) {
 
-                $plan->display_price = $this->isPromoPeriod()
-                    ? $plan->promo_price
-                    : $plan->regular_price;
+                $plan->display_price = $plan->promo_price;
 
                 return $plan;
 
@@ -88,19 +86,6 @@ class Company extends Model
         }
 
         return 'https://'.$this->subdomain.'.solutcloud.com';
-    }
-
-    public function isPromoPeriod(): bool
-    {
-        if (! $this->subscription_started_at) {
-
-            return true;
-
-        }
-
-        return now()->lessThan(
-            $this->subscription_started_at->copy()->addYear()
-        );
     }
 
     public function getPackageUpperAttribute(): string

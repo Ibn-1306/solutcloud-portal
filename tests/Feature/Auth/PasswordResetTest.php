@@ -28,9 +28,11 @@ class PasswordResetTest extends TestCase
         $this->get(route('password.reset', [
             'token' => $token,
             'email' => $user->email,
+            'activation' => 1,
         ]))
             ->assertOk()
-            ->assertSee($user->email);
+            ->assertSee($user->email)
+            ->assertSee('name="activation" value="1"', false);
     }
 
     public function test_password_can_be_initialized_with_a_valid_token(): void
@@ -41,15 +43,16 @@ class PasswordResetTest extends TestCase
         $this->post(route('password.store'), [
             'token' => $token,
             'email' => $user->email,
-            'password' => 'New-secure-password1',
-            'password_confirmation' => 'New-secure-password1',
+            'activation' => 1,
+            'password' => 'Ab1',
+            'password_confirmation' => 'Ab1',
         ])
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('login'));
 
         $user->refresh();
 
-        $this->assertTrue(Hash::check('New-secure-password1', $user->password));
+        $this->assertTrue(Hash::check('Ab1', $user->password));
         $this->assertNotNull($user->password_initialized_at);
     }
 }

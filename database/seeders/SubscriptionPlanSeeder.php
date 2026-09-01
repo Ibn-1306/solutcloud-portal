@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\SubscriptionPlan;
+use Illuminate\Database\Seeder;
 
 class SubscriptionPlanSeeder extends Seeder
 {
@@ -11,7 +11,6 @@ class SubscriptionPlanSeeder extends Seeder
     {
 
         $plans = [
-
 
             /*
             |--------------------------------------------------------------------------
@@ -23,39 +22,36 @@ class SubscriptionPlanSeeder extends Seeder
                 'package' => 'START',
                 'duration_months' => 1,
                 'promo_price' => 5900,
-                'regular_price' => 10000,
+                'regular_price' => 5900,
             ],
 
             [
                 'package' => 'START',
                 'duration_months' => 2,
                 'promo_price' => 11800,
-                'regular_price' => 20000,
+                'regular_price' => 11800,
             ],
 
             [
                 'package' => 'START',
                 'duration_months' => 3,
                 'promo_price' => 17700,
-                'regular_price' => 30000,
+                'regular_price' => 17700,
             ],
 
             [
                 'package' => 'START',
                 'duration_months' => 6,
                 'promo_price' => 35400,
-                'regular_price' => 60000,
+                'regular_price' => 35400,
             ],
 
             [
                 'package' => 'START',
                 'duration_months' => 12,
                 'promo_price' => 70800,
-                'regular_price' => 120000,
+                'regular_price' => 70800,
             ],
-
-
-
 
             /*
             |--------------------------------------------------------------------------
@@ -67,40 +63,36 @@ class SubscriptionPlanSeeder extends Seeder
                 'package' => 'BUSINESS',
                 'duration_months' => 1,
                 'promo_price' => 9900,
-                'regular_price' => 18000,
+                'regular_price' => 9900,
             ],
 
             [
                 'package' => 'BUSINESS',
                 'duration_months' => 2,
                 'promo_price' => 19800,
-                'regular_price' => 36000,
+                'regular_price' => 19800,
             ],
 
             [
                 'package' => 'BUSINESS',
                 'duration_months' => 3,
                 'promo_price' => 29700,
-                'regular_price' => 54000,
+                'regular_price' => 29700,
             ],
 
             [
                 'package' => 'BUSINESS',
                 'duration_months' => 6,
                 'promo_price' => 59400,
-                'regular_price' => 108000,
+                'regular_price' => 59400,
             ],
 
             [
                 'package' => 'BUSINESS',
                 'duration_months' => 12,
                 'promo_price' => 118800,
-                'regular_price' => 216000,
+                'regular_price' => 118800,
             ],
-
-
-
-
 
             /*
             |--------------------------------------------------------------------------
@@ -112,44 +104,40 @@ class SubscriptionPlanSeeder extends Seeder
                 'package' => 'PREMIUM',
                 'duration_months' => 1,
                 'promo_price' => 24900,
-                'regular_price' => 49800,
+                'regular_price' => 24900,
             ],
 
             [
                 'package' => 'PREMIUM',
                 'duration_months' => 2,
                 'promo_price' => 49800,
-                'regular_price' => 99600,
+                'regular_price' => 49800,
             ],
 
             [
                 'package' => 'PREMIUM',
                 'duration_months' => 3,
                 'promo_price' => 74700,
-                'regular_price' => 149400,
+                'regular_price' => 74700,
             ],
 
             [
                 'package' => 'PREMIUM',
                 'duration_months' => 6,
                 'promo_price' => 149400,
-                'regular_price' => 298800,
+                'regular_price' => 149400,
             ],
 
             [
                 'package' => 'PREMIUM',
                 'duration_months' => 12,
                 'promo_price' => 298800,
-                'regular_price' => 597600,
+                'regular_price' => 298800,
             ],
-
 
         ];
 
-
-
         foreach ($plans as $plan) {
-
 
             SubscriptionPlan::updateOrCreate(
 
@@ -168,9 +156,7 @@ class SubscriptionPlanSeeder extends Seeder
 
             );
 
-
         }
-
 
     }
 }

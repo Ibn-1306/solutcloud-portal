@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Company;
 use App\Models\SubscriptionPlan;
 
 class SubscriptionPricingService
@@ -12,12 +11,10 @@ class SubscriptionPricingService
         return strtoupper((string) config('services.moneroo.currency', 'XOF'));
     }
 
-    public function amountFor(Company $company, SubscriptionPlan $plan): int
+    public function amountFor(SubscriptionPlan $plan): int
     {
         if ($this->currency() === 'XOF') {
-            return $company->isPromoPeriod()
-                ? $plan->promo_price
-                : $plan->regular_price;
+            return $plan->promo_price;
         }
 
         $monthlyAmount = (int) config(

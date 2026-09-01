@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendBusinessUpgradePendingEmail;
 use App\Models\Company;
 use App\Models\Payment;
 use Illuminate\Support\Arr;
@@ -25,7 +26,8 @@ class PaymentSynchronizer
 
         $remote = $this->moneroo->verify($transactionId);
 
-        return DB::transaction(function () use ($payment, $remote, $transactionId): Payment {
+        $notifyUpgrade = false;
+        $synchronized = DB::transaction(function () use ($payment, $remote, $transactionId, &$notifyUpgrade): Payment {
             $locked = Payment::query()->lockForUpdate()->findOrFail($payment->id);
             $remoteId = (string) Arr::get($remote, 'id', '');
 
@@ -57,17 +59,30 @@ class PaymentSynchronizer
             ])->save();
 
             if ($status === Payment::STATUS_PAID) {
+                if ($locked->purpose === Payment::PURPOSE_UPGRADE
+                    && $locked->upgrade_pending_notified_at === null) {
+                    $locked->forceFill(['upgrade_pending_notified_at' => now()])->save();
+                    $notifyUpgrade = true;
+                }
+
                 $this->applySubscriptionChange($locked);
             }
 
             return $locked->fresh();
         });
+
+        if ($notifyUpgrade) {
+            SendBusinessUpgradePendingEmail::dispatch($synchronized->id)
+                ->onConnection('deferred');
+        }
+
+        return $synchronized;
     }
 
     private function applySubscriptionChange(Payment $payment): void
     {
         if ($payment->applied_at !== null
-            || ! in_array($payment->purpose, [Payment::PURPOSE_RENEWAL, Payment::PURPOSE_UPGRADE], true)
+            || $payment->purpose !== Payment::PURPOSE_RENEWAL
             || $payment->duration_months === null
             || $payment->company_id === null) {
             return;
@@ -85,9 +100,7 @@ class PaymentSynchronizer
         }
 
         $company->forceFill([
-            'package' => $payment->purpose === Payment::PURPOSE_UPGRADE
-                ? $payment->package
-                : $company->package,
+            'package' => $company->package,
             'status' => 'active',
             'suspension_reason' => null,
             'expires_at' => $startsAt->addMonthsNoOverflow($payment->duration_months),
@@ -95,6 +108,54 @@ class PaymentSynchronizer
         ])->save();
 
         $payment->forceFill(['applied_at' => now()])->save();
+    }
+
+    public function finalizeUpgrade(Payment $payment): Payment
+    {
+        return DB::transaction(function () use ($payment): Payment {
+            $locked = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+
+            if ($locked->purpose !== Payment::PURPOSE_UPGRADE || ! $locked->isPaid()) {
+                throw new RuntimeException('Seul un passage à BUSINESS payé peut être finalisé.');
+            }
+
+            if ($locked->applied_at !== null) {
+                throw new RuntimeException('Cette évolution vers BUSINESS a déjà été finalisée.');
+            }
+
+            if ($locked->company_id === null || $locked->duration_months === null) {
+                throw new RuntimeException('Ce paiement ne possède pas les informations nécessaires à la finalisation.');
+            }
+
+            $company = Company::query()->lockForUpdate()->findOrFail($locked->company_id);
+
+            if (strtolower($company->package) !== 'start') {
+                throw new RuntimeException('Seule une entreprise actuellement en offre START peut passer à BUSINESS.');
+            }
+
+            $startsAt = $company->expires_at?->isFuture()
+                ? $company->expires_at->copy()
+                : now();
+
+            if ($company->status === 'suspended') {
+                $this->lws->reactivate($company);
+            }
+
+            $company->forceFill([
+                'package' => 'business',
+                'status' => 'active',
+                'suspension_reason' => null,
+                'expires_at' => $startsAt->addMonthsNoOverflow($locked->duration_months),
+                'subscription_started_at' => $company->subscription_started_at ?? now(),
+            ])->save();
+
+            $locked->forceFill([
+                'applied_at' => now(),
+                'upgrade_reviewed_at' => now(),
+            ])->save();
+
+            return $locked->fresh(['company']);
+        });
     }
 
     /**

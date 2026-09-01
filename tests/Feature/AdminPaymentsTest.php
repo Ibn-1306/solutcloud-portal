@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\AccountInvitationMail;
 use App\Mail\ClientPasswordResetMail;
-use App\Mail\InstallationPendingMail;
+use App\Mail\InstanceInstallationMail;
 use App\Mail\InstanceReadyMail;
 use App\Mail\PaymentLinkMail;
 use App\Models\ClientSecurityLink;
@@ -38,7 +38,7 @@ class AdminPaymentsTest extends TestCase
         $this->get(route('admin.dashboard'))
             ->assertOk()
             ->assertDontSee("En attente d'installation")
-            ->assertSee('Créer une instance payée')
+            ->assertSee('Créer une instance')
             ->assertSee('Instances Déployées')
             ->assertDontSee('Ouvrir Paiement')
             ->assertDontSee('Ouvrir Paiements')
@@ -111,6 +111,43 @@ class AdminPaymentsTest extends TestCase
         $this->assertStringNotContainsString('Commande de l’offre', $payment->description);
         $this->assertStringNotContainsString('Précisions :', $payment->description);
         $this->assertStringNotContainsString($lead->commercialReference(), $payment->description);
+    }
+
+    public function test_payment_link_can_be_created_without_client_notes(): void
+    {
+        Mail::fake();
+        config()->set('services.moneroo.secret', 'test-secret');
+        config()->set('services.moneroo.currency', 'XOF');
+
+        Http::fake([
+            'https://api.moneroo.io/v1/payments/initialize' => Http::response([
+                'data' => [
+                    'id' => 'pay_without_notes',
+                    'checkout_url' => 'https://checkout.moneroo.io/pay_without_notes',
+                ],
+            ], 201),
+        ]);
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.payments.store'), [
+                'customer_name' => 'Awa Koné',
+                'customer_email' => 'awa@example.com',
+                'company_name' => 'Entreprise Alpha',
+                'package' => 'business',
+                'amount' => 118800,
+            ])
+            ->assertRedirect(route('admin.payments.index'))
+            ->assertSessionHas('status')
+            ->assertSessionDoesntHaveErrors();
+
+        $payment = Payment::firstOrFail();
+        $this->assertNull($payment->description);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.moneroo.io/v1/payments/initialize'
+            && $request['description'] === "Règlement {$payment->reference} — SOLUTCLOUD BUSINESS"
+        );
     }
 
     public function test_manual_payment_rejects_an_invalid_international_phone(): void
@@ -338,6 +375,7 @@ class AdminPaymentsTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.companies.store'), [
+                'creation_mode' => 'confirmed_payment',
                 'payment_id' => $unpaid->id,
                 'domain' => 'alpha',
             ])
@@ -352,6 +390,7 @@ class AdminPaymentsTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.companies.store'), [
+                'creation_mode' => 'confirmed_payment',
                 'payment_id' => $unpaid->id,
                 'domain' => 'alpha',
             ])
@@ -366,14 +405,126 @@ class AdminPaymentsTest extends TestCase
         $this->assertSame($company->id, $unpaid->fresh()->company_id);
         $this->assertSame($company->id, $client->company_id);
 
-        Mail::assertSent(InstallationPendingMail::class, fn ($mail) => $mail->hasTo($client->email));
-        Mail::assertSent(AccountInvitationMail::class, fn ($mail) => $mail->hasTo($client->email)
+        Mail::assertSent(InstanceInstallationMail::class, fn ($mail) => $mail->hasTo($client->email)
             && $mail->company->is($company)
             && $mail->payment?->is($unpaid)
+            && filled($mail->activationUrl)
         );
+        Mail::assertSentCount(1);
     }
 
-    public function test_finalization_activates_the_instance_and_sends_erp_access(): void
+    public function test_admin_can_create_a_cash_paid_instance_without_moneroo(): void
+    {
+        Mail::fake();
+        Http::fake();
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Paiement manuel — espèces, virement ou autre')
+            ->assertSee('Aucun lien Moneroo ne sera généré')
+            ->assertSee('name="manual_payment_method"', false)
+            ->assertSee('data-phone-input', false);
+
+        $this->post(route('admin.companies.store'), [
+            'creation_mode' => 'manual_payment',
+            'manual_customer_name' => 'Awa Koné',
+            'manual_customer_email' => 'awa.cash@example.com',
+            'manual_customer_phone' => '+2250102030405',
+            'manual_company_name' => 'Entreprise Espèces',
+            'manual_package' => 'business',
+            'manual_amount' => 59400,
+            'manual_duration_months' => 6,
+            'manual_payment_method' => 'cash',
+            'manual_description' => 'Reçu de caisse RC-2026-42',
+            'domain' => 'entreprise-especes',
+        ])
+            ->assertSessionHas('status')
+            ->assertSessionDoesntHaveErrors();
+
+        $payment = Payment::firstOrFail();
+        $company = Company::firstOrFail();
+        $client = User::where('role', User::ROLE_CLIENT)->firstOrFail();
+
+        $this->assertTrue($payment->isPaid());
+        $this->assertSame('cash', $payment->payment_channel);
+        $this->assertSame('Espèces', $payment->channelLabel());
+        $this->assertSame(6, $payment->duration_months);
+        $this->assertNull($payment->moneroo_payment_id);
+        $this->assertNull($payment->checkout_url);
+        $this->assertSame($company->id, $payment->company_id);
+        $this->assertSame('business', $company->package);
+        $this->assertSame('pending', $company->status);
+        $this->assertSame('https://entreprise-especes.solutcloud.com', $company->instance_url);
+        $this->assertSame($company->id, $client->company_id);
+
+        Http::assertNothingSent();
+        Mail::assertSent(InstanceInstallationMail::class, fn (InstanceInstallationMail $mail): bool => $mail->hasTo($client->email)
+            && $mail->payment?->is($payment)
+        );
+
+        $this->get(route('admin.payments.index'))
+            ->assertOk()
+            ->assertSee($payment->reference)
+            ->assertSee('Espèces');
+    }
+
+    public function test_admin_manually_defines_short_urls_independently_of_the_company_name(): void
+    {
+        Mail::fake();
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $startPayment = $this->payment([
+            'company_name' => 'Société Internationale de Distribution et de Transformation de Produits Agricoles',
+            'status' => Payment::STATUS_PAID,
+            'paid_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard', ['payment' => $startPayment->id]))
+            ->assertOk()
+            ->assertSee('Saisie manuelle obligatoire')
+            ->assertSee('Informations transmises par le client')
+            ->assertSee($startPayment->company_name)
+            ->assertDontSee('const slugify', false)
+            ->assertSee('fillPayment(true)', false)
+            ->assertSee("if (clearDomain) inputDomain.value = '';", false);
+
+        $this->post(route('admin.companies.store'), [
+            'creation_mode' => 'confirmed_payment',
+            'payment_id' => $startPayment->id,
+            'domain' => 'siditra',
+        ])->assertSessionHas('status');
+
+        $startCompany = Company::where('package', 'start')->firstOrFail();
+        $this->assertSame($startPayment->company_name, $startCompany->name);
+        $this->assertSame('siditra', $startCompany->subdomain);
+        $this->assertNull($startCompany->custom_domain);
+        $this->assertSame('https://siditra.solutcloud.com', $startCompany->instance_url);
+        $this->assertSame('siditra.solutcloud.com', $startCompany->resolved_ftp_path);
+
+        $premiumPayment = $this->payment([
+            'customer_email' => 'premium@example.com',
+            'company_name' => 'Cabinet International de Conseil et d’Expertise Financière',
+            'package' => 'premium',
+            'status' => Payment::STATUS_PAID,
+            'paid_at' => now(),
+        ]);
+
+        $this->post(route('admin.companies.store'), [
+            'creation_mode' => 'confirmed_payment',
+            'payment_id' => $premiumPayment->id,
+            'domain' => 'cabinet-expert.ci',
+        ])->assertSessionHas('status');
+
+        $premiumCompany = Company::where('package', 'premium')->firstOrFail();
+        $this->assertSame('cabinet-expert.ci', $premiumCompany->custom_domain);
+        $this->assertSame('https://cabinet-expert.ci', $premiumCompany->instance_url);
+        $this->assertSame('cabinet-expert.ci', $premiumCompany->resolved_ftp_path);
+    }
+
+    public function test_finalization_activates_the_instance_and_sends_all_start_erp_accesses(): void
     {
         Mail::fake();
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
@@ -383,6 +534,7 @@ class AdminPaymentsTest extends TestCase
         ]);
 
         $this->actingAs($admin)->post(route('admin.companies.store'), [
+            'creation_mode' => 'confirmed_payment',
             'payment_id' => $payment->id,
             'domain' => 'alpha',
         ]);
@@ -393,8 +545,10 @@ class AdminPaymentsTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.companies.finalize', $company->id), [
-                'erp_login' => 'admin.alpha',
-                'erp_password' => 'Secret-ERP-2026',
+                'credentials' => [
+                    'admin' => ['login' => 'admin.alpha', 'password' => 'A1'],
+                    'employee' => ['login' => 'employe.alpha', 'password' => 'E1'],
+                ],
             ])
             ->assertSessionHas('status');
 
@@ -404,10 +558,86 @@ class AdminPaymentsTest extends TestCase
         $this->assertNotNull($company->subscription_started_at);
         $this->assertNull($company->erp_password);
 
-        Mail::assertSent(InstanceReadyMail::class, fn (InstanceReadyMail $mail) => $mail->hasTo($client->email)
-            && $mail->login === 'admin.alpha'
-            && $mail->password === 'Secret-ERP-2026'
-        );
+        Mail::assertSent(InstanceReadyMail::class, function (InstanceReadyMail $mail) use ($client): bool {
+            return $mail->hasTo($client->email)
+                && $mail->credentials === [
+                    ['key' => 'admin', 'label' => 'Administrateur', 'login' => 'admin.alpha', 'password' => 'A1'],
+                    ['key' => 'employee', 'label' => 'Employé', 'login' => 'employe.alpha', 'password' => 'E1'],
+                ];
+        });
+    }
+
+    public function test_finalization_requires_the_exact_credentials_for_business_and_premium_offers(): void
+    {
+        Mail::fake();
+        /** @var User $admin */
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+
+        $business = $this->company([
+            'name' => 'Entreprise Business',
+            'email' => 'business@example.com',
+            'subdomain' => 'business',
+            'package' => 'business',
+            'status' => 'pending',
+        ]);
+        User::factory()->create([
+            'company_id' => $business->id,
+            'role' => User::ROLE_CLIENT,
+            'email' => $business->email,
+        ]);
+
+        $incompleteBusinessCredentials = [
+            'admin' => ['login' => 'admin.business', 'password' => 'Secret-Admin-2026'],
+            'employee_1' => ['login' => 'employe1.business', 'password' => 'Secret-Employe1-2026'],
+            'employee_2' => ['login' => 'employe2.business', 'password' => 'Secret-Employe2-2026'],
+            'employee_3' => ['login' => 'employe3.business', 'password' => 'Secret-Employe3-2026'],
+        ];
+
+        $this->actingAs($admin)
+            ->post(route('admin.companies.finalize', $business->id), ['credentials' => $incompleteBusinessCredentials])
+            ->assertSessionHasErrors('credentials.employee_4');
+
+        $this->assertSame('pending', $business->fresh()->status);
+
+        $businessCredentials = $incompleteBusinessCredentials + [
+            'employee_4' => ['login' => 'employe4.business', 'password' => 'Secret-Employe4-2026'],
+        ];
+
+        $this->actingAs($admin)
+            ->post(route('admin.companies.finalize', $business->id), ['credentials' => $businessCredentials])
+            ->assertSessionHas('status');
+
+        $this->assertSame('active', $business->fresh()->status);
+        Mail::assertSent(InstanceReadyMail::class, fn (InstanceReadyMail $mail): bool => $mail->company->is($business)
+            && count($mail->credentials) === 5
+            && $mail->credentials[4]['label'] === 'Employé 4');
+
+        $premium = $this->company([
+            'name' => 'Entreprise Premium',
+            'email' => 'premium-access@example.com',
+            'subdomain' => 'premium-access',
+            'package' => 'premium',
+            'status' => 'pending',
+        ]);
+        User::factory()->create([
+            'company_id' => $premium->id,
+            'role' => User::ROLE_CLIENT,
+            'email' => $premium->email,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.companies.finalize', $premium->id), [
+                'credentials' => [
+                    'super_admin' => ['login' => 'superadmin.premium', 'password' => 'Secret-Premium-2026'],
+                ],
+            ])
+            ->assertSessionHas('status');
+
+        $this->assertSame('superadmin.premium', $premium->fresh()->erp_login);
+        Mail::assertSent(InstanceReadyMail::class, fn (InstanceReadyMail $mail): bool => $mail->company->is($premium)
+            && $mail->credentials === [
+                ['key' => 'super_admin', 'label' => 'Super administrateur', 'login' => 'superadmin.premium', 'password' => 'Secret-Premium-2026'],
+            ]);
     }
 
     public function test_lws_folders_are_resolved_automatically_for_each_offer(): void

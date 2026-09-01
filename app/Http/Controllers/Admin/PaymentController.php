@@ -203,15 +203,18 @@ class PaymentController extends Controller
         );
     }
 
-    public function reviewUpgrade(Payment $payment): RedirectResponse
+    public function finalizeUpgrade(Payment $payment, PaymentSynchronizer $synchronizer): RedirectResponse
     {
-        if ($payment->purpose !== Payment::PURPOSE_UPGRADE || ! $payment->isPaid()) {
-            return back()->withErrors('Seul un passage à BUSINESS confirmé peut être marqué comme traité.');
+        try {
+            $finalized = $synchronizer->finalizeUpgrade($payment);
+
+            return back()->with(
+                'status',
+                "L’évolution de {$finalized->company_name} vers SOLUTCLOUD BUSINESS est finalisée.",
+            );
+        } catch (RuntimeException $exception) {
+            return back()->withErrors($exception->getMessage());
         }
-
-        $payment->forceFill(['upgrade_reviewed_at' => now()])->save();
-
-        return back()->with('status', "Le passage à BUSINESS de {$payment->company_name} est marqué comme traité.");
     }
 
     private function initializeWithMoneroo(Payment $payment, MonerooPaymentService $moneroo): void

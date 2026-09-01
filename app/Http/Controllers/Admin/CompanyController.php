@@ -10,7 +10,9 @@ use App\Models\Demo;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\WebsiteLead;
+use App\Rules\InternationalPhoneNumber;
 use App\Services\LwsInstanceStorage;
+use App\Support\InternationalPhone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +76,7 @@ class CompanyController extends Controller
             ->with('company')
             ->paid()
             ->where('purpose', Payment::PURPOSE_UPGRADE)
-            ->whereNull('upgrade_reviewed_at')
+            ->whereNull('applied_at')
             ->latest('paid_at')
             ->get();
         $pendingUpgradeCount = $pendingUpgradePayments->count();
@@ -145,25 +147,63 @@ class CompanyController extends Controller
 
     public function store(Request $request)
     {
+        $currency = strtoupper((string) config('services.moneroo.currency', 'XOF'));
+        $minimumAmount = $currency === 'XOF' ? 100 : 1;
         $data = $request->validate([
-            'payment_id' => ['required', 'integer', 'exists:payments,id'],
+            'creation_mode' => ['required', Rule::in(['confirmed_payment', 'manual_payment'])],
+            'payment_id' => ['nullable', 'required_if:creation_mode,confirmed_payment', 'integer', 'exists:payments,id'],
+            'manual_customer_name' => ['nullable', 'required_if:creation_mode,manual_payment', 'string', 'max:255'],
+            'manual_customer_email' => ['nullable', 'required_if:creation_mode,manual_payment', 'email:rfc', 'max:255'],
+            'manual_customer_phone' => ['nullable', 'string', 'max:30', new InternationalPhoneNumber],
+            'manual_company_name' => ['nullable', 'required_if:creation_mode,manual_payment', 'string', 'max:255'],
+            'manual_package' => ['nullable', 'required_if:creation_mode,manual_payment', Rule::in(['start', 'business', 'premium'])],
+            'manual_amount' => ['nullable', 'required_if:creation_mode,manual_payment', 'integer', 'min:'.$minimumAmount],
+            'manual_duration_months' => ['nullable', 'required_if:creation_mode,manual_payment', 'integer', Rule::in([1, 2, 3, 6, 12])],
+            'manual_payment_method' => ['nullable', 'required_if:creation_mode,manual_payment', Rule::in(['cash', 'bank_transfer', 'other'])],
+            'manual_description' => ['nullable', 'string', 'max:5000'],
             'domain' => ['required', 'string', 'max:255'],
         ]);
 
         try {
-            [$company, $user] = DB::transaction(function () use ($data): array {
-                $payment = Payment::query()->lockForUpdate()->findOrFail($data['payment_id']);
-
-                if (! $payment->isPaid()) {
-                    throw ValidationException::withMessages([
-                        'payment_id' => 'L’instance ne peut être créée qu’après confirmation du paiement.',
+            $adminId = $request->user()?->id;
+            [$company, $user, $payment] = DB::transaction(function () use ($data, $currency, $adminId): array {
+                if ($data['creation_mode'] === 'manual_payment') {
+                    $payment = Payment::create([
+                        'customer_name' => trim((string) $data['manual_customer_name']),
+                        'customer_email' => mb_strtolower(trim((string) $data['manual_customer_email'])),
+                        'customer_phone' => InternationalPhone::normalize($data['manual_customer_phone'] ?? null),
+                        'company_name' => trim((string) $data['manual_company_name']),
+                        'package' => $data['manual_package'],
+                        'amount' => (int) $data['manual_amount'],
+                        'currency' => $currency,
+                        'description' => filled($data['manual_description'] ?? null)
+                            ? trim((string) $data['manual_description'])
+                            : null,
+                        'purpose' => Payment::PURPOSE_INITIAL,
+                        'duration_months' => (int) $data['manual_duration_months'],
+                        'status' => Payment::STATUS_PAID,
+                        'payment_channel' => $data['manual_payment_method'],
+                        'verified_at' => now(),
+                        'paid_at' => now(),
+                        'provider_payload' => [
+                            'source' => 'admin_manual_payment',
+                            'recorded_by_user_id' => $adminId,
+                        ],
                     ]);
-                }
+                } else {
+                    $payment = Payment::query()->lockForUpdate()->findOrFail($data['payment_id']);
 
-                if ($payment->company_id !== null) {
-                    throw ValidationException::withMessages([
-                        'payment_id' => 'Une instance a déjà été créée pour ce paiement.',
-                    ]);
+                    if (! $payment->isPaid()) {
+                        throw ValidationException::withMessages([
+                            'payment_id' => 'L’instance ne peut être créée qu’après confirmation du paiement.',
+                        ]);
+                    }
+
+                    if ($payment->company_id !== null) {
+                        throw ValidationException::withMessages([
+                            'payment_id' => 'Une instance a déjà été créée pour ce paiement.',
+                        ]);
+                    }
                 }
 
                 $customerEmail = mb_strtolower(trim($payment->customer_email));
@@ -173,18 +213,32 @@ class CompanyController extends Controller
                     ->first();
 
                 if ($user !== null && (! $user->isClient() || $user->company_id !== null)) {
+                    $emailField = $data['creation_mode'] === 'manual_payment'
+                        ? 'manual_customer_email'
+                        : 'payment_id';
+
                     throw ValidationException::withMessages([
-                        'payment_id' => 'Un compte déjà rattaché utilise cette adresse e-mail.',
+                        $emailField => 'Un compte déjà rattaché utilise cette adresse e-mail.',
                     ]);
                 }
 
                 $domain = strtolower(trim($data['domain']));
-                $domainRules = $payment->package === 'premium'
+                $isPremium = $payment->package === 'premium';
+                $domainRules = $isPremium
                     ? ['required', 'max:255', 'regex:/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i', Rule::unique('companies', 'custom_domain')]
                     : ['required', 'max:63', 'regex:/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/', Rule::unique('companies', 'subdomain')];
 
                 validator(['domain' => $domain], ['domain' => $domainRules], [
-                    'domain.regex' => 'Le domaine ou identifiant d’instance n’est pas valide.',
+                    'domain.required' => $isPremium
+                        ? 'Saisissez manuellement le nom de domaine dédié du client.'
+                        : 'Saisissez manuellement un identifiant court pour l’instance du client.',
+                    'domain.max' => $isPremium
+                        ? 'Le nom de domaine dédié est trop long.'
+                        : 'L’identifiant de l’instance ne peut pas dépasser 63 caractères.',
+                    'domain.regex' => $isPremium
+                        ? 'Saisissez uniquement le domaine, par exemple entreprise.com, sans https:// ni chemin.'
+                        : 'Utilisez uniquement des lettres minuscules, chiffres et tirets, par exemple entreprise.',
+                    'domain.unique' => 'Cette adresse est déjà utilisée par une autre instance.',
                 ])->validate();
 
                 $company = Company::create([
@@ -197,7 +251,7 @@ class CompanyController extends Controller
                     'custom_domain' => $payment->package === 'premium' ? $domain : null,
                     'package' => $payment->package,
                     'status' => 'pending',
-                    'expires_at' => now()->addYear(),
+                    'expires_at' => now()->addMonthsNoOverflow($payment->duration_months ?: 12),
                 ]);
 
                 if ($user === null) {
@@ -217,13 +271,17 @@ class CompanyController extends Controller
 
                 $payment->forceFill(['company_id' => $company->id])->save();
 
-                return [$company, $user];
+                return [$company, $user, $payment];
             });
 
             SendInstanceSetupEmails::dispatch($company->id, $user->id)
                 ->onConnection('deferred');
 
-            return back()->with('status', 'Instance placée en attente d’installation. Les deux e-mails client sont envoyés.');
+            $status = $data['creation_mode'] === 'manual_payment'
+                ? "Règlement manuel {$payment->reference} enregistré. L’instance est en attente d’installation et le client a été notifié."
+                : 'Instance placée en attente d’installation. Un e-mail unique d’information et d’activation est envoyé au client.';
+
+            return back()->with('status', $status);
 
         } catch (ValidationException $exception) {
             throw $exception;
@@ -237,29 +295,88 @@ class CompanyController extends Controller
     public function finalizeInstance(Request $request, int $id)
     {
         $company = Company::findOrFail($id);
-        $data = $request->validate([
-            'erp_login' => ['required', 'string', 'max:255'],
-            'erp_password' => ['required', 'string', 'min:8', 'max:255'],
-        ]);
+        $profiles = $this->credentialProfilesFor($company->package);
 
         if ($company->status !== 'pending') {
             return back()->withErrors('Cette instance n’est pas en attente d’installation.');
         }
 
+        if ($profiles === []) {
+            return back()->withErrors('L’offre de cette instance ne permet pas de déterminer les accès ERP attendus.');
+        }
+
+        $profileKeys = array_keys($profiles);
+        $rules = [
+            'credentials' => ['required', 'array:'.implode(',', $profileKeys)],
+            'credentials.*' => ['required', 'array:login,password'],
+            'credentials.*.login' => ['required', 'string', 'max:255', 'distinct'],
+            'credentials.*.password' => ['required', 'string', 'max:255'],
+        ];
+        $attributes = [];
+
+        foreach ($profiles as $key => $label) {
+            $rules["credentials.{$key}"] = ['required', 'array:login,password'];
+            $rules["credentials.{$key}.login"] = ['required', 'string', 'max:255', 'distinct'];
+            $rules["credentials.{$key}.password"] = ['required', 'string', 'max:255'];
+            $attributes["credentials.{$key}.login"] = "{$label} — identifiant ERP";
+            $attributes["credentials.{$key}.password"] = "{$label} — mot de passe ERP";
+        }
+
+        $data = $request->validate($rules, [
+            'credentials.required' => 'Renseignez tous les accès ERP prévus dans cette offre.',
+            'credentials.*.required' => 'Tous les comptes ERP prévus dans cette offre sont obligatoires.',
+            'credentials.*.login.required' => 'Chaque compte doit posséder un identifiant ERP.',
+            'credentials.*.login.distinct' => 'Chaque compte ERP doit utiliser un identifiant différent.',
+            'credentials.*.password.required' => 'Chaque compte doit posséder un mot de passe ERP.',
+        ], $attributes);
+
+        $credentials = collect($profiles)
+            ->map(fn (string $label, string $key): array => [
+                'key' => $key,
+                'label' => $label,
+                'login' => trim((string) $data['credentials'][$key]['login']),
+                'password' => (string) $data['credentials'][$key]['password'],
+            ])
+            ->values()
+            ->all();
+
         $company->update([
             'status' => 'active',
-            'erp_login' => $data['erp_login'],
+            'erp_login' => $credentials[0]['login'],
             'subscription_started_at' => now(),
             'expires_at' => now()->addYear(),
         ]);
 
         SendInstanceReadyEmail::dispatch(
             $company->id,
-            $data['erp_login'],
-            $data['erp_password'],
+            $credentials,
         )->onConnection('deferred');
 
-        return back()->with('status', 'Instance activée. Le dernier e-mail contenant les accès ERP est envoyé au client.');
+        return back()->with('status', 'Instance activée. Tous les accès ERP de l’offre ont été envoyés au client.');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function credentialProfilesFor(string $package): array
+    {
+        return match (strtolower($package)) {
+            'start' => [
+                'admin' => 'Administrateur',
+                'employee' => 'Employé',
+            ],
+            'business' => [
+                'admin' => 'Administrateur',
+                'employee_1' => 'Employé 1',
+                'employee_2' => 'Employé 2',
+                'employee_3' => 'Employé 3',
+                'employee_4' => 'Employé 4',
+            ],
+            'premium' => [
+                'super_admin' => 'Super administrateur',
+            ],
+            default => [],
+        };
     }
 
     public function suspend(int $id, LwsInstanceStorage $lws)
