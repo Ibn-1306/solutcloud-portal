@@ -14,8 +14,7 @@
         .page::before,.page::after { content:""; position:absolute; border:1px solid rgba(43,144,154,.15); border-radius:999px; pointer-events:none; }
         .page::before { width:460px; height:460px; right:-240px; top:-190px; }
         .page::after { width:320px; height:320px; left:-190px; bottom:-180px; }
-        .card { width:min(100%,760px); overflow:hidden; border:1px solid var(--line); border-radius:28px; background:rgba(255,255,255,.96); box-shadow:0 28px 80px rgba(15,23,42,.10); position:relative; z-index:1; }
-        .topline { height:7px; background:linear-gradient(90deg,var(--brand-dark),var(--brand),#6acbd2); }
+        .card { width:min(100%,760px); overflow:hidden; border:1px solid var(--line); border-radius:28px; background:#fff; box-shadow:none; position:relative; z-index:1; }
         .content { padding:42px clamp(24px,7vw,64px) 36px; }
         .brand { display:flex; align-items:center; gap:12px; color:var(--brand); font-weight:900; letter-spacing:.08em; }
         .brand img { width:42px; height:42px; object-fit:contain; }
@@ -41,7 +40,6 @@
 <body>
     <main class="page">
         <section class="card" aria-labelledby="suspended-title">
-            <div class="topline"></div>
             <div class="content">
                 <div class="brand"><img src="{{ asset('img/favicon.png') }}" alt=""><span>SOLUTCLOUD</span></div>
                 <div class="status"><span></span>Accès temporairement suspendu</div>

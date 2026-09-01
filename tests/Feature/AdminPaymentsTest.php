@@ -890,6 +890,8 @@ class AdminPaymentsTest extends TestCase
             ->assertSee('suspendu.')
             ->assertSee($company->name)
             ->assertSee('Contacter le service client')
+            ->assertDontSee('class="topline"', false)
+            ->assertSee('box-shadow:none', false)
             ->assertDontSee('Renouveler mon abonnement');
     }
 
