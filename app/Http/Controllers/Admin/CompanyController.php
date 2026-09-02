@@ -173,7 +173,7 @@ class CompanyController extends Controller
             'manual_package' => ['nullable', 'required_if:creation_mode,manual_payment', Rule::in(['start', 'business', 'premium'])],
             'manual_amount' => ['nullable', 'required_if:creation_mode,manual_payment', 'integer', 'min:'.$minimumAmount],
             'manual_duration_months' => ['nullable', 'required_if:creation_mode,manual_payment', 'integer', Rule::in([1, 2, 3, 6, 12])],
-            'manual_payment_method' => ['nullable', 'required_if:creation_mode,manual_payment', Rule::in(['cash', 'bank_transfer', 'other'])],
+            'manual_payment_method' => ['nullable', 'required_if:creation_mode,manual_payment', Rule::in(['cash', 'mobile_money', 'bank_transfer', 'other'])],
             'manual_description' => ['nullable', 'string', 'max:5000'],
             'domain' => ['required', 'string', 'max:255'],
         ]);

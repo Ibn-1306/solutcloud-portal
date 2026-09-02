@@ -220,12 +220,12 @@
 
     <section class="mt-8" aria-labelledby="admin-overview-title">
         <div class="mb-4">
-            <h2 id="admin-overview-title" class="text-xl font-extrabold text-slate-950">Ma vue générale</h2>
+            <h2 id="admin-overview-title" class="text-left text-xl font-extrabold text-slate-950">Ma vue générale</h2>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <article class="rounded-3xl border border-[#2b909a]/35 bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Commandes</p><span class="text-2xl font-black text-slate-950">{{ $totalCommercialRequestCount }}</span></div>
+                <div class="flex items-center justify-center"><p class="text-center text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Commandes</p></div>
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Commandes</dt><dd class="mt-1 font-extrabold text-slate-800">{{ $orderCount }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Devis</dt><dd class="mt-1 font-extrabold text-slate-800">{{ $quoteRequestCount }}</dd></div>
@@ -234,7 +234,7 @@
             </article>
 
             <article class="rounded-3xl border border-emerald-300 bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Paiements</p><span class="text-2xl font-black text-slate-950">{{ $totalPaymentCount }}</span></div>
+                <div class="flex items-center justify-center"><p class="text-center text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Paiements</p></div>
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Payés</dt><dd class="mt-1 font-extrabold text-emerald-700">{{ $paidPaymentCount }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">En cours</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingPaymentCount }}</dd></div>
@@ -243,7 +243,7 @@
             </article>
 
             <article class="rounded-3xl border border-amber-300 bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Instances</p><span class="text-2xl font-black text-slate-950">{{ $totalCount }}</span></div>
+                <div class="flex items-center justify-center"><p class="text-center text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Instances</p></div>
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Actives</dt><dd class="mt-1 font-extrabold text-emerald-700">{{ $activeCount }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Installation</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingCount }}</dd></div>
@@ -252,7 +252,7 @@
             </article>
 
             <article class="rounded-3xl border border-violet-300 bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Démonstrations</p><span class="text-2xl font-black text-slate-950">{{ $totalDemoRequestCount }}</span></div>
+                <div class="flex items-center justify-center"><p class="text-center text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Démonstrations</p></div>
                 <dl class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Demandes</dt><dd class="mt-1 font-extrabold text-slate-800">{{ $totalDemoRequestCount }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-amber-700">À traiter</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingDemoRequestCount }}</dd></div>
@@ -260,7 +260,7 @@
                 </dl>
             </article>
             <article class="rounded-3xl border {{ $pendingUpgradeCount > 0 ? 'border-blue-400' : 'border-blue-300' }} bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between"><p class="text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Passages à BUSINESS</p><span class="text-2xl font-black text-slate-950">{{ $totalUpgradeCount }}</span></div>
+                <div class="flex items-center justify-center"><p class="text-center text-xs font-extrabold uppercase tracking-[.13em] text-slate-400">Passages à BUSINESS</p></div>
                 <dl class="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 text-center">
                     <div><dt class="text-[10px] font-bold uppercase text-slate-400">Confirmés</dt><dd class="mt-1 font-extrabold text-blue-700">{{ $paidUpgradeCount }}</dd></div>
                     <div><dt class="text-[10px] font-bold uppercase text-amber-700">À traiter</dt><dd class="mt-1 font-extrabold text-amber-700">{{ $pendingUpgradeCount }}</dd></div>
@@ -268,7 +268,10 @@
             </article>
         </div>
     </section>
-    <section class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Indicateurs administrateur">
+    <div class="mb-4 mt-8">
+        <h2 class="text-left text-xl font-extrabold text-slate-950">Indicateurs clés</h2>
+    </div>
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Indicateurs administrateur">
         @php
             $metrics = [
                 ['label' => 'Total entreprises', 'value' => $totalCount, 'note' => 'Comptes enregistrés', 'color' => 'text-[#207b84]', 'bg' => 'bg-[#e5f5f6]', 'icon' => 'company'],
@@ -307,15 +310,15 @@
         <div class="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
             <div class="flex items-start gap-3">
                 <span class="flex shrink-0 items-center justify-center text-[#207b84]">
-                    <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="13" height="6" rx="2"/><rect x="3" y="14" width="13" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h2M11 17h2M20 8v8M16 12h8" stroke-linecap="round"/></svg>
+                    <svg class="h-9 w-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="13" height="6" rx="2"/><rect x="3" y="14" width="13" height="6" rx="2"/><path d="M7 7h.01M7 17h.01M11 7h2M11 17h2M20 8v8M16 12h8" stroke-linecap="round"/></svg>
                 </span>
-                <div><h2 id="instance-create-title" class="text-lg font-extrabold text-slate-950">Créer une instance</h2><p class="mt-1 text-xs leading-5 text-slate-500">Utilisez un paiement Moneroo confirmé ou enregistrez directement un règlement reçu hors ligne.</p></div>
+                <div><h2 id="instance-create-title" class="text-xl font-extrabold text-slate-950">Créer une instance</h2><p class="mt-1 text-xs leading-5 text-slate-500">Utilisez un paiement Moneroo confirmé ou enregistrez directement un règlement reçu hors ligne.</p></div>
             </div>
         </div>
 
         <form action="{{ route('admin.companies.store') }}" method="POST" id="instance-create-form" class="p-5 sm:p-7">
             @csrf
-            <div class="rounded-2xl border border-[#2b909a]/20 bg-[#2b909a]/[.04] p-4">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4">
                 <label for="instance-creation-mode" class="mb-2 block text-xs font-extrabold uppercase tracking-[.1em] text-slate-500">Mode de création</label>
                 <select id="instance-creation-mode" name="creation_mode" class="min-h-12 w-full rounded-xl border-slate-300 text-sm font-bold shadow-sm focus:border-[#2b909a] focus:ring-[#2b909a] sm:max-w-xl" required>
                     <option value="confirmed_payment" @selected($instanceCreationMode === 'confirmed_payment') @disabled($availablePayments->isEmpty())>Depuis un paiement Moneroo confirmé{{ $availablePayments->isEmpty() ? ' — aucun disponible' : '' }}</option>
@@ -334,25 +337,28 @@
                 </select>
             </div>
 
-            <div id="manual-payment-panel" class="mt-5 hidden rounded-2xl border border-amber-200 bg-amber-50/40 p-4 sm:p-5">
+            <div id="manual-payment-panel" class="mt-5 hidden rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
                 <div class="mb-4"><p class="text-xs font-extrabold uppercase tracking-[.12em] text-amber-800">Règlement reçu par l’administrateur</p><p class="mt-1 text-xs leading-5 text-slate-500">Saisissez les informations réelles du client et du paiement encaissé. Aucun lien de paiement ne sera envoyé.</p></div>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div><label for="manual-customer-name" class="mb-2 block text-xs font-bold text-slate-600">Responsable</label><input id="manual-customer-name" type="text" name="manual_customer_name" value="{{ old('manual_customer_name') }}" data-manual-input autocomplete="off" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="Nom et prénoms"></div>
-                    <div><label for="manual-customer-email" class="mb-2 block text-xs font-bold text-slate-600">E-mail du client</label><input id="manual-customer-email" type="email" name="manual_customer_email" value="{{ old('manual_customer_email') }}" data-manual-input autocomplete="off" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="client@entreprise.com"></div>
-                    <div><label for="manual-customer-phone" class="mb-2 block text-xs font-bold text-slate-600">Téléphone</label><input id="manual-customer-phone" type="tel" name="manual_customer_phone" value="{{ old('manual_customer_phone') }}" data-manual-input data-phone-input autocomplete="tel" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="Numéro international"></div>
+                    <div><label for="manual-customer-email" class="mb-2 block text-xs font-bold text-slate-600">E-mail du client</label><input id="manual-customer-email" type="email" name="manual_customer_email" value="{{ old('manual_customer_email') }}" data-manual-input autocomplete="off" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="client@email.com"></div>
+                    <div><label for="manual-customer-phone" class="mb-2 block text-xs font-bold text-slate-600">Téléphone</label><input id="manual-customer-phone" type="tel" name="manual_customer_phone" value="{{ old('manual_customer_phone') }}" data-manual-input data-phone-input autocomplete="tel" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="Numéro de téléphone"></div>
                     <div><label for="manual-company-name" class="mb-2 block text-xs font-bold text-slate-600">Entreprise</label><input id="manual-company-name" type="text" name="manual_company_name" value="{{ old('manual_company_name') }}" data-manual-input autocomplete="off" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="Raison sociale"></div>
                     <div><label for="manual-package" class="mb-2 block text-xs font-bold text-slate-600">Offre</label><select id="manual-package" name="manual_package" data-manual-input class="min-h-12 w-full rounded-xl border-slate-300 text-sm"><option value="">Choisir l’offre</option><option value="start" @selected(old('manual_package') === 'start')>START</option><option value="business" @selected(old('manual_package') === 'business')>BUSINESS</option><option value="premium" @selected(old('manual_package') === 'premium')>PREMIUM</option></select></div>
                     <div><label for="manual-duration" class="mb-2 block text-xs font-bold text-slate-600">Durée payée</label><select id="manual-duration" name="manual_duration_months" data-manual-input class="min-h-12 w-full rounded-xl border-slate-300 text-sm">@foreach([1, 2, 3, 6, 12] as $duration)<option value="{{ $duration }}" @selected((int) old('manual_duration_months', 12) === $duration)>{{ $duration }} mois</option>@endforeach</select></div>
                     <div><label for="manual-amount" class="mb-2 block text-xs font-bold text-slate-600">Montant encaissé ({{ strtoupper(config('services.moneroo.currency', 'XOF')) }})</label><input id="manual-amount" type="number" min="{{ strtoupper(config('services.moneroo.currency', 'XOF')) === 'XOF' ? 100 : 1 }}" step="1" name="manual_amount" value="{{ old('manual_amount') }}" data-manual-input class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="Montant reçu"></div>
-                    <div><label for="manual-payment-method" class="mb-2 block text-xs font-bold text-slate-600">Mode de règlement</label><select id="manual-payment-method" name="manual_payment_method" data-manual-input class="min-h-12 w-full rounded-xl border-slate-300 text-sm"><option value="cash" @selected(old('manual_payment_method', 'cash') === 'cash')>Espèces</option><option value="bank_transfer" @selected(old('manual_payment_method') === 'bank_transfer')>Virement</option><option value="other" @selected(old('manual_payment_method') === 'other')>Autre paiement manuel</option></select></div>
-                    <div class="sm:col-span-2 lg:col-span-1"><label for="manual-description" class="mb-2 block text-xs font-bold text-slate-600">Note interne facultative</label><input id="manual-description" type="text" name="manual_description" value="{{ old('manual_description') }}" data-manual-input autocomplete="off" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="Référence du reçu, précision…"></div>
+                    <div><label for="manual-payment-method" class="mb-2 block text-xs font-bold text-slate-600">Mode de règlement</label><select id="manual-payment-method" name="manual_payment_method" data-manual-input class="min-h-12 w-full rounded-xl border-slate-300 text-sm"><option value="cash" @selected(old('manual_payment_method', 'cash') === 'cash')>Espèces</option><option value="mobile_money" @selected(old('manual_payment_method') === 'mobile_money')>Mobile money</option><option value="bank_transfer" @selected(old('manual_payment_method') === 'bank_transfer')>Virement</option><option value="other" @selected(old('manual_payment_method') === 'other')>Autre paiement manuel</option></select></div>
+                    <div class="sm:col-span-2 lg:col-span-1"><label for="manual-description" class="mb-2 block text-xs font-bold text-slate-600">Note interne (facultative)</label><input id="manual-description" type="text" name="manual_description" value="{{ old('manual_description') }}" data-manual-input autocomplete="off" class="min-h-12 w-full rounded-xl border-slate-300 text-sm" placeholder="Référence du reçu, précision…"></div>
                 </div>
             </div>
 
-            <div class="mt-5 grid min-w-0 gap-5 lg:grid-cols-2">
+            <div class="mt-5 grid min-w-0 gap-5 lg:grid-cols-1">
                 <div class="min-w-0">
                     <label id="label-domain" for="input-domain" class="mb-2 block text-xs font-extrabold uppercase tracking-[.1em] text-slate-500">Identifiant d’instance</label>
-                    <input type="text" id="input-domain" name="domain" value="{{ strtolower((string) old('domain')) }}" autocomplete="off" autocapitalize="none" spellcheck="false" class="min-h-12 w-full rounded-xl border-slate-300 text-sm lowercase shadow-sm focus:border-[#2b909a] focus:ring-[#2b909a]" required placeholder="entreprise">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <input type="text" id="input-domain" name="domain" value="{{ strtolower((string) old('domain')) }}" autocomplete="off" autocapitalize="none" spellcheck="false" class="min-h-12 w-full flex-1 rounded-xl border-slate-300 text-sm lowercase shadow-sm focus:border-[#2b909a] focus:ring-[#2b909a] sm:max-w-xl" required placeholder="entreprise">
+                        <button type="submit" class="min-h-12 w-full shrink-0 rounded-xl bg-[#2b909a] px-10 text-sm font-extrabold text-white transition hover:bg-[#217b84] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30 sm:ml-auto sm:min-w-[220px] sm:w-auto">Créer et notifier</button>
+                    </div>
                     <p class="mt-2 text-xs font-semibold text-amber-700">Saisie manuelle obligatoire : choisissez une adresse courte, claire et représentative du client.</p>
                     <p id="hint-domain" class="mt-1 break-all text-xs text-slate-400">URL finale : <span class="font-bold text-[#207b84]">https://...</span></p>
                 </div>
@@ -362,9 +368,8 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex flex-col gap-4 rounded-2xl border border-[#2b909a]/15 bg-[#2b909a]/[.04] p-4 sm:flex-row sm:items-center sm:justify-between">
-                <p id="instance-submit-note" class="max-w-3xl text-xs leading-5 text-slate-600">Le client recevra un e-mail unique : installation en cours et lien sécurisé pour activer son espace client.</p>
-                <button type="submit" class="min-h-12 shrink-0 rounded-xl bg-[#2b909a] px-6 text-sm font-extrabold text-white shadow-lg shadow-[#2b909a]/15 transition hover:bg-[#217b84] focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30">Créer et notifier</button>
+            <div class="mt-6 flex flex-col items-center gap-3 border-t border-slate-100 pt-6">
+                <p id="instance-submit-note" class="max-w-3xl text-center text-xs leading-5 text-slate-600">Le client recevra un e-mail unique : installation en cours et lien sécurisé pour activer son espace client.</p>
             </div>
         </form>
     </section>

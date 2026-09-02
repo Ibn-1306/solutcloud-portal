@@ -28,7 +28,7 @@
             <div class="border-b border-slate-100 bg-slate-50/70 px-6 py-5">
                 <p class="text-xs font-black uppercase tracking-[.15em] text-[#2b909a]">Action sécurisée</p>
                 <h2 id="secure-link-title" class="mt-1 text-xl font-extrabold text-slate-950">Envoyer un lien au client</h2>
-                <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Le système choisit automatiquement une activation initiale ou une réinitialisation selon l’état du compte. Aucun mot de passe client n’est visible ni communiqué. Le token sécurisé reste également invisible.</p>
+                <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Le système choisit automatiquement une activation initiale ou une réinitialisation selon l’état du compte. Aucun mot de passe client n’est visible ni communiqué.</p>
             </div>
             <form method="POST" action="{{ route('admin.client-security.send') }}" class="grid gap-5 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,.7fr)_auto] lg:items-end lg:p-8">
                 @csrf
@@ -65,7 +65,7 @@
 
             <div class="overflow-x-auto">
                 <table class="admin-data-table min-w-full text-sm">
-                    <thead class="bg-[#2b909a] text-white"><tr><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Client</th><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Entreprise</th><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Type de lien</th><th class="px-5 py-4 text-center text-[10px] font-bold uppercase tracking-widest">Statut</th><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Demandé par</th><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Date</th></tr></thead>
+                    <thead class="bg-[#2b909a] text-white"><tr><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Client</th><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Entreprise</th><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Type de lien</th><th class="px-5 py-4 text-center text-[10px] font-bold uppercase tracking-widest">Statut</th><th class="px-5 py-4 text-left text-[10px] font-bold uppercase tracking-widest">Date</th></tr></thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
                         @forelse($links as $link)
                             @php
@@ -77,11 +77,11 @@
                                 <td class="px-5 py-5 font-semibold text-slate-600">{{ $link->user?->company?->name ?: '—' }}</td>
                                 <td class="px-5 py-5"><span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase {{ $typeClass }}">{{ $link->typeLabel() }}</span></td>
                                 <td class="px-5 py-5 text-center"><span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-black uppercase {{ $statusClass }}">{{ $link->statusLabel() }}</span>@if($link->failure_reason)<p class="mx-auto mt-2 max-w-[220px] text-[10px] leading-4 text-red-600">{{ $link->failure_reason }}</p>@endif</td>
-                                <td class="px-5 py-5 text-xs font-semibold text-slate-600">{{ $link->requester?->name ?: 'Système' }}</td>
+
                                 <td class="px-5 py-5 whitespace-nowrap text-xs text-slate-500">{{ ($link->sent_at ?? $link->created_at)?->format('d/m/Y') }}<span class="mt-1 block text-slate-400">{{ ($link->sent_at ?? $link->created_at)?->format('H:i') }}</span></td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="px-6 py-16 text-center"><p class="font-bold text-slate-500">Aucun envoi sécurisé dans le suivi.</p><p class="mt-1 text-xs text-slate-400">Le premier envoi apparaîtra automatiquement ici.</p></td></tr>
+                            <tr><td colspan="5" class="px-6 py-16 text-center"><p class="font-bold text-slate-500">Aucun envoi sécurisé dans le suivi.</p><p class="mt-1 text-xs text-slate-400">Le premier envoi apparaîtra automatiquement ici.</p></td></tr>
                         @endforelse
                     </tbody>
                 </table>

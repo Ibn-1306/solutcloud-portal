@@ -21,7 +21,16 @@ class WebsiteLeadController extends Controller
             'email' => mb_strtolower(trim((string) $request->input('email'))),
         ]);
 
-        $accountRequest = in_array($request->input('type'), ['trial', 'order', 'quote'], true);
+        $accountRequest = in_array($request->input('type'), ['order', 'quote'], true);
+        if ($accountRequest && WebsiteLead::query()
+            ->whereIn('type', ['order', 'quote'])
+            ->whereRaw('LOWER(email) = ?', [$request->input('email')])
+            ->exists()) {
+            return response()->json([
+                'error' => 'Un compte SOLUTCLOUD existe déjà avec cette adresse e-mail. Veuillez choisir une autre adresse e-mail.',
+                'field' => 'email',
+            ], 422);
+        }
 
         $data = $request->validate([
             'type' => ['required', 'string', Rule::in(['contact', 'trial', 'order', 'quote'])],

@@ -87,7 +87,7 @@
                         </div>
                         <div>
                             <label for="customer_email" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-gray-500">E-mail</label>
-                            <input id="customer_email" type="email" name="customer_email" value="{{ old('customer_email') }}" class="payment-input" required>
+                            <input id="customer_email" type="email" name="customer_email" value="{{ old('customer_email') }}" class="payment-input" placeholder="client@email.com" required>
                         </div>
                         <div>
                             <label for="customer_phone" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-gray-500">Téléphone</label>

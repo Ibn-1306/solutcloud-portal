@@ -160,9 +160,10 @@ class Payment extends Model
     {
         return match ($this->payment_channel) {
             'cash' => 'Espèces',
+            'mobile_money' => 'Mobile money',
             'bank_transfer' => 'Virement',
             'other' => 'Paiement manuel',
-            default => 'Moneroo',
+            default => 'Paiement en ligne',
         };
     }
 

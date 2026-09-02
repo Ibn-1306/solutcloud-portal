@@ -215,15 +215,17 @@
                         <p class="hidden truncate text-xs text-slate-500 sm:block">{{ $description }}</p>
                     </div>
                 </div>
-                <div class="flex min-w-0 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-1.5 pr-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dff3f5] text-[#176f78]">
-                        <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                            <circle cx="12" cy="8" r="3.5"/>
-                            <path d="M5.5 20a6.5 6.5 0 0113 0" stroke-linecap="round"/>
-                        </svg>
-                    </span>
-                    <span class="hidden max-w-44 truncate text-sm font-bold text-slate-700 sm:block">Administrateur</span>
-                </div>
+                <div class="relative" x-data="{ profileOpen: false }" @keydown.escape.window="profileOpen = false">
+    <button type="button" @click="profileOpen = ! profileOpen" :aria-expanded="profileOpen.toString()" aria-haspopup="menu" class="flex min-w-0 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-1.5 pr-3 transition hover:border-[#2b909a]/40 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#2b909a]/30">
+        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dff3f5] text-[#176f78]"><svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0113 0" stroke-linecap="round"/></svg></span>
+        <span class="hidden max-w-44 truncate text-sm font-bold text-slate-700 sm:block">Administrateur</span>
+        <svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m7 10 5 5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div x-cloak x-show="profileOpen" @click.outside="profileOpen = false" x-transition class="absolute right-0 top-full z-50 mt-2 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl" role="menu">
+        <a href="{{ route('admin.profile.edit') }}" class="block rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-[#207b84]" role="menuitem">Compte</a>
+        <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="w-full rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-[#207b84]" role="menuitem">Se déconnecter</button></form>
+    </div>
+</div>
             </div>
         </header>
 

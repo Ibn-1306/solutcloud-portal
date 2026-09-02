@@ -18,7 +18,7 @@ class UniqueCustomerEmail implements ValidationRule
 
         if ($user !== null
             && ! ($this->allowUnassignedClient && $user->isClient() && $user->company_id === null)) {
-            $fail('Un compte SOLUTCLOUD existe déjà avec cette adresse e-mail. Connectez-vous à votre espace compte ou utilisez « Mot de passe oublié ».');
+            $fail('Un compte SOLUTCLOUD existe déjà avec cette adresse e-mail. Veuillez choisir une autre adresse e-mail.');
         }
     }
 }

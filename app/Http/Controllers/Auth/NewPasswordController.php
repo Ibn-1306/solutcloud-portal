@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -42,7 +41,7 @@ class NewPasswordController extends Controller
             'email' => ['required', 'email'],
             'password' => $isInitialActivation
                 ? ['required', 'string', 'confirmed', 'max:255']
-                : ['required', 'confirmed', Rules\Password::defaults()],
+                : ['required', 'string', 'confirmed', 'max:255'],
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we

@@ -1,17 +1,19 @@
-SOLUTCLOUD — Règlement {{ $payment->reference }}
+SOLUTCLOUD — Votre récapitulatif de règlement
 
-Bonjour {{ $payment->customer_name }},
+Bonjour {{ explode(" ", trim($payment->customer_name))[0] }},
 
-Comme convenu avec notre équipe, votre règlement est disponible sur Moneroo.
+Voici le récapitulatif de votre règlement SOLUTCLOUD.
 
-Référence : {{ $payment->reference }}
+Numéro de reçu : {{ $payment->reference }}
 Offre : SOLUTCLOUD {{ strtoupper($payment->package) }}
 Montant : {{ number_format($payment->amount, 0, ',', ' ') }} {{ $payment->currency }}
 
-Accéder au paiement :
-{{ $payment->customerCheckoutUrl() }}
+Choisissez le moyen de règlement disponible qui vous convient. Votre instance sera préparée dès confirmation.
 
-Vous pourrez choisir le moyen de paiement disponible qui vous convient. La préparation de votre instance commencera après confirmation du règlement.
+Cordialement,
+Equipe SOLUTCLOUD
+sales@i-solutions.ci
+
+Payer en toute sécurité : {{ $payment->customerCheckoutUrl() }}
 
 I-SOLUTIONS · SOLUTCLOUD
-sales@i-solutions.ci
