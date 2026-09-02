@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\PaymentLinkExpiredException;
 use App\Models\Payment;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -84,6 +85,12 @@ class MonerooPaymentService
         $response = $this->request()->get('/v1/payments/'.rawurlencode($transactionId).'/verify');
 
         if (! $response->successful()) {
+            $message = mb_strtolower((string) $response->json('message', ''));
+
+            if (in_array($response->status(), [404, 410], true) || str_contains($message, 'expir')) {
+                throw new PaymentLinkExpiredException('Le lien de paiement a expiré.');
+            }
+
             throw new RuntimeException($this->errorMessage($response, 'Impossible de vérifier le paiement Moneroo.'));
         }
 

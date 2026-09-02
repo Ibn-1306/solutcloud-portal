@@ -127,6 +127,58 @@ class PaymentReturnFlowTest extends TestCase
         $this->assertSame(2, User::count());
     }
 
+    public function test_expired_payment_link_returns_the_same_dedicated_404_after_refresh(): void
+    {
+        config()->set('services.moneroo.secret', 'test-secret');
+        config()->set('services.moneroo.checkout_ttl_minutes', 1440);
+
+        $payment = $this->payment([
+            'status' => Payment::STATUS_INITIATED,
+            'moneroo_payment_id' => 'expired_payment',
+            'checkout_url' => 'https://checkout.moneroo.io/expired_payment',
+            'initialized_at' => now(),
+        ]);
+        $attempt = $payment->checkoutAttempts()->create([
+            'moneroo_payment_id' => 'expired_payment',
+            'checkout_url' => 'https://checkout.moneroo.io/expired_payment',
+            'initialized_at' => now(),
+        ]);
+        Http::fake([
+            'https://api.moneroo.io/v1/payments/expired_payment/verify' => Http::response([
+                'data' => [
+                    'id' => 'expired_payment',
+                    'status' => 'expired',
+                ],
+            ]),
+        ]);
+
+        $url = $payment->customerCheckoutUrl();
+
+        $this->assertNotNull($url);
+        $this->assertStringContainsString('/payments/checkout/'.$attempt->id, $url);
+        $this->assertStringNotContainsString('checkout.moneroo.io', $url);
+
+        $this->get($url)
+            ->assertNotFound()
+            ->assertHeader('Cache-Control')
+            ->assertViewIs('payments.expired')
+            ->assertSee('Erreur 404')
+            ->assertSee('Lien de paiement expiré');
+
+        $this->assertSame(Payment::STATUS_EXPIRED, $payment->fresh()->status);
+
+        $this->get($url)
+            ->assertNotFound()
+            ->assertViewIs('payments.expired')
+            ->assertSee('Lien de paiement expiré');
+
+        $this->get(route('payments.return', ['paymentId' => 'expired_payment']))
+            ->assertNotFound()
+            ->assertViewIs('payments.expired');
+
+        Http::assertSentCount(1);
+    }
+
     public function test_expired_subscription_links_to_a_safe_renewal_entry_point(): void
     {
         $this->get(route('subscription.expired'))

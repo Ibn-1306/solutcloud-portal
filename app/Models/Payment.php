@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\URL;
 
 class Payment extends Model
 {
@@ -20,6 +21,8 @@ class Payment extends Model
     public const STATUS_FAILED = 'failed';
 
     public const STATUS_CANCELLED = 'cancelled';
+
+    public const STATUS_EXPIRED = 'expired';
 
     public const PURPOSE_INITIAL = 'initial';
 
@@ -119,9 +122,31 @@ class Payment extends Model
         return $this->status === self::STATUS_PAID;
     }
 
+    public function isExpired(): bool
+    {
+        return $this->status === self::STATUS_EXPIRED;
+    }
+
+    public function customerCheckoutUrl(): ?string
+    {
+        if (! $this->exists) {
+            return $this->checkout_url;
+        }
+
+        $attempt = $this->checkoutAttempts()
+            ->whereNull('superseded_at')
+            ->latest('id')
+            ->first();
+
+        return $attempt
+            ? URL::signedRoute('payments.checkout', ['attempt' => $attempt->id])
+            : $this->checkout_url;
+    }
+
     public function canSendLink(): bool
     {
         return ! $this->isPaid()
+            && ! $this->isExpired()
             && is_string($this->checkout_url)
             && $this->checkout_url !== '';
     }
@@ -166,6 +191,7 @@ class Payment extends Model
             self::STATUS_PAID => 'Payé',
             self::STATUS_FAILED => 'Échoué',
             self::STATUS_CANCELLED => 'Annulé',
+            self::STATUS_EXPIRED => 'Expiré',
             default => ucfirst($this->status),
         };
     }

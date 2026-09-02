@@ -25,7 +25,7 @@
                 <table role="presentation" width="420" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:420px">
                     <tr>
                         <td align="center" bgcolor="#2b909a" style="border-radius:7px">
-                            <a href="{{ $payment->checkout_url }}" class="email-button" style="display:block;padding:18px 32px;border-radius:7px;background:#2b909a;color:#ffffff!important;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;line-height:1.2;text-align:center;text-decoration:none">
+                            <a href="{{ $payment->customerCheckoutUrl() }}" class="email-button" style="display:block;padding:18px 32px;border-radius:7px;background:#2b909a;color:#ffffff!important;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;line-height:1.2;text-align:center;text-decoration:none">
                                 Payer en toute sécurité
                             </a>
                         </td>

@@ -82,10 +82,21 @@ class Company extends Model
     public function getInstanceUrlAttribute(): string
     {
         if ($this->package === 'premium' && ! empty($this->custom_domain)) {
-            return 'https://'.$this->custom_domain;
+            return 'https://'.strtolower($this->custom_domain);
         }
 
-        return 'https://'.$this->subdomain.'.solutcloud.com';
+        return 'https://'.strtolower($this->subdomain).'.solutcloud.com';
+    }
+
+    public function setSubdomainAttribute(?string $value): void
+    {
+        $this->attributes['subdomain'] = strtolower(trim((string) $value));
+    }
+
+    public function setCustomDomainAttribute(?string $value): void
+    {
+        $normalized = strtolower(trim((string) $value));
+        $this->attributes['custom_domain'] = $normalized === '' ? null : $normalized;
     }
 
     public function getPackageUpperAttribute(): string

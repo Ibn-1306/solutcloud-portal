@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountDeletedController;
 use App\Http\Controllers\AccountSuspendedController;
 use App\Http\Controllers\Admin\ClientSecurityController;
 use App\Http\Controllers\Admin\CompanyController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Client\PortalController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\SubscriptionController;
+use App\Http\Controllers\PaymentCheckoutController;
 use App\Http\Controllers\PaymentReturnController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubscriptionExpiredController;
@@ -27,6 +29,10 @@ Route::get('/', function () {
     return redirect()->route('login');
 
 });
+
+Route::get('/payments/checkout/{attempt}', PaymentCheckoutController::class)
+    ->middleware(['signed', 'throttle:30,1'])
+    ->name('payments.checkout');
 
 Route::get('/payments/return', PaymentReturnController::class)
     ->name('payments.return');
@@ -48,6 +54,9 @@ Route::get('/compte-suspendu/statut', [AccountSuspendedController::class, 'statu
 
 Route::get('/compte-suspendu', [AccountSuspendedController::class, 'show'])
     ->name('account.suspended');
+
+Route::get('/compte-supprime', AccountDeletedController::class)
+    ->name('account.deleted');
 
 /*
 |--------------------------------------------------------------------------

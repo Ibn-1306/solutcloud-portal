@@ -7,6 +7,7 @@ use App\Mail\NewsletterWelcome;
 use App\Mail\WebsiteLeadAcknowledgement;
 use App\Mail\WebsiteLeadReceived;
 use App\Models\NewsletterSubscriber;
+use App\Models\User;
 use App\Models\WebsiteLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -106,6 +107,45 @@ class PublicWebsiteFormsTest extends TestCase
             'offer' => 'BUSINESS',
             'email' => 'mariam@example.com',
             'message' => null,
+        ]);
+    }
+
+    public function test_account_request_rejects_an_email_already_registered_regardless_of_case(): void
+    {
+        Mail::fake();
+        Queue::fake();
+        User::factory()->create(['email' => 'client@example.com']);
+
+        $this->postJson('/api/leads', [
+            'type' => 'order',
+            'offer' => 'START',
+            'fullname' => 'Client Existant',
+            'email' => ' CLIENT@EXAMPLE.COM ',
+            'phone' => '+225 01 02 03 04 05',
+            'company_name' => 'Entreprise Existante',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseCount('website_leads', 0);
+        Queue::assertNothingPushed();
+        Mail::assertNothingSent();
+    }
+
+    public function test_existing_client_can_still_send_a_contact_message(): void
+    {
+        Mail::fake();
+        User::factory()->create(['email' => 'client@example.com']);
+
+        $this->postJson('/api/leads', [
+            'type' => 'contact',
+            'fullname' => 'Client Existant',
+            'email' => 'CLIENT@example.com',
+            'message' => 'Je souhaite contacter le service client.',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('website_leads', [
+            'type' => 'contact',
+            'email' => 'client@example.com',
         ]);
     }
 

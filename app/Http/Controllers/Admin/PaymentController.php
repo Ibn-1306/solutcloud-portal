@@ -7,6 +7,7 @@ use App\Jobs\SendPaymentLinkEmail;
 use App\Models\Payment;
 use App\Models\WebsiteLead;
 use App\Rules\InternationalPhoneNumber;
+use App\Rules\UniqueCustomerEmail;
 use App\Services\MonerooPaymentService;
 use App\Services\PaymentSynchronizer;
 use App\Support\InternationalPhone;
@@ -72,13 +73,17 @@ class PaymentController extends Controller
 
     public function store(Request $request, MonerooPaymentService $moneroo): RedirectResponse
     {
+        $request->merge([
+            'customer_email' => mb_strtolower(trim((string) $request->input('customer_email'))),
+        ]);
+
         $paymentCurrency = $this->configuredCurrency();
         $minimumAmount = $paymentCurrency === 'XOF' ? 100 : 1;
 
         $data = $request->validate([
             'website_lead_id' => ['nullable', 'integer', 'exists:website_leads,id'],
             'customer_name' => ['required', 'string', 'max:255'],
-            'customer_email' => ['required', 'email:rfc', 'max:255'],
+            'customer_email' => ['required', 'email:rfc', 'max:255', new UniqueCustomerEmail(allowUnassignedClient: true)],
             'customer_phone' => ['nullable', 'string', 'max:30', new InternationalPhoneNumber],
             'company_name' => ['required', 'string', 'max:255'],
             'package' => ['required', Rule::in(['start', 'business', 'premium'])],

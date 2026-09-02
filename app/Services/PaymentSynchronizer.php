@@ -52,9 +52,11 @@ class PaymentSynchronizer
                 'paid_at' => $status === Payment::STATUS_PAID
                     ? ($locked->paid_at ?? now())
                     : $locked->paid_at,
-                'failure_reason' => $status === Payment::STATUS_FAILED
-                    ? (string) Arr::get($remote, 'capture.failure_message', 'Paiement refusé par le prestataire.')
-                    : null,
+                'failure_reason' => match ($status) {
+                    Payment::STATUS_FAILED => (string) Arr::get($remote, 'capture.failure_message', 'Paiement refusé par le prestataire.'),
+                    Payment::STATUS_EXPIRED => 'Le lien de paiement a expiré.',
+                    default => null,
+                },
                 'provider_payload' => $this->auditPayload($remote),
             ])->save();
 
@@ -197,6 +199,7 @@ class PaymentSynchronizer
             'pending' => Payment::STATUS_PENDING,
             'failed' => Payment::STATUS_FAILED,
             'cancelled' => Payment::STATUS_CANCELLED,
+            'expired' => Payment::STATUS_EXPIRED,
             'initiated' => Payment::STATUS_INITIATED,
             default => throw new RuntimeException('Statut Moneroo inconnu ou absent.'),
         };

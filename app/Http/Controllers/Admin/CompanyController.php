@@ -11,8 +11,10 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\WebsiteLead;
 use App\Rules\InternationalPhoneNumber;
+use App\Rules\UniqueCustomerEmail;
 use App\Services\LwsInstanceStorage;
 use App\Support\InternationalPhone;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -147,13 +149,25 @@ class CompanyController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->filled('manual_customer_email')) {
+            $request->merge([
+                'manual_customer_email' => mb_strtolower(trim((string) $request->input('manual_customer_email'))),
+            ]);
+        }
+
         $currency = strtoupper((string) config('services.moneroo.currency', 'XOF'));
         $minimumAmount = $currency === 'XOF' ? 100 : 1;
         $data = $request->validate([
             'creation_mode' => ['required', Rule::in(['confirmed_payment', 'manual_payment'])],
             'payment_id' => ['nullable', 'required_if:creation_mode,confirmed_payment', 'integer', 'exists:payments,id'],
             'manual_customer_name' => ['nullable', 'required_if:creation_mode,manual_payment', 'string', 'max:255'],
-            'manual_customer_email' => ['nullable', 'required_if:creation_mode,manual_payment', 'email:rfc', 'max:255'],
+            'manual_customer_email' => [
+                'nullable',
+                'required_if:creation_mode,manual_payment',
+                'email:rfc',
+                'max:255',
+                Rule::when($request->input('creation_mode') === 'manual_payment', [new UniqueCustomerEmail(allowUnassignedClient: true)]),
+            ],
             'manual_customer_phone' => ['nullable', 'string', 'max:30', new InternationalPhoneNumber],
             'manual_company_name' => ['nullable', 'required_if:creation_mode,manual_payment', 'string', 'max:255'],
             'manual_package' => ['nullable', 'required_if:creation_mode,manual_payment', Rule::in(['start', 'business', 'premium'])],
@@ -285,6 +299,18 @@ class CompanyController extends Controller
 
         } catch (ValidationException $exception) {
             throw $exception;
+        } catch (QueryException $exception) {
+            if ((string) $exception->getCode() === '23000'
+                && (str_contains(mb_strtolower($exception->getMessage()), 'users.email')
+                    || str_contains(mb_strtolower($exception->getMessage()), 'users_email'))) {
+                throw ValidationException::withMessages([
+                    $data['creation_mode'] === 'manual_payment' ? 'manual_customer_email' : 'payment_id' => 'Un compte SOLUTCLOUD existe déjà avec cette adresse e-mail. Utilisez le compte existant.',
+                ]);
+            }
+
+            Log::error('ERREUR CREATION CLIENT', ['message' => $exception->getMessage()]);
+
+            return back()->withErrors('La création de l’instance a échoué. Vérifiez les journaux techniques.');
         } catch (Throwable $exception) {
             Log::error('ERREUR CREATION CLIENT', ['message' => $exception->getMessage()]);
 
@@ -452,14 +478,18 @@ class CompanyController extends Controller
 
     public function destroy(Company $company, LwsInstanceStorage $lws)
     {
+        if ($company->status !== 'suspended') {
+            return back()->withErrors('Suspendez d’abord cette instance avant de supprimer définitivement le client.');
+        }
+
         try {
-            $lws->block($company);
+            $lws->markDeleted($company);
+            $companyName = $company->name;
+            $company->delete();
+
+            return back()->with('status', "Instance et compte client de {$companyName} supprimés.");
         } catch (\Exception $e) {
             return back()->with('error', 'Suppression annulée : '.$e->getMessage());
         }
-
-        $company->delete();
-
-        return back()->with('status', 'Fiche client supprimée.');
     }
 }

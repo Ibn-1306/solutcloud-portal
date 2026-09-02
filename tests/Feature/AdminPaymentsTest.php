@@ -169,6 +169,63 @@ class AdminPaymentsTest extends TestCase
         $this->assertDatabaseCount('payments', 0);
     }
 
+    public function test_initial_payment_rejects_an_email_already_used_by_a_client_account(): void
+    {
+        Http::fake();
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'email' => 'client@example.com',
+            'company_id' => $this->company([
+                'email' => 'client@example.com',
+                'subdomain' => 'client-existant',
+            ])->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.payments.store'), [
+                'customer_name' => 'Client Existant',
+                'customer_email' => ' CLIENT@EXAMPLE.COM ',
+                'company_name' => 'Entreprise Existante',
+                'package' => 'start',
+                'amount' => 5900,
+            ])
+            ->assertSessionHasErrors('customer_email');
+
+        $this->assertDatabaseCount('payments', 0);
+        Http::assertNothingSent();
+    }
+
+    public function test_manual_instance_creation_rejects_an_existing_email_without_partial_records(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'email' => 'client@example.com',
+            'company_id' => $this->company([
+                'email' => 'client@example.com',
+                'subdomain' => 'client-manuel',
+            ])->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.companies.store'), [
+                'creation_mode' => 'manual_payment',
+                'manual_customer_name' => 'Client Existant',
+                'manual_customer_email' => 'CLIENT@example.com',
+                'manual_company_name' => 'Entreprise Existante',
+                'manual_package' => 'business',
+                'manual_amount' => 9900,
+                'manual_duration_months' => 1,
+                'manual_payment_method' => 'cash',
+                'domain' => 'entreprise-existante',
+            ])
+            ->assertSessionHasErrors('manual_customer_email');
+
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertDatabaseCount('companies', 1);
+    }
+
     public function test_admin_can_remove_an_unpaid_payment_from_tracking_without_deleting_its_audit_record(): void
     {
         $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
@@ -642,7 +699,7 @@ class AdminPaymentsTest extends TestCase
 
     public function test_lws_folders_are_resolved_automatically_for_each_offer(): void
     {
-        $start = new Company(['package' => 'start', 'subdomain' => 'alpha']);
+        $start = new Company(['package' => 'start', 'subdomain' => 'ALPHA']);
         $business = new Company(['package' => 'business', 'subdomain' => 'beta']);
         $premium = new Company([
             'package' => 'premium',
@@ -651,8 +708,12 @@ class AdminPaymentsTest extends TestCase
         ]);
 
         $this->assertSame('alpha.solutcloud.com', $start->resolved_ftp_path);
+        $this->assertSame('alpha', $start->subdomain);
+        $this->assertSame('https://alpha.solutcloud.com', $start->instance_url);
         $this->assertSame('beta.solutcloud.com', $business->resolved_ftp_path);
         $this->assertSame('entreprise.com', $premium->resolved_ftp_path);
+        $this->assertSame('entreprise.com', $premium->custom_domain);
+        $this->assertSame('https://entreprise.com', $premium->instance_url);
         $this->assertSame([
             'alpha.solutcloud.com',
             'htdocs/alpha.solutcloud.com',
@@ -758,6 +819,66 @@ class AdminPaymentsTest extends TestCase
         $this->actingAs($client)
             ->get($renewUrl)
             ->assertRedirect(route('client.renew'));
+    }
+
+    public function test_admin_must_suspend_an_instance_before_deleting_it(): void
+    {
+        Storage::fake('lws');
+        Storage::disk('lws')->put('alpha.solutcloud.com/index.php', '<?php');
+        Storage::disk('lws')->put('alpha.solutcloud.com/main.inc.php', '<?php');
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $company = $this->company(['status' => 'active']);
+
+        $this->actingAs($admin)
+            ->delete(route('companies.destroy', $company))
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseHas('companies', ['id' => $company->id]);
+        Storage::disk('lws')->assertMissing('alpha.solutcloud.com/.htaccess');
+    }
+
+    public function test_admin_can_delete_a_suspended_instance_and_its_client_account(): void
+    {
+        Storage::fake('lws');
+        Storage::disk('lws')->put('alpha.solutcloud.com/index.php', '<?php');
+        Storage::disk('lws')->put('alpha.solutcloud.com/main.inc.php', '<?php');
+        Storage::disk('lws')->put('alpha.solutcloud.com/.htaccess', '# SOLUTCLOUD INSTANCE SUSPENDED');
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $company = $this->company([
+            'status' => 'suspended',
+            'suspension_reason' => Company::SUSPENSION_ADMINISTRATIVE,
+        ]);
+        $client = User::factory()->create([
+            'role' => User::ROLE_CLIENT,
+            'company_id' => $company->id,
+            'email' => 'client-delete@example.com',
+        ]);
+        $payment = $this->payment(['company_id' => $company->id]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('Supprimer le client '.$company->name, false)
+            ->assertSee(route('companies.destroy', $company), false);
+
+        $this->delete(route('companies.destroy', $company))
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseMissing('companies', ['id' => $company->id]);
+        $this->assertDatabaseMissing('users', ['id' => $client->id]);
+        $this->assertNull($payment->fresh()->company_id);
+        $this->assertStringContainsString(
+            'https://login.solutcloud.com/compte-supprime?instance=alpha.solutcloud.com',
+            Storage::disk('lws')->get('alpha.solutcloud.com/.htaccess'),
+        );
+
+        $this->get(route('account.deleted', ['instance' => 'alpha.solutcloud.com']))
+            ->assertOk()
+            ->assertHeader('Cache-Control')
+            ->assertSee('Ce compte a été supprimé.')
+            ->assertSee('L’administrateur SOLUTCLOUD a supprimé ce compte');
     }
 
     public function test_admin_suspends_and_reactivates_a_start_instance_at_the_ftp_root(): void

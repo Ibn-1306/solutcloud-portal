@@ -9,7 +9,7 @@ Offre : SOLUTCLOUD {{ strtoupper($payment->package) }}
 Montant : {{ number_format($payment->amount, 0, ',', ' ') }} {{ $payment->currency }}
 
 Accéder au paiement :
-{{ $payment->checkout_url }}
+{{ $payment->customerCheckoutUrl() }}
 
 Vous pourrez choisir le moyen de paiement disponible qui vous convient. La préparation de votre instance commencera après confirmation du règlement.
 

@@ -50,6 +50,7 @@ return [
         'base_url' => env('MONEROO_BASE_URL', 'https://api.moneroo.io'),
         'currency' => strtoupper(env('MONEROO_CURRENCY', 'XOF')),
         'timeout' => (int) env('MONEROO_TIMEOUT', 10),
+        'checkout_ttl_minutes' => (int) env('MONEROO_CHECKOUT_TTL_MINUTES', 1440),
         'sandbox_monthly_amounts' => [
             'start' => (int) env('MONEROO_SANDBOX_START_MONTHLY', 10),
             'business' => (int) env('MONEROO_SANDBOX_BUSINESS_MONTHLY', 20),

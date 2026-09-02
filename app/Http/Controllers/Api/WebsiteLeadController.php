@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendWebsiteLeadEmails;
 use App\Models\WebsiteLead;
 use App\Rules\InternationalPhoneNumber;
+use App\Rules\UniqueCustomerEmail;
 use App\Support\InternationalPhone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,10 +17,21 @@ class WebsiteLeadController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        $request->merge([
+            'email' => mb_strtolower(trim((string) $request->input('email'))),
+        ]);
+
+        $accountRequest = in_array($request->input('type'), ['trial', 'order', 'quote'], true);
+
         $data = $request->validate([
             'type' => ['required', 'string', Rule::in(['contact', 'trial', 'order', 'quote'])],
             'fullname' => ['required', 'string', 'max:255', 'not_regex:/[\r\n]/'],
-            'email' => ['required', 'email:rfc', 'max:255'],
+            'email' => array_filter([
+                'required',
+                'email:rfc',
+                'max:255',
+                $accountRequest ? new UniqueCustomerEmail : null,
+            ]),
             'phone' => ['nullable', 'required_if:type,trial,order,quote', 'string', 'max:30', new InternationalPhoneNumber],
             'company_name' => ['nullable', 'required_if:type,trial,order,quote', 'string', 'max:255'],
             'profile' => ['nullable', 'string', 'max:100'],

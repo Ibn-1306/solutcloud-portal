@@ -74,6 +74,29 @@ class LwsInstanceStorage
         return $path;
     }
 
+    public function markDeleted(Company $company): string
+    {
+        $path = $this->resolvePath($company);
+        $deletedUrl = rtrim(
+            (string) config('services.solutcloud.portal_url', 'https://login.solutcloud.com'),
+            '/',
+        ).'/compte-supprime?'.http_build_query([
+            'instance' => (string) parse_url($company->instance_url, PHP_URL_HOST),
+        ], '', '&', PHP_QUERY_RFC3986);
+        $content = self::SUSPENSION_MARKER."\n"
+            ."<IfModule mod_headers.c>\n"
+            ."    Header always set Cache-Control \"no-store, no-cache, must-revalidate, max-age=0\"\n"
+            ."    Header always set Pragma \"no-cache\"\n"
+            ."    Header always set Expires \"0\"\n"
+            ."</IfModule>\n"
+            ."RewriteEngine On\n"
+            .'RewriteRule ^ '.str_replace(' ', '%20', $deletedUrl).' [L,R=302]';
+
+        $this->writeLock($path, $content);
+
+        return $path;
+    }
+
     public function reactivate(Company $company): string
     {
         $path = $this->resolvePath($company);

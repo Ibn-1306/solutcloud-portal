@@ -352,7 +352,7 @@
             <div class="mt-5 grid min-w-0 gap-5 lg:grid-cols-2">
                 <div class="min-w-0">
                     <label id="label-domain" for="input-domain" class="mb-2 block text-xs font-extrabold uppercase tracking-[.1em] text-slate-500">Identifiant d’instance</label>
-                    <input type="text" id="input-domain" name="domain" value="{{ old('domain') }}" autocomplete="off" autocapitalize="none" spellcheck="false" class="min-h-12 w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-[#2b909a] focus:ring-[#2b909a]" required placeholder="entreprise">
+                    <input type="text" id="input-domain" name="domain" value="{{ strtolower((string) old('domain')) }}" autocomplete="off" autocapitalize="none" spellcheck="false" class="min-h-12 w-full rounded-xl border-slate-300 text-sm lowercase shadow-sm focus:border-[#2b909a] focus:ring-[#2b909a]" required placeholder="entreprise">
                     <p class="mt-2 text-xs font-semibold text-amber-700">Saisie manuelle obligatoire : choisissez une adresse courte, claire et représentative du client.</p>
                     <p id="hint-domain" class="mt-1 break-all text-xs text-slate-400">URL finale : <span class="font-bold text-[#207b84]">https://...</span></p>
                 </div>
@@ -380,7 +380,8 @@
                 <article id="instance-mobile-{{ $company->id }}" class="min-w-0 rounded-2xl border border-slate-200 p-4 transition duration-300">
                     <div class="flex min-w-0 items-start justify-between gap-3"><div class="min-w-0"><h3 class="break-words font-extrabold text-slate-950">{{ $company->name }}</h3><p class="mt-1 break-all text-xs font-semibold text-[#207b84]">{{ $company->instance_url }}</p></div><span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase {{ $company->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($company->status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700') }}">{{ $company->status === 'active' ? 'Actif' : ($company->status === 'pending' ? 'Installation' : 'Suspendu') }}</span></div>
                     <dl class="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3 text-xs"><div><dt class="text-slate-400">Offre</dt><dd class="mt-1 font-extrabold uppercase text-slate-700">{{ $company->package }}</dd></div><div><dt class="text-slate-400">Échéance</dt><dd class="mt-1 font-extrabold text-slate-700">{{ $company->expires_at?->format('d/m/Y') ?: '—' }}</dd></div><div class="col-span-2"><dt class="text-slate-400">Contact</dt><dd class="mt-1 break-all font-semibold text-slate-700">{{ $company->email }}</dd></div></dl>
-                    <div class="mt-4">
+                    <div class="mt-4 flex items-end gap-2">
+                        <div class="min-w-0 flex-1">
                         @if ($company->status === 'pending')
                             <button type="button" data-finalize-company data-company-id="{{ $company->id }}" data-company-name="{{ $company->name }}" data-company-package="{{ $company->package }}" class="min-h-11 w-full rounded-xl bg-[#2b909a] px-4 text-xs font-extrabold uppercase text-white">Finaliser l’activation</button>
                         @elseif ($company->status === 'active')
@@ -388,6 +389,14 @@
                         @else
                             <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="grid grid-cols-[1fr_auto] gap-2">@csrf<select name="duration" class="min-h-11 rounded-xl border-slate-300 text-sm" required>@foreach ([0 => '0 mois · échéance inchangée', 1 => '1 mois', 2 => '2 mois', 3 => '3 mois', 6 => '6 mois', 12 => '12 mois'] as $duration => $label)<option value="{{ $duration }}">{{ $label }}</option>@endforeach</select><button class="min-h-11 rounded-xl bg-emerald-600 px-4 text-xs font-extrabold uppercase text-white">Réactiver</button></form>
                         @endif
+                        </div>
+                        <form action="{{ route('companies.destroy', $company) }}" method="POST" class="shrink-0" onsubmit="return confirm('Supprimer définitivement ce client et son instance ? Cette action est irréversible.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" @disabled($company->status !== 'suspended') class="flex h-11 w-11 items-center justify-center rounded-xl border transition {{ $company->status === 'suspended' ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300' }}" aria-label="Supprimer le client {{ $company->name }}" title="{{ $company->status === 'suspended' ? 'Supprimer définitivement' : 'Suspendez d’abord l’instance' }}">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </form>
                     </div>
                 </article>
             @empty
@@ -407,6 +416,7 @@
                             <td class="px-5 py-5 text-center"><span class="rounded-full px-3 py-1 text-[10px] font-extrabold uppercase {{ $company->status === 'active' ? 'bg-emerald-50 text-emerald-700' : ($company->status === 'pending' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700') }}">{{ $company->status === 'active' ? 'Actif' : ($company->status === 'pending' ? 'Installation' : 'Suspendu') }}</span></td>
                             <td class="px-5 py-5"><p class="font-bold text-slate-700">{{ $company->expires_at?->format('d/m/Y') ?: '—' }}</p>@if ($company->expires_at)<p class="mt-1 text-xs {{ now()->gt($company->expires_at) ? 'font-bold text-red-600' : 'text-slate-400' }}">{{ now()->gt($company->expires_at) ? 'Expirée' : ((int) now()->diffInDays($company->expires_at)).' jours restants' }}</p>@endif</td>
                             <td class="px-6 py-5 text-right">
+                                <div class="inline-flex items-center justify-end gap-2">
                                 @if ($company->status === 'pending')
                                     <button type="button" data-finalize-company data-company-id="{{ $company->id }}" data-company-name="{{ $company->name }}" data-company-package="{{ $company->package }}" class="min-h-9 rounded-lg bg-[#2b909a] px-3 text-[10px] font-extrabold uppercase text-white">Finaliser</button>
                                 @elseif ($company->status === 'active')
@@ -414,6 +424,14 @@
                                 @else
                                     <form action="{{ route('admin.activate', $company->id) }}" method="POST" class="inline-flex items-center gap-2">@csrf<select name="duration" class="min-h-9 rounded-lg border-slate-300 py-1 text-xs" required>@foreach ([0 => '0 mois · échéance inchangée', 1 => '1 mois', 2 => '2 mois', 3 => '3 mois', 6 => '6 mois', 12 => '12 mois'] as $duration => $label)<option value="{{ $duration }}">{{ $label }}</option>@endforeach</select><button class="min-h-9 rounded-lg bg-emerald-600 px-3 text-[10px] font-extrabold uppercase text-white">Réactiver</button></form>
                                 @endif
+                                <form action="{{ route('companies.destroy', $company) }}" method="POST" class="inline-flex" onsubmit="return confirm('Supprimer définitivement ce client et son instance ? Cette action est irréversible.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" @disabled($company->status !== 'suspended') class="flex h-9 w-9 items-center justify-center rounded-lg border transition {{ $company->status === 'suspended' ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300' }}" aria-label="Supprimer le client {{ $company->name }}" title="{{ $company->status === 'suspended' ? 'Supprimer définitivement' : 'Suspendez d’abord l’instance' }}">
+                                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    </button>
+                                </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -551,7 +569,12 @@
                 if (inputDomain) inputDomain.value = '';
                 updateDomainHint(manualPackage.value);
             });
-            inputDomain?.addEventListener('input', () => updateDomainHint(selectedCreationPackage()));
+            inputDomain?.addEventListener('input', () => {
+                const cursor = inputDomain.selectionStart;
+                inputDomain.value = inputDomain.value.toLowerCase();
+                if (cursor !== null) inputDomain.setSelectionRange(cursor, cursor);
+                updateDomainHint(selectedCreationPackage());
+            });
             syncCreationMode();
 
             const finalizeOfferSummary = document.getElementById('finalize-offer-summary');
