@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    --iti-path-flags-1x: url('/img/flags.webp');
+    --iti-path-flags-2x: url('/img/flags@2x.webp');
+}
+
 
 /* =====================================
    SOLUTCLOUD - PROFIL ADMINISTRATEUR
@@ -179,6 +184,8 @@
 /* SOLUTCLOUD — téléphone international */
 .iti {
     width: 100%;
+    --iti-path-flags-1x: url('/img/flags.webp');
+    --iti-path-flags-2x: url('/img/flags@2x.webp');
     --iti-border-color: #dbe5e7;
     --iti-dialcode-color: #475569;
     --iti-dropdown-bg: #ffffff;
@@ -187,6 +194,16 @@
 
 .iti input[data-phone-input] {
     width: 100%;
+}
+
+.iti .iti__flag {
+    background-image: url('/img/flags.webp');
+}
+
+@media (min-resolution: 2dppx) {
+    .iti .iti__flag {
+        background-image: url('/img/flags@2x.webp');
+    }
 }
 
 .iti__selected-country {
