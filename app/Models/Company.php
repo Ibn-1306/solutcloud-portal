@@ -127,6 +127,7 @@ class Company extends Model
             $domain = trim(strtolower($this->custom_domain), " /\\\t\n\r\0\x0B");
 
             return array_values(array_unique([
+                '/var/www/'.$domain,
                 $domain,
                 'htdocs/'.$domain,
             ]));

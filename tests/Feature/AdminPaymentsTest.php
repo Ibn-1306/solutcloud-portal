@@ -983,6 +983,28 @@ class AdminPaymentsTest extends TestCase
         $this->assertSame('suspended', $company->fresh()->status);
     }
 
+    public function test_admin_suspends_a_premium_instance_in_its_dedicated_var_www_directory(): void
+    {
+        Storage::fake('lws');
+        Storage::disk('lws')->put('/var/www/entreprise.com/index.php', '<?php');
+        Storage::disk('lws')->put('/var/www/entreprise.com/main.inc.php', '<?php');
+
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $company = $this->company([
+            'subdomain' => 'premium-100',
+            'custom_domain' => 'entreprise.com',
+            'package' => 'premium',
+        ]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.suspend', $company->id))
+            ->assertSessionHas('status');
+
+        Storage::disk('lws')->assertExists('/var/www/entreprise.com/.htaccess');
+        Storage::disk('lws')->assertMissing('htdocs/entreprise.com/.htaccess');
+        $this->assertSame('suspended', $company->fresh()->status);
+    }
+
     public function test_administratively_suspended_client_is_blocked_from_every_account_page(): void
     {
         $company = $this->company([
