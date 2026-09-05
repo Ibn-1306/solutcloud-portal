@@ -2,7 +2,7 @@ SOLUTCLOUD — Votre instance est en cours d’installation
 
 Bonjour {{ $user->name }},
 
-Notre équipe a lancé l’installation de l’environnement SOLUTCLOUD dédié à {{ $company->name }}. Merci de patienter pendant sa finalisation.
+Votre instance est en cours d'installation. Nous vous invitons donc à patienter pendant sa finalisation.
 
 Entreprise : {{ $company->name }}
 Offre : SOLUTCLOUD {{ strtoupper($company->package) }}

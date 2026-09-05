@@ -133,6 +133,7 @@ class CompanyController extends Controller
         $lead = WebsiteLead::query()->latest('updated_at')->first(['id', 'updated_at']);
         $payment = Payment::query()->latest('updated_at')->first(['id', 'updated_at']);
         $demo = Demo::query()->latest('updated_at')->first(['id', 'updated_at']);
+        $company = Company::query()->latest('updated_at')->first(['id', 'updated_at']);
 
         return hash('sha256', implode('|', [
             WebsiteLead::query()->count(),
@@ -144,6 +145,9 @@ class CompanyController extends Controller
             Demo::query()->count(),
             $demo?->id,
             $demo?->updated_at?->getTimestamp(),
+            Company::query()->count(),
+            $company?->id,
+            $company?->updated_at?->getTimestamp(),
         ]));
     }
 

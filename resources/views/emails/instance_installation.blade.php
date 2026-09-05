@@ -8,7 +8,7 @@
 
 @section('content')
     <p>Bonjour <strong>{{ $user->name }}</strong>,</p>
-    <p>Notre équipe a lancé l’installation de l’environnement SOLUTCLOUD dédié à <strong>{{ $company->name }}</strong>. Cette préparation est réalisée avec soin ; nous vous invitons à patienter pendant sa finalisation.</p>
+    <p>Votre instance est en cours d'installation. Nous vous invitons donc à patienter pendant sa finalisation.</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-panel">
         <tr><td class="email-detail-label">Entreprise</td><td class="email-detail-value">{{ $company->name }}</td></tr>

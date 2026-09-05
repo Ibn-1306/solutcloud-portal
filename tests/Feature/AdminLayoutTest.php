@@ -58,7 +58,7 @@ class AdminLayoutTest extends TestCase
             ->assertOk()
             ->assertSee('grid gap-4 p-4 lg:hidden', false)
             ->assertSee('hidden overflow-x-auto lg:block', false)
-            ->assertSee('mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2', false)
+            ->assertSee('grid gap-4 sm:grid-cols-2 xl:grid-cols-5', false)
             ->assertSee('hover:border-blue-300', false)
             ->assertSee('<article class="rounded-3xl border border-amber-300', false)
             ->assertSee('<article class="rounded-3xl border border-violet-300', false)
@@ -200,7 +200,7 @@ class AdminLayoutTest extends TestCase
             ->assertSee($upgrade->reference)
             ->assertSee('Le compte reste sur START jusqu’à votre validation.')
             ->assertSee('Finaliser l’évolution')
-            ->assertSee('href="'.route('admin.payments.index').'"', false)
+            ->assertSee('href="'.route('admin.payments.index').'#payment-'.$upgrade->id.'"', false)
             ->assertSee('Confirmés')
             ->assertSee('À traiter');
 

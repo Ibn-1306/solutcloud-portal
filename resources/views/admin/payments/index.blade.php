@@ -180,7 +180,7 @@
                                         default => 'bg-amber-100 text-amber-800',
                                     };
                                 @endphp
-                                <tr class="align-top transition hover:bg-[#2b909a]/[.025]">
+                                <tr id="payment-{{ $payment->id }}" class="align-top transition hover:bg-[#2b909a]/[.025]">
                                     <td class="px-5 py-5">
                                         <div class="font-black text-gray-900">{{ $payment->reference }}</div>
                                         <div class="mt-1 text-[10px] text-gray-400">{{ $payment->created_at->format('d/m/Y H:i') }}</div>

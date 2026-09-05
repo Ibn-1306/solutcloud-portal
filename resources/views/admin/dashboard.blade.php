@@ -54,6 +54,16 @@
         $nextPendingCompany = $companies->firstWhere('status', 'pending');
     @endphp
 
+    @if (session('status'))
+        <div class="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" role="status"><svg class="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ session('status') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800" role="alert">{{ session('error') }}</div>
+    @endif
+    @if ($errors->any())
+        <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert"><p class="font-extrabold">Une vérification est nécessaire.</p><ul class="mt-2 list-disc space-y-1 pl-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+    @endif
+
     <section class="mt-7" aria-labelledby="admin-priorities-title" aria-live="polite">
         <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -190,7 +200,7 @@
                     <svg class="dashboard-action-arrow h-5 w-7" viewBox="0 0 28 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 10h22M17 3l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </span>
             </a>
-            <a href="{{ route('admin.payments.index') }}" @class([
+            <a href="{{ $latestPendingUpgrade ? route('admin.payments.index').'#payment-'.$latestPendingUpgrade->id : route('admin.payments.index') }}" @class([
                 'dashboard-action-card relative overflow-hidden rounded-3xl border p-5 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2',
                 'dashboard-action-card--active border-blue-300 bg-gradient-to-br from-blue-50 to-white shadow-lg shadow-blue-600/10 hover:-translate-y-0.5 hover:border-blue-400' => $pendingUpgradeCount > 0,
                 'border-slate-200 bg-white hover:border-blue-300' => $pendingUpgradeCount === 0,
@@ -292,16 +302,6 @@
             </article>
         @endforeach
     </section>
-
-    @if (session('status'))
-        <div class="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800" role="status"><svg class="mt-0.5 h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ session('status') }}</div>
-    @endif
-    @if (session('error'))
-        <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800" role="alert">{{ session('error') }}</div>
-    @endif
-    @if ($errors->any())
-        <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert"><p class="font-extrabold">Une vérification est nécessaire.</p><ul class="mt-2 list-disc space-y-1 pl-5">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
-    @endif
 
     @php
         $instanceCreationMode = old('creation_mode', $availablePayments->isEmpty() ? 'manual_payment' : 'confirmed_payment');
